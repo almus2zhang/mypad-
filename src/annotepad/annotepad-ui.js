@@ -111,7 +111,20 @@ export function createAnnotepadPanel(manager) {
   const resultsContainer = document.createElement('div');
   resultsContainer.className = 'annotepad-results';
 
-  panel.append(header, searchControls, statusEl, hlHeader, hlContainer, resultsContainer);
+  const controlsWrapper = document.createElement('div');
+  controlsWrapper.className = 'annotepad-controls-wrapper';
+  
+  const leftCol = document.createElement('div');
+  leftCol.className = 'annotepad-col';
+  leftCol.append(searchControls, statusEl);
+
+  const rightCol = document.createElement('div');
+  rightCol.className = 'annotepad-col';
+  rightCol.append(hlHeader, hlContainer);
+
+  controlsWrapper.append(leftCol, rightCol);
+
+  panel.append(header, controlsWrapper, resultsContainer);
 
   let isLayoutVertical = false;
 

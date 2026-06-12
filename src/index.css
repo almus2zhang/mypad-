@@ -2163,12 +2163,34 @@ body {
 }
 
 #workspace.annotepad-vertical .annotepad-panel {
-  height: 300px;
-  max-height: 50%;
+  max-height: 40%;
   border-top: 1px solid var(--border-primary);
   border-left: none;
   border-right: none;
   width: 100%;
+}
+
+.annotepad-controls-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+#workspace.annotepad-vertical .annotepad-controls-wrapper {
+  flex-direction: row;
+}
+
+.annotepad-col {
+  display: flex;
+  flex-direction: column;
+}
+
+#workspace.annotepad-vertical .annotepad-col {
+  flex: 1;
+  min-width: 0;
+}
+
+#workspace.annotepad-vertical .annotepad-col:first-child {
+  border-right: 1px solid var(--border-primary);
 }
 
 .annotepad-panel {
