@@ -3,7 +3,7 @@
  * Bridges the AnNotePad UI with EditorManager and CodeMirror 6.
  */
 
-import { Compartment } from '@codemirror/state';
+import { Compartment, StateEffect } from '@codemirror/state';
 import { EditorView, Decoration, ViewPlugin, MatchDecorator } from '@codemirror/view';
 import { SearchCursor, RegExpCursor } from '@codemirror/search';
 import { createAnnotepadPanel } from './annotepad-ui.js';
@@ -15,6 +15,7 @@ export class AnnotepadManager {
     this.highlightRules = [];
     this.ui = createAnnotepadPanel(this);
     this.hlCompartment = new Compartment();
+    this.hlCompartmentInjected = false;
   }
 
   get element() {
@@ -29,11 +30,10 @@ export class AnnotepadManager {
     this.editorManager.setSyntaxHighlightingEnabled(false);
     
     // Inject compartment for custom highlights if not already
-    if (this.editorManager.view) {
+    if (this.editorManager.view && !this.hlCompartmentInjected) {
+      this.hlCompartmentInjected = true;
       this.editorManager.view.dispatch({
-        effects: this.editorManager.view.state.update({
-          effects: window.annotepadHlCompartmentInit ? [] : []
-        }) // wait, we can append it directly to baseExtensions in main.js, or reconfigure via a stored extension.
+        effects: StateEffect.appendConfig.of(this.hlCompartment.of([]))
       });
     }
 
