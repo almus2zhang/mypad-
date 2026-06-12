@@ -153,7 +153,25 @@ sidebar.onOpenFileSelect((file) => {
 
 sidebar.onRecentFileSelect(async (file) => {
   if (file.workspacePath) {
-    const ok = await workspaceBrowser.client.checkConnection();
+    let ok = false;
+    try {
+      ok = await workspaceBrowser.client.checkConnection();
+    } catch (e) {
+      if (e.status === 401) {
+        const pwd = prompt('Remote access requires a password:');
+        if (pwd === null) return;
+        workspaceBrowser.client.setPassword(pwd);
+        try {
+          ok = await workspaceBrowser.client.checkConnection();
+        } catch (err2) {
+          if (err2.status === 401) {
+            showToast('Incorrect password!', 'error');
+            return;
+          }
+        }
+      }
+    }
+
     if (!ok) {
       showToast("Cannot connect to Server Workspace.", "error");
       return;

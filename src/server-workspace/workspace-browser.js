@@ -34,9 +34,29 @@ export class WorkspaceBrowser {
     this._saveFilename = saveFilename;
     this._overlay.classList.add('visible');
 
-    const ok = await this.client.checkConnection();
+    let ok = false;
+    try {
+      ok = await this.client.checkConnection();
+    } catch (e) {
+      if (e.status === 401) {
+        const pwd = prompt('Remote access requires a password:');
+        if (pwd === null) {
+          this.hide();
+          return;
+        }
+        this.client.setPassword(pwd);
+        try {
+          ok = await this.client.checkConnection();
+        } catch (err2) {
+          if (err2.status === 401) {
+            alert('Incorrect password!');
+          }
+        }
+      }
+    }
+
     if (!ok) {
-      alert("Failed to connect to the Server Workspace backend. Is node server.js running?");
+      alert("Failed to connect to the Server Workspace backend. Is node server.js running, or did you enter the wrong password?");
       this.hide();
       return;
     }

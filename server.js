@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Parse args for --workspace
+// Parse args for --workspace and --password
 const args = process.argv.slice(2);
 const workspaceArgIdx = args.indexOf('--workspace');
 let workspacePath = process.cwd();
@@ -18,8 +18,19 @@ if (workspaceArgIdx !== -1 && args[workspaceArgIdx + 1]) {
   workspacePath = path.resolve(args[workspaceArgIdx + 1]);
 }
 
+const passArgIdx = args.indexOf('--password');
+let serverPassword = null;
+if (passArgIdx !== -1 && args[passArgIdx + 1]) {
+  serverPassword = args[passArgIdx + 1];
+}
+
 console.log(`Starting MyPad++ Server`);
 console.log(`Workspace Path: ${workspacePath}`);
+if (serverPassword) {
+  console.log(`Remote Access: Enabled (Password Protected)`);
+} else {
+  console.log(`Remote Access: Disabled (No password configured)`);
+}
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -37,6 +48,28 @@ function resolveAndCheckPath(reqPath) {
 
 // API Endpoints
 const apiRouter = express.Router();
+
+// Auth Middleware
+apiRouter.use((req, res, next) => {
+  const isLocal = req.ip === '::1' || req.ip === '127.0.0.1' || req.ip === '::ffff:127.0.0.1';
+  
+  if (isLocal) {
+    // Always allow local connections
+    return next();
+  }
+
+  if (!serverPassword) {
+    // If no password is set, deny all remote requests
+    return res.status(403).json({ error: 'Remote access requires a password to be configured on the server (--password)' });
+  }
+
+  const clientPassword = req.headers['x-workspace-password'];
+  if (clientPassword !== serverPassword) {
+    return res.status(401).json({ error: 'Password required or incorrect' });
+  }
+
+  next();
+});
 
 apiRouter.get('/list', async (req, res) => {
   try {
