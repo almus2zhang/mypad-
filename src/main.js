@@ -108,6 +108,7 @@ const toolbar = createToolbar({
     const tab = tabManager.getActiveTab();
     workspaceBrowser.show('open', tab?.filename);
   },
+  onAnnotepad: () => annotepadManager.toggle(),
 });
 document.getElementById('toolbar-container').appendChild(toolbar);
 
@@ -205,6 +206,11 @@ const workspaceBrowser = new WorkspaceBrowser({
   onFileSave: handleWorkspaceFileSave,
   onError: (msg) => showToast(msg, 'error'),
 });
+
+// --- Annotepad Manager ---
+import { AnnotepadManager } from './annotepad/annotepad-manager.js';
+const annotepadManager = new AnnotepadManager(editorManager);
+document.getElementById('workspace').appendChild(annotepadManager.element);
 
 // ============================================================
 // Apply Initial Theme

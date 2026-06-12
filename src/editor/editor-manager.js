@@ -115,11 +115,15 @@ export class EditorManager {
     this._currentFontSize = fontSize;
     this._currentTabSize = tabSize;
     this._currentWordWrap = wordWrap;
+    this._currentLanguage = language;
+    if (this._syntaxHighlightingEnabled === undefined) {
+      this._syntaxHighlightingEnabled = true;
+    }
 
     /* Build compartment-managed extensions */
     const compartmentExtensions = [
       this.themeCompartment.of(getTheme(theme)),
-      this.languageCompartment.of(language ? language : []),
+      this.languageCompartment.of((this._syntaxHighlightingEnabled && language) ? language : []),
       this.wordWrapCompartment.of(wordWrap ? EditorView.lineWrapping : []),
       this.tabSizeCompartment.of(EditorState.tabSize.of(tabSize)),
       this.fontSizeCompartment.of(this._buildFontSizeExtension(fontSize)),
@@ -285,9 +289,26 @@ export class EditorManager {
    */
   setLanguage(langSupport) {
     this._assertView();
+    this._currentLanguage = langSupport;
+    if (this._syntaxHighlightingEnabled !== false) {
+      this.view.dispatch({
+        effects: this.languageCompartment.reconfigure(
+          langSupport ? langSupport : []
+        ),
+      });
+    }
+  }
+
+  /**
+   * Temporarily disable or re-enable syntax parsing for the current language.
+   * @param {boolean} enabled 
+   */
+  setSyntaxHighlightingEnabled(enabled) {
+    this._assertView();
+    this._syntaxHighlightingEnabled = enabled;
     this.view.dispatch({
       effects: this.languageCompartment.reconfigure(
-        langSupport ? langSupport : []
+        (enabled && this._currentLanguage) ? this._currentLanguage : []
       ),
     });
   }
