@@ -1,0 +1,23 @@
+{
+  "name": "MyPad++",
+  "short_name": "MyPad++",
+  "description": "A powerful code editor for Android tablets with syntax highlighting, multi-tab support, and WebDAV integration.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#1e66f5",
+  "background_color": "#ffffff",
+  "categories": ["developer", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "lang": "en",
+  "dir": "ltr"
+}

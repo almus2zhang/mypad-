@@ -1,0 +1,282 @@
+/**
+ * @module toolbar
+ * Top toolbar for MyPad++ with SVG icon buttons.
+ */
+
+// ─── SVG Icon Definitions ────────────────────────────────────────────────────
+
+const ICONS = {
+  newFile: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="12" y1="18" x2="12" y2="12"/>
+    <line x1="9" y1="15" x2="15" y2="15"/>
+  </svg>`,
+
+  open: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+  </svg>`,
+
+  save: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+    <polyline points="17 21 17 13 7 13 7 21"/>
+    <polyline points="7 3 7 8 15 8"/>
+  </svg>`,
+
+  saveAs: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+    <polyline points="17 21 17 13 7 13 7 21"/>
+    <polyline points="7 3 7 8 15 8"/>
+    <circle cx="19" cy="5" r="4" fill="var(--toolbar-bg)" stroke="currentColor" stroke-width="1.5"/>
+    <line x1="19" y1="3" x2="19" y2="7"/>
+    <line x1="17" y1="5" x2="21" y2="5"/>
+  </svg>`,
+
+  undo: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="1 4 1 10 7 10"/>
+    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+  </svg>`,
+
+  redo: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="23 4 23 10 17 10"/>
+    <path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/>
+  </svg>`,
+
+  wordWrap: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="3" y1="6" x2="21" y2="6"/>
+    <path d="M3 12h15a3 3 0 1 1 0 6h-4"/>
+    <polyline points="16 16 14 18 16 20"/>
+    <line x1="3" y1="18" x2="10" y2="18"/>
+  </svg>`,
+
+  zoomIn: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="8"/>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    <line x1="11" y1="8" x2="11" y2="14"/>
+    <line x1="8" y1="11" x2="14" y2="11"/>
+  </svg>`,
+
+  zoomOut: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="8"/>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    <line x1="8" y1="11" x2="14" y2="11"/>
+  </svg>`,
+
+  themeDark: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>`,
+
+  themeLight: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="1" x2="12" y2="3"/>
+    <line x1="12" y1="21" x2="12" y2="23"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="1" y1="12" x2="3" y2="12"/>
+    <line x1="21" y1="12" x2="23" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>`,
+
+  find: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="8"/>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  </svg>`,
+
+  replace: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 4h6v6"/>
+    <path d="M20 4L10 14"/>
+    <path d="M10 20H4v-6"/>
+    <path d="M4 20l10-10"/>
+  </svg>`,
+
+  webdav: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+  </svg>`,
+
+  workspace: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+    <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+    <line x1="6" y1="6" x2="6.01" y2="6"></line>
+    <line x1="6" y1="18" x2="6.01" y2="18"></line>
+  </svg>`,
+
+  nextError: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"></circle>
+    <line x1="12" y1="8" x2="12" y2="12"></line>
+    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+  </svg>`,
+
+  compare: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+    <line x1="12" y1="3" x2="12" y2="21"/>
+  </svg>`,
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Create a toolbar button element.
+ * @param {object} opts
+ * @param {string} opts.id
+ * @param {string} opts.icon - SVG markup
+ * @param {string} opts.tooltip
+ * @param {Function} opts.onClick
+ * @param {boolean} [opts.toggle] - If true, the button supports pressed state
+ * @returns {HTMLButtonElement}
+ */
+function createButton({ id, icon, tooltip, onClick, toggle = false }) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'toolbar-btn';
+  btn.id = id;
+  btn.title = tooltip;
+  btn.setAttribute('aria-label', tooltip);
+  btn.innerHTML = icon;
+
+  if (toggle) {
+    btn.setAttribute('aria-pressed', 'false');
+    btn.dataset.toggle = 'true';
+  }
+
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (toggle) {
+      const pressed = btn.getAttribute('aria-pressed') === 'true';
+      btn.setAttribute('aria-pressed', String(!pressed));
+      btn.classList.toggle('toolbar-btn--active', !pressed);
+    }
+    if (typeof onClick === 'function') onClick(e);
+  });
+
+  return btn;
+}
+
+/**
+ * Create a visual divider between button groups.
+ * @returns {HTMLSpanElement}
+ */
+function createDivider() {
+  const div = document.createElement('span');
+  div.className = 'toolbar-divider';
+  div.setAttribute('role', 'separator');
+  div.setAttribute('aria-orientation', 'vertical');
+  return div;
+}
+
+// ─── Main export ─────────────────────────────────────────────────────────────
+
+/**
+ * Create the application toolbar.
+ *
+ * @param {object} callbacks - Click handlers for each toolbar action.
+ * @param {Function} [callbacks.onNew]         - New file
+ * @param {Function} [callbacks.onOpen]        - Open file
+ * @param {Function} [callbacks.onSave]        - Save file
+ * @param {Function} [callbacks.onSaveAs]      - Save As
+ * @param {Function} [callbacks.onUndo]        - Undo
+ * @param {Function} [callbacks.onRedo]        - Redo
+ * @param {Function} [callbacks.onWordWrap]    - Toggle word wrap
+ * @param {Function} [callbacks.onZoomIn]      - Zoom in
+ * @param {Function} [callbacks.onZoomOut]     - Zoom out
+ * @param {Function} [callbacks.onThemeToggle] - Toggle dark/light theme
+ * @param {Function} [callbacks.onFind]        - Open find panel
+ * @param {Function} [callbacks.onReplace]     - Open replace panel
+ * @param {Function} [callbacks.onNextError]   - Jump to next error
+ * @param {Function} [callbacks.onCompare]     - Compare tabs
+ * @param {Function} [callbacks.onWebDAV]      - Open WebDAV dialog
+ * @returns {HTMLElement} The toolbar DOM element.
+ */
+export function createToolbar(callbacks = {}) {
+  const toolbar = document.createElement('div');
+  toolbar.className = 'toolbar';
+  toolbar.id = 'toolbar';
+  toolbar.setAttribute('role', 'toolbar');
+  toolbar.setAttribute('aria-label', 'Main toolbar');
+
+  // Track theme state internally for icon swapping
+  let isDark = false;
+  const themeBtn = createButton({
+    id: 'btn-theme-toggle',
+    icon: ICONS.themeDark,
+    tooltip: 'Toggle Dark Theme',
+    onClick: () => {
+      isDark = !isDark;
+      themeBtn.innerHTML = isDark ? ICONS.themeLight : ICONS.themeDark;
+      themeBtn.title = isDark ? 'Toggle Light Theme' : 'Toggle Dark Theme';
+      themeBtn.setAttribute('aria-label', themeBtn.title);
+      if (typeof callbacks.onThemeToggle === 'function') callbacks.onThemeToggle(isDark);
+    },
+  });
+
+  // ── File group ──────────────────────────────────────────────────────────
+  const fileGroup = [
+    createButton({ id: 'btn-new', icon: ICONS.newFile, tooltip: 'New File', onClick: callbacks.onNew }),
+    createButton({ id: 'btn-open', icon: ICONS.open, tooltip: 'Open File', onClick: callbacks.onOpen }),
+    createButton({ id: 'btn-save', icon: ICONS.save, tooltip: 'Save', onClick: callbacks.onSave }),
+    createButton({ id: 'btn-save-as', icon: ICONS.saveAs, tooltip: 'Save As', onClick: callbacks.onSaveAs }),
+  ];
+
+  // ── Edit group ──────────────────────────────────────────────────────────
+  const editGroup = [
+    createButton({ id: 'btn-undo', icon: ICONS.undo, tooltip: 'Undo', onClick: callbacks.onUndo }),
+    createButton({ id: 'btn-redo', icon: ICONS.redo, tooltip: 'Redo', onClick: callbacks.onRedo }),
+  ];
+
+  // ── View group ──────────────────────────────────────────────────────────
+  const viewGroup = [
+    createButton({ id: 'btn-word-wrap', icon: ICONS.wordWrap, tooltip: 'Toggle Word Wrap', onClick: callbacks.onWordWrap, toggle: true }),
+    createButton({ id: 'btn-zoom-in', icon: ICONS.zoomIn, tooltip: 'Zoom In', onClick: callbacks.onZoomIn }),
+    createButton({ id: 'btn-zoom-out', icon: ICONS.zoomOut, tooltip: 'Zoom Out', onClick: callbacks.onZoomOut }),
+    themeBtn,
+  ];
+
+  // ── Tools group ─────────────────────────────────────────────────────────
+  const toolsGroup = [
+    createButton({ id: 'btn-find', icon: ICONS.find, tooltip: 'Find', onClick: callbacks.onFind }),
+    createButton({ id: 'btn-replace', icon: ICONS.replace, tooltip: 'Replace', onClick: callbacks.onReplace }),
+    createButton({ id: 'btn-next-error', icon: ICONS.nextError, tooltip: 'Next Error', onClick: callbacks.onNextError }),
+    createButton({ id: 'btn-compare', icon: ICONS.compare, tooltip: 'Compare', onClick: callbacks.onCompare }),
+    createButton({ id: 'btn-webdav', icon: ICONS.webdav, tooltip: 'WebDAV', onClick: callbacks.onWebDAV }),
+    createButton({ id: 'btn-workspace', icon: ICONS.workspace, tooltip: 'Server Workspace', onClick: callbacks.onWorkspace }),
+  ];
+
+  // ── Assemble ────────────────────────────────────────────────────────────
+  const groups = [fileGroup, editGroup, viewGroup, toolsGroup];
+  groups.forEach((group, i) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'toolbar-group';
+    group.forEach((btn) => wrapper.appendChild(btn));
+    toolbar.appendChild(wrapper);
+    if (i < groups.length - 1) {
+      toolbar.appendChild(createDivider());
+    }
+  });
+
+  // ── Keyboard navigation (arrow keys within toolbar) ─────────────────────
+  const focusableSelector = '.toolbar-btn';
+
+  toolbar.addEventListener('keydown', (e) => {
+    const buttons = Array.from(toolbar.querySelectorAll(focusableSelector));
+    const idx = buttons.indexOf(document.activeElement);
+    if (idx === -1) return;
+
+    let next = -1;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      next = (idx + 1) % buttons.length;
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      next = (idx - 1 + buttons.length) % buttons.length;
+    } else if (e.key === 'Home') {
+      next = 0;
+    } else if (e.key === 'End') {
+      next = buttons.length - 1;
+    }
+
+    if (next !== -1) {
+      e.preventDefault();
+      buttons[next].focus();
+    }
+  });
+
+  return toolbar;
+}
