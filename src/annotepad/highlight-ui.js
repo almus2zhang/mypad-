@@ -64,7 +64,8 @@ export function createHighlightPanel(manager) {
       colorInp.value = rule.color;
       colorInp.className = 'annotepad-hl-color';
       colorInp.addEventListener('change', () => {
-        manager.updateHighlightRule(idx, { ...rule, color: colorInp.value });
+        const currentRule = manager.getHighlightRules()[idx];
+        manager.updateHighlightRule(idx, { ...currentRule, color: colorInp.value });
       });
 
       const textInp = document.createElement('input');
@@ -75,7 +76,8 @@ export function createHighlightPanel(manager) {
       textInp.style.flex = '1';
       textInp.style.minWidth = '0';
       textInp.addEventListener('input', () => {
-        manager.updateHighlightRule(idx, { ...rule, pattern: textInp.value });
+        const currentRule = manager.getHighlightRules()[idx];
+        manager.updateHighlightRule(idx, { ...currentRule, pattern: textInp.value });
       });
 
       const rmBtn = document.createElement('button');

@@ -102,11 +102,10 @@ const ICONS = {
   </svg>`,
 
   highlights: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-    <line x1="8" y1="11" x2="16" y2="11"/>
-    <line x1="8" y1="15" x2="16" y2="15"/>
-    <line x1="8" y1="19" x2="12" y2="19"/>
+    <path d="M9 11l-6 6v3h3l6-6"/>
+    <path d="M11 9l4-4a2.828 2.828 0 0 1 4 4l-4 4"/>
+    <path d="M15 13l-4-4"/>
+    <line x1="14" y1="20" x2="21" y2="20"/>
   </svg>`,
 
   nextError: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
