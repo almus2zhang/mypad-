@@ -2481,7 +2481,7 @@ body {
   cursor: pointer;
   display: flex;
   font-family: var(--font-mono);
-  font-size: var(--font-size-sm);
+  font-size: var(--search-font-size, var(--font-size-sm));
   border-bottom: 1px solid var(--border-secondary);
   width: max-content;
   min-width: 100%;

@@ -57,6 +57,9 @@ export class EditorManager {
     /** @type {Compartment} */
     this.fontSizeCompartment = new Compartment();
 
+    /** @type {Compartment} */
+    this.keyboardCompartment = new Compartment();
+
     /* ---- Current settings (for bookkeeping) ---- */
 
     /** @type {'light' | 'dark'} */
@@ -127,6 +130,7 @@ export class EditorManager {
       this.wordWrapCompartment.of(wordWrap ? EditorView.lineWrapping : []),
       this.tabSizeCompartment.of(EditorState.tabSize.of(tabSize)),
       this.fontSizeCompartment.of(this._buildFontSizeExtension(fontSize)),
+      this.keyboardCompartment.of([]),
     ];
 
     const state = EditorState.create({
@@ -338,6 +342,20 @@ export class EditorManager {
       effects: this.tabSizeCompartment.reconfigure(
         EditorState.tabSize.of(size)
       ),
+    });
+  }
+
+  /**
+   * Toggle virtual keyboard pop-up on touch devices.
+   * By setting inputmode="none", the virtual keyboard will not pop up, but the editor remains selectable.
+   * @param {boolean} enabled 
+   */
+  setKeyboardEnabled(enabled) {
+    this._assertView();
+    this.view.dispatch({
+      effects: this.keyboardCompartment.reconfigure(
+        enabled ? [] : EditorView.contentAttributes.of({ inputmode: 'none' })
+      )
     });
   }
 

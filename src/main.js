@@ -62,6 +62,8 @@ let currentFontSize = parseInt(loadString('mypad_font_size', '14'), 10);
 let wordWrapEnabled = loadString('mypad_word_wrap', 'false') === 'true';
 /** @type {number} */
 let tabSize = parseInt(loadString('mypad_tab_size', '4'), 10);
+/** @type {boolean} */
+let keyboardEnabled = loadString('mypad_keyboard_enabled', 'true') === 'true';
 
 // ============================================================
 // Initialize Core Services
@@ -108,6 +110,7 @@ const toolbar = createToolbar({
   onZoomOut: () => zoomOut(),
   onThemeToggle: () => toggleTheme(),
   onToggleStatusBar: () => toggleStatusBar(),
+  onToggleKeyboard: () => toggleKeyboard(),
   onFind: () => searchPanel.toggle('find'),
   onReplace: () => searchPanel.toggle('replace'),
   onNextError: () => { if (editorManager.view) nextDiagnostic(editorManager.view); },
@@ -280,6 +283,7 @@ async function openEditorForTab(tab) {
     fontSize: currentFontSize,
   });
 
+  editorManager.setKeyboardEnabled(keyboardEnabled);
   editorManager.focus();
   updateStatusBar();
 }
@@ -744,11 +748,32 @@ function zoomOut() {
   applyFontSize();
 }
 
+function toggleKeyboard() {
+  keyboardEnabled = !keyboardEnabled;
+  saveString('mypad_keyboard_enabled', String(keyboardEnabled));
+  applyKeyboardVisibility();
+}
+
+function applyKeyboardVisibility() {
+  if (editorManager.hasView) {
+    editorManager.setKeyboardEnabled(keyboardEnabled);
+  }
+  const btn = document.getElementById('btn-keyboard');
+  if (btn) {
+    btn.setAttribute('aria-pressed', String(!keyboardEnabled));
+    btn.classList.toggle('toolbar-btn--active', !keyboardEnabled);
+  }
+}
+
+// Call applyKeyboardVisibility at initialization
+setTimeout(applyKeyboardVisibility, 100);
+
 function applyFontSize() {
   saveString('mypad_font_size', String(currentFontSize));
   if (editorManager.hasView) {
     editorManager.setFontSize(currentFontSize);
   }
+  document.documentElement.style.setProperty('--search-font-size', `${Math.max(12, currentFontSize - 1)}px`);
 }
 
 function showGoToLine() {
@@ -1138,6 +1163,9 @@ function init() {
   // Update sidebar
   sidebar.updateRecentFiles(recentFiles.getAll());
   sidebar.updateOpenFiles(mapTabsForSidebar());
+  
+  // Set initial font scales
+  applyFontSize();
 
   console.log('MyPad++ ready!');
 }

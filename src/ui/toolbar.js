@@ -123,6 +123,19 @@ const ICONS = {
     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
     <line x1="3" y1="16" x2="21" y2="16"/>
   </svg>`,
+
+  keyboardOff: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/>
+    <path d="M6 8h.001"/>
+    <path d="M10 8h.001"/>
+    <path d="M14 8h.001"/>
+    <path d="M18 8h.001"/>
+    <path d="M8 12h.001"/>
+    <path d="M12 12h.001"/>
+    <path d="M16 12h.001"/>
+    <path d="M7 16h10"/>
+    <line x1="2" y1="2" x2="22" y2="22"/>
+  </svg>`,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -243,6 +256,7 @@ export function createToolbar(callbacks = {}) {
   const viewGroup = [
     createButton({ id: 'btn-word-wrap', icon: ICONS.wordWrap, tooltip: 'Toggle Word Wrap', onClick: callbacks.onWordWrap, toggle: true }),
     createButton({ id: 'btn-status-bar', icon: ICONS.statusBar, tooltip: 'Toggle Status Bar', onClick: callbacks.onToggleStatusBar, toggle: true }),
+    createButton({ id: 'btn-keyboard', icon: ICONS.keyboardOff, tooltip: 'Toggle Touch Keyboard', onClick: callbacks.onToggleKeyboard, toggle: true }),
     createButton({ id: 'btn-zoom-in', icon: ICONS.zoomIn, tooltip: 'Zoom In', onClick: callbacks.onZoomIn }),
     createButton({ id: 'btn-zoom-out', icon: ICONS.zoomOut, tooltip: 'Zoom Out', onClick: callbacks.onZoomOut }),
     themeBtn,
