@@ -303,6 +303,12 @@ export function createSearchPanel(editorManager) {
   layoutBtn.addEventListener('click', () => {
     isLayoutVertical = !isLayoutVertical;
     layoutBtn.innerHTML = isLayoutVertical ? LAYOUT_BOTTOM_SVG : LAYOUT_SIDE_SVG;
+    
+    // Reset any inline sizes set by dragging
+    panel.style.width = '';
+    panel.style.height = '';
+    panel.style.flex = '';
+    
     _setLayout(isLayoutVertical ? 'vertical' : 'horizontal');
   });
 
