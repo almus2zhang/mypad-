@@ -861,7 +861,7 @@ function showToast(message, type = 'info') {
 // ============================================================
 
 window.addEventListener('contextmenu', (e) => {
-  if (!editorManager.view || !editorManager.view.dom.contains(e.target)) return;
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
   try {
     e.preventDefault();
     e.stopPropagation();
@@ -913,7 +913,9 @@ window.addEventListener('contextmenu', (e) => {
     if (refItemIndex !== -1) menuItems[refItemIndex].disabled = true;
   }
 
-    contextMenu.show(e.clientX, e.clientY, menuItems);
+    const x = e.clientX ?? (e.touches?.[0]?.clientX) ?? 0;
+    const y = e.clientY ?? (e.touches?.[0]?.clientY) ?? 0;
+    contextMenu.show(x, y, menuItems);
   } catch (err) {
     console.error('ContextMenu Error:', err);
     alert('ContextMenu Error: ' + err.message);
