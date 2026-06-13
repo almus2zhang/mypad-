@@ -655,7 +655,7 @@ function toggleStatusBar() {
 }
 
 function applyStatusBarVisibility() {
-  const sb = document.getElementById('status-bar-container');
+  const sb = document.getElementById('statusbar-container');
   if (sb) {
     sb.style.display = statusBarVisible ? 'flex' : 'none';
   }
