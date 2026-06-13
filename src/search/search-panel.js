@@ -285,24 +285,18 @@ export function createSearchPanel(editorManager) {
   });
 
   findAllBtn.addEventListener('click', () => {
-    isFindAllMode = !isFindAllMode;
-    findAllBtn.classList.toggle('active', isFindAllMode);
-    
-    if (isFindAllMode) {
+    if (!isFindAllMode) {
+      isFindAllMode = true;
+      findAllBtn.classList.add('active');
       saveSearchHistory(findInput.value);
-      // Removed: editorManager.setSyntaxHighlightingEnabled(false);
       resultsContainer.style.display = 'block';
       layoutBtn.style.display = 'inline-block';
       _setLayout(isLayoutVertical ? 'vertical' : 'horizontal');
       _runFindAll();
     } else {
-      // Removed: editorManager.setSyntaxHighlightingEnabled(true);
-      returnPosition = null;
-      resultsContainer.style.display = 'none';
-      layoutBtn.style.display = 'none';
-      const container = document.getElementById('workspace');
-      if (container) container.classList.remove('annotepad-horizontal', 'annotepad-vertical');
-      _runNormalSearch();
+      // Already in Find All mode, just refresh results
+      saveSearchHistory(findInput.value);
+      _runFindAll();
     }
   });
 
@@ -655,6 +649,14 @@ export function createSearchPanel(editorManager) {
     matches = [];
     matchCount = 0;
     currentMatch = 0;
+    
+    // Reset Find All mode
+    isFindAllMode = false;
+    findAllBtn.classList.remove('active');
+    returnPosition = null;
+    resultsContainer.style.display = 'none';
+    layoutBtn.style.display = 'none';
+    
     const container = document.getElementById('workspace');
     if (container) container.classList.remove('annotepad-horizontal', 'annotepad-vertical');
     editorManager.focus?.();
