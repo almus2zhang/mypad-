@@ -101,7 +101,7 @@ const ICONS = {
     <line x1="6" y1="18" x2="6.01" y2="18"/>
   </svg>`,
 
-  annotepad: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  highlights: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
     <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
     <line x1="8" y1="11" x2="16" y2="11"/>
@@ -247,7 +247,7 @@ export function createToolbar(callbacks = {}) {
     createButton({ id: 'btn-compare', icon: ICONS.compare, tooltip: 'Compare', onClick: callbacks.onCompare }),
     createButton({ id: 'btn-webdav', icon: ICONS.webdav, tooltip: 'WebDAV', onClick: callbacks.onWebDAV }),
     createButton({ id: 'btn-workspace', icon: ICONS.workspace, tooltip: 'Server Workspace', onClick: callbacks.onWorkspace }),
-    createButton({ id: 'btn-annotepad', icon: ICONS.annotepad, tooltip: 'AnNotePad Mode', onClick: callbacks.onAnnotepad }),
+    createButton({ id: 'btn-highlights', icon: ICONS.highlights, tooltip: 'Custom Highlights', onClick: callbacks.onCustomHighlights }),
   ];
 
   // ── Assemble ────────────────────────────────────────────────────────────

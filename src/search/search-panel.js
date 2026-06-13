@@ -1,20 +1,14 @@
 /**
  * SearchPanel — Custom search & replace panel
  * Uses CodeMirror 6's search API under the hood
+ * Integrates AnNotePad "Find All" mode.
  * @module search/search-panel
  */
 
-import {
-  SearchCursor,
-} from '@codemirror/search';
-import {
-  EditorSelection,
-} from '@codemirror/state';
-import {
-  Decoration,
-  ViewPlugin,
-  MatchDecorator,
-} from '@codemirror/view';
+import { SearchCursor, RegExpCursor } from '@codemirror/search';
+import { EditorSelection } from '@codemirror/state';
+
+const SEARCH_HISTORY_KEY = 'mypad_search_history';
 
 /**
  * Create a search panel for the editor
@@ -29,8 +23,17 @@ export function createSearchPanel(editorManager) {
   let useRegex = false;
   let matchCount = 0;
   let currentMatch = 0;
-  /** @type {Array<{from:number, to:number}>} */
+  /** @type {Array<{from:number, to:number, lineNum?:number, col?:number, matchLen?:number, text?:string}>} */
   let matches = [];
+  
+  let isFindAllMode = false;
+  let isLayoutVertical = false;
+
+  // Load search history
+  let searchHistory = [];
+  try {
+    searchHistory = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
+  } catch(e) {}
 
   // Build DOM
   const panel = document.createElement('div');
@@ -46,10 +49,32 @@ export function createSearchPanel(editorManager) {
   findInput.placeholder = 'Find...';
   findInput.id = 'search-find-input';
   findInput.setAttribute('aria-label', 'Find');
+  findInput.setAttribute('list', 'search-history-list');
+
+  const datalist = document.createElement('datalist');
+  datalist.id = 'search-history-list';
+  function updateDatalist() {
+    datalist.innerHTML = '';
+    searchHistory.forEach(q => {
+      const opt = document.createElement('option');
+      opt.value = q;
+      datalist.appendChild(opt);
+    });
+  }
+  updateDatalist();
 
   const caseBtn = _createToggle('Aa', 'Case Sensitive', 'search-case-btn');
   const wordBtn = _createToggle('W', 'Whole Word', 'search-word-btn');
   const regexBtn = _createToggle('.*', 'Regular Expression', 'search-regex-btn');
+
+  const findAllBtn = document.createElement('button');
+  findAllBtn.className = 'btn';
+  findAllBtn.textContent = 'Find All';
+  findAllBtn.title = 'Show all results in a list (Disables syntax highlighting)';
+  findAllBtn.style.padding = '2px 8px';
+
+  const layoutBtn = _createToggle('Layout: Side', 'Toggle Results Layout (Bottom/Side)', 'search-layout-btn');
+  layoutBtn.style.display = 'none';
 
   const countSpan = document.createElement('span');
   countSpan.className = 'search-count';
@@ -67,10 +92,10 @@ export function createSearchPanel(editorManager) {
 
   const closeBtn = document.createElement('button');
   closeBtn.className = 'search-close';
-  closeBtn.innerHTML = '×';
+  closeBtn.innerHTML = '&times;';
   closeBtn.title = 'Close (Escape)';
 
-  findRow.append(findInput, caseBtn, wordBtn, regexBtn, countSpan, prevBtn, nextBtn, closeBtn);
+  findRow.append(findInput, datalist, caseBtn, wordBtn, regexBtn, findAllBtn, layoutBtn, countSpan, prevBtn, nextBtn, closeBtn);
 
   // ---- Replace Row ----
   const replaceRow = document.createElement('div');
@@ -94,19 +119,33 @@ export function createSearchPanel(editorManager) {
 
   replaceRow.append(replaceInput, replaceBtn, replaceAllBtn);
 
-  panel.append(findRow, replaceRow);
+  // ---- Find All Results Panel ----
+  const resultsContainer = document.createElement('div');
+  resultsContainer.className = 'annotepad-results';
+  resultsContainer.style.display = 'none'; // Hidden initially
+
+  panel.append(findRow, replaceRow, resultsContainer);
 
   // ---- Event Handlers ----
 
-  findInput.addEventListener('input', () => _runSearch());
+  findInput.addEventListener('input', () => {
+    if (isFindAllMode) {
+      // Don't auto-run Find All on every keystroke, let user press Enter
+      _runNormalSearch();
+    } else {
+      _runNormalSearch();
+    }
+  });
 
   findInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (e.shiftKey) {
-        _findPrev();
+      saveSearchHistory(findInput.value);
+      if (isFindAllMode) {
+        _runFindAll();
       } else {
-        _findNext();
+        if (e.shiftKey) _findPrev();
+        else _findNext();
       }
     } else if (e.key === 'Escape') {
       hide();
@@ -125,20 +164,56 @@ export function createSearchPanel(editorManager) {
   caseBtn.addEventListener('click', () => {
     caseSensitive = !caseSensitive;
     caseBtn.classList.toggle('active', caseSensitive);
-    _runSearch();
+    isFindAllMode ? _runFindAll() : _runNormalSearch();
   });
 
   wordBtn.addEventListener('click', () => {
     wholeWord = !wholeWord;
     wordBtn.classList.toggle('active', wholeWord);
-    _runSearch();
+    isFindAllMode ? _runFindAll() : _runNormalSearch();
   });
 
   regexBtn.addEventListener('click', () => {
     useRegex = !useRegex;
     regexBtn.classList.toggle('active', useRegex);
-    _runSearch();
+    isFindAllMode ? _runFindAll() : _runNormalSearch();
   });
+
+  findAllBtn.addEventListener('click', () => {
+    isFindAllMode = !isFindAllMode;
+    findAllBtn.classList.toggle('active', isFindAllMode);
+    
+    if (isFindAllMode) {
+      saveSearchHistory(findInput.value);
+      editorManager.setSyntaxHighlightingEnabled(false);
+      resultsContainer.style.display = 'block';
+      layoutBtn.style.display = 'inline-block';
+      _setLayout(isLayoutVertical ? 'vertical' : 'horizontal');
+      _runFindAll();
+    } else {
+      editorManager.setSyntaxHighlightingEnabled(true);
+      resultsContainer.style.display = 'none';
+      layoutBtn.style.display = 'none';
+      const container = document.getElementById('workspace');
+      if (container) container.classList.remove('annotepad-horizontal', 'annotepad-vertical');
+      _runNormalSearch();
+    }
+  });
+
+  layoutBtn.addEventListener('click', () => {
+    isLayoutVertical = !isLayoutVertical;
+    layoutBtn.textContent = isLayoutVertical ? 'Layout: Bottom' : 'Layout: Side';
+    _setLayout(isLayoutVertical ? 'vertical' : 'horizontal');
+  });
+
+  function _setLayout(layout) {
+    const container = document.getElementById('workspace');
+    if (!container) return;
+    container.classList.remove('annotepad-horizontal', 'annotepad-vertical');
+    if (isVisible && isFindAllMode) {
+      container.classList.add(`annotepad-${layout}`);
+    }
+  }
 
   nextBtn.addEventListener('click', () => _findNext());
   prevBtn.addEventListener('click', () => _findPrev());
@@ -146,9 +221,18 @@ export function createSearchPanel(editorManager) {
   replaceBtn.addEventListener('click', () => _replaceNext());
   replaceAllBtn.addEventListener('click', () => _replaceAll());
 
+  function saveSearchHistory(query) {
+    if (!query) return;
+    searchHistory = searchHistory.filter(q => q !== query);
+    searchHistory.unshift(query);
+    if (searchHistory.length > 20) searchHistory.pop();
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
+    updateDatalist();
+  }
+
   // ---- Search Logic ----
 
-  function _runSearch() {
+  function _runNormalSearch() {
     const view = editorManager.view;
     if (!view) return;
 
@@ -158,7 +242,6 @@ export function createSearchPanel(editorManager) {
       matchCount = 0;
       currentMatch = 0;
       countSpan.textContent = 'No results';
-      _clearHighlights();
       return;
     }
 
@@ -200,7 +283,6 @@ export function createSearchPanel(editorManager) {
     if (matchCount === 0) {
       currentMatch = 0;
       countSpan.textContent = 'No results';
-      _clearHighlights();
       return;
     }
 
@@ -216,8 +298,109 @@ export function createSearchPanel(editorManager) {
     }
 
     _updateCount();
-    _highlightMatches();
     _goToMatch(currentMatch);
+  }
+
+  function _runFindAll() {
+    const view = editorManager.view;
+    if (!view) return;
+    const doc = view.state.doc;
+    const query = findInput.value;
+    
+    resultsContainer.innerHTML = '';
+    
+    if (!query) {
+      countSpan.textContent = 'No results';
+      return;
+    }
+
+    countSpan.textContent = 'Searching...';
+    
+    setTimeout(() => {
+      matches = [];
+      let CursorClass = SearchCursor;
+      let args = [doc, query, 0, doc.length];
+      
+      if (useRegex) {
+        CursorClass = RegExpCursor;
+        args = [doc, query, {}, 0, doc.length];
+      } else {
+        if (!caseSensitive || wholeWord) {
+          CursorClass = RegExpCursor;
+          const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          let rxStr = escapeRegExp(query);
+          if (wholeWord) rxStr = `\\b${rxStr}\\b`;
+          args = [doc, rxStr, {ignoreCase: !caseSensitive}, 0, doc.length];
+        }
+      }
+
+      try {
+        const cursor = new CursorClass(...args);
+        while (!cursor.next().done) {
+          const { from, to } = cursor.value;
+          const line = doc.lineAt(from);
+          matches.push({
+            from, to,
+            lineNum: line.number,
+            col: from - line.from,
+            matchLen: to - from,
+            text: line.text
+          });
+          if (matches.length > 2000) break; // limit
+        }
+        
+        matchCount = matches.length;
+        _updateCount();
+        _renderResults();
+      } catch (e) {
+        countSpan.textContent = `Error: ${e.message}`;
+      }
+    }, 10);
+  }
+
+  function _renderResults() {
+    resultsContainer.innerHTML = '';
+    if (matches.length === 0) {
+      resultsContainer.innerHTML = '<div style="padding: 10px; color: var(--text-tertiary);">No results found.</div>';
+      return;
+    }
+
+    const escapeHtml = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    matches.forEach(res => {
+      const item = document.createElement('div');
+      item.className = 'annotepad-result-item';
+
+      const lineNo = document.createElement('span');
+      lineNo.className = 'annotepad-result-line';
+      lineNo.textContent = `${res.lineNum}: `;
+
+      const textSpan = document.createElement('span');
+      textSpan.className = 'annotepad-result-text';
+      
+      let html = escapeHtml(res.text);
+      if (res.matchLen) {
+        const matchCol = res.col;
+        const matchLen = res.matchLen;
+        const before = escapeHtml(res.text.substring(0, matchCol));
+        const match = escapeHtml(res.text.substring(matchCol, matchCol + matchLen));
+        const after = escapeHtml(res.text.substring(matchCol + matchLen));
+        html = `${before}<span class="annotepad-result-hl">${match}</span>${after}`;
+      }
+      textSpan.innerHTML = html;
+
+      item.append(lineNo, textSpan);
+      item.addEventListener('click', () => {
+        // Go to line
+        const view = editorManager.view;
+        if (!view) return;
+        view.dispatch({
+          selection: { anchor: res.from, head: res.to },
+          effects: EditorView.scrollIntoView(res.from, {y: 'center'})
+        });
+      });
+      resultsContainer.appendChild(item);
+    });
   }
 
   function _isWholeWord(text, index, length) {
@@ -267,8 +450,8 @@ export function createSearchPanel(editorManager) {
       changes: { from: match.from, to: match.to, insert: replacement },
     });
 
-    // Re-run search after replacement
-    _runSearch();
+    if (isFindAllMode) _runFindAll();
+    else _runNormalSearch();
   }
 
   function _replaceAll() {
@@ -277,7 +460,6 @@ export function createSearchPanel(editorManager) {
 
     const replacement = replaceInput.value;
 
-    // Replace from end to start to maintain positions
     const changes = matches.slice().reverse().map((m) => ({
       from: m.from,
       to: m.to,
@@ -285,24 +467,20 @@ export function createSearchPanel(editorManager) {
     }));
 
     view.dispatch({ changes });
-    _runSearch();
+    if (isFindAllMode) _runFindAll();
+    else _runNormalSearch();
   }
 
   function _updateCount() {
     if (matchCount === 0) {
       countSpan.textContent = 'No results';
     } else {
-      countSpan.textContent = `${currentMatch + 1} of ${matchCount}`;
+      if (isFindAllMode) {
+        countSpan.textContent = `Found ${matchCount}${matchCount > 2000 ? '+' : ''}`;
+      } else {
+        countSpan.textContent = `${currentMatch + 1} of ${matchCount}`;
+      }
     }
-  }
-
-  function _highlightMatches() {
-    // We rely on CodeMirror's built-in selection match highlighting
-    // and the cursor position to show the current match
-  }
-
-  function _clearHighlights() {
-    // No-op since we use CM's built-in highlighting
   }
 
   // ---- Public API ----
@@ -312,6 +490,12 @@ export function createSearchPanel(editorManager) {
     isVisible = true;
     panel.style.display = '';
     replaceRow.style.display = mode === 'replace' ? '' : 'none';
+    
+    // Add layout class if Find All mode is active
+    if (isFindAllMode) {
+      _setLayout(isLayoutVertical ? 'vertical' : 'horizontal');
+    }
+
     findInput.focus();
     findInput.select();
 
@@ -319,7 +503,14 @@ export function createSearchPanel(editorManager) {
     const selectedText = editorManager.getSelectionText?.();
     if (selectedText && selectedText.length < 200) {
       findInput.value = selectedText;
-      _runSearch();
+      // Auto-trigger Find All if requested
+      if (!isFindAllMode) {
+        findAllBtn.click(); // This enables Find All mode and searches
+      } else {
+        _runFindAll();
+      }
+    } else {
+      if (isFindAllMode) _runFindAll();
     }
   }
 
@@ -329,6 +520,8 @@ export function createSearchPanel(editorManager) {
     matches = [];
     matchCount = 0;
     currentMatch = 0;
+    const container = document.getElementById('workspace');
+    if (container) container.classList.remove('annotepad-horizontal', 'annotepad-vertical');
     editorManager.focus?.();
   }
 

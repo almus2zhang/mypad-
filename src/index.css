@@ -2143,7 +2143,48 @@ body {
 }
 
 /* ============================================================
-   AnNotePad Mode
+   Custom Highlights Panel
+   ============================================================ */
+
+.highlight-floating-panel {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg-primary);
+  z-index: 1000;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  width: 320px;
+}
+
+.highlight-header {
+  display: flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  cursor: grab;
+  user-select: none;
+}
+
+.highlight-header:active {
+  cursor: grabbing;
+}
+
+.highlight-title {
+  font-weight: 600;
+  flex: 1;
+  color: var(--text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.highlight-body {
+  padding: var(--space-3);
+}
+
+/* ============================================================
+   AnNotePad Mode (Find All)
    ============================================================ */
 
 #workspace.annotepad-horizontal {
@@ -2154,67 +2195,23 @@ body {
   flex-direction: column;
 }
 
-#workspace.annotepad-horizontal .annotepad-panel {
+#workspace.annotepad-horizontal .annotepad-results {
   width: 350px;
   max-width: 50%;
   border-left: 1px solid var(--border-primary);
-  border-right: none;
-  border-top: none;
+  background: var(--bg-primary);
+  overflow-y: auto;
 }
 
-#workspace.annotepad-vertical .annotepad-panel {
+#workspace.annotepad-vertical .annotepad-results {
   max-height: 40%;
   border-top: 1px solid var(--border-primary);
-  border-left: none;
-  border-right: none;
   width: 100%;
+  background: var(--bg-primary);
+  overflow-y: auto;
 }
 
-.annotepad-controls-wrapper {
-  display: flex;
-  flex-direction: column;
-}
 
-#workspace.annotepad-vertical .annotepad-controls-wrapper {
-  flex-direction: row;
-}
-
-.annotepad-col {
-  display: flex;
-  flex-direction: column;
-}
-
-#workspace.annotepad-vertical .annotepad-col {
-  flex: 1;
-  min-width: 0;
-}
-
-#workspace.annotepad-vertical .annotepad-col:first-child {
-  border-right: 1px solid var(--border-primary);
-}
-
-.annotepad-panel {
-  display: flex;
-  flex-direction: column;
-  background-color: var(--bg-primary);
-  z-index: var(--z-sidebar);
-  overflow: hidden;
-  box-shadow: var(--shadow-md);
-}
-
-.annotepad-header {
-  display: flex;
-  align-items: center;
-  padding: var(--space-3) var(--space-4);
-  background-color: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-primary);
-}
-
-.annotepad-title {
-  font-weight: 600;
-  flex: 1;
-  color: var(--text-primary);
-}
 
 .annotepad-btn {
   background: transparent;

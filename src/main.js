@@ -87,7 +87,15 @@ const searchPanel = createSearchPanel(editorManager);
 // UI Components
 // ============================================================
 
-// --- Toolbar ---
+// --- Highlight Manager ---
+import { HighlightManager } from './annotepad/highlight-manager.js';
+const highlightManager = new HighlightManager(editorManager);
+document.getElementById('workspace').appendChild(highlightManager.element);
+
+// ============================================================
+// Toolbar & UI
+// ============================================================
+
 const toolbar = createToolbar({
   onNew: () => createNewTab(),
   onOpen: () => openFile(),
@@ -108,7 +116,7 @@ const toolbar = createToolbar({
     const tab = tabManager.getActiveTab();
     workspaceBrowser.show('open', tab?.filename);
   },
-  onAnnotepad: () => annotepadManager.toggle(),
+  onCustomHighlights: () => highlightManager.toggle(),
 });
 document.getElementById('toolbar-container').appendChild(toolbar);
 
@@ -207,10 +215,8 @@ const workspaceBrowser = new WorkspaceBrowser({
   onError: (msg) => showToast(msg, 'error'),
 });
 
-// --- Annotepad Manager ---
-import { AnnotepadManager } from './annotepad/annotepad-manager.js';
-const annotepadManager = new AnnotepadManager(editorManager);
-document.getElementById('workspace').appendChild(annotepadManager.element);
+// --- Highlight Manager ---
+// Initialization has been moved to the top level via hoisted imports
 
 // ============================================================
 // Apply Initial Theme
