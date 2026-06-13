@@ -187,20 +187,20 @@ export function createHighlightPanel(manager) {
 
   // ---- Dragging Logic ----
   let isDragging = false;
-  let startX, startY, initialLeft, initialTop;
+  let startX, startY, currentLeft, currentTop;
 
   header.addEventListener('mousedown', (e) => {
     if (e.target === closeBtn) return;
     isDragging = true;
     startX = e.clientX;
     startY = e.clientY;
-    const rect = panel.getBoundingClientRect();
-    initialLeft = rect.left;
-    initialTop = rect.top;
+    
+    currentLeft = panel.offsetLeft;
+    currentTop = panel.offsetTop;
     
     panel.style.position = 'absolute';
-    panel.style.left = `${initialLeft}px`;
-    panel.style.top = `${initialTop}px`;
+    panel.style.left = `${currentLeft}px`;
+    panel.style.top = `${currentTop}px`;
     panel.style.bottom = 'auto';
     panel.style.right = 'auto';
     panel.style.margin = '0';
@@ -213,8 +213,8 @@ export function createHighlightPanel(manager) {
     if (!isDragging) return;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
-    panel.style.left = `${initialLeft + dx}px`;
-    panel.style.top = `${initialTop + dy}px`;
+    panel.style.left = `${currentLeft + dx}px`;
+    panel.style.top = `${currentTop + dy}px`;
   }
 
   function onMouseUp() {
@@ -230,9 +230,10 @@ export function createHighlightPanel(manager) {
         panel.style.display = 'flex';
         if (!panel.style.left) {
           panel.style.position = 'absolute';
-          panel.style.left = '50%';
-          panel.style.top = '50%';
-          panel.style.transform = 'translate(-50%, -50%)';
+          const parentWidth = panel.offsetParent ? panel.offsetParent.clientWidth : window.innerWidth;
+          const parentHeight = panel.offsetParent ? panel.offsetParent.clientHeight : window.innerHeight;
+          panel.style.left = `${Math.max(0, (parentWidth - 320) / 2)}px`;
+          panel.style.top = `${Math.max(0, (parentHeight - panel.offsetHeight) / 2)}px`;
         }
       } else {
         panel.style.display = 'none';

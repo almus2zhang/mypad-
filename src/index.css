@@ -2150,7 +2150,7 @@ body {
   flex-direction: column;
   background: var(--search-bg);
   z-index: 1000;
-  overflow: hidden;
+  overflow: visible;
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--search-border);
   border-radius: var(--radius-lg);
