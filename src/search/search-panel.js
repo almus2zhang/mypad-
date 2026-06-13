@@ -419,7 +419,7 @@ export function createSearchPanel(editorManager) {
       textSpan.innerHTML = html;
 
       item.append(lineNo, textSpan);
-      item.addEventListener('click', () => {
+      item.addEventListener('dblclick', () => {
         // Go to line
         const view = editorManager.view;
         if (!view) return;
