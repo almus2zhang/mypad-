@@ -2301,14 +2301,17 @@ body {
   cursor: ew-resize;
 }
 
-/* Compact search mode in vertical layout */
-#workspace.annotepad-vertical .search-panel {
-  padding: 4px;
+/* Compact search mode in vertical and horizontal layouts */
+#workspace.annotepad-vertical .search-panel,
+#workspace.annotepad-horizontal .search-panel {
+  padding: 2px 4px;
 }
-#workspace.annotepad-vertical .search-row {
+#workspace.annotepad-vertical .search-row,
+#workspace.annotepad-horizontal .search-row {
   margin-bottom: 2px;
 }
-#workspace.annotepad-vertical .annotepad-results {
+#workspace.annotepad-vertical .annotepad-results,
+#workspace.annotepad-horizontal .annotepad-results {
   margin-top: 2px;
   padding-top: 2px;
 }
