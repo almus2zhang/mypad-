@@ -773,7 +773,7 @@ function applyFontSize() {
   if (editorManager.hasView) {
     editorManager.setFontSize(currentFontSize);
   }
-  document.documentElement.style.setProperty('--search-font-size', `${Math.max(12, currentFontSize - 1)}px`);
+  document.documentElement.style.setProperty('--search-font-size', `${currentFontSize - 1}px`);
 }
 
 function showGoToLine() {
