@@ -2472,6 +2472,7 @@ body {
 .annotepad-results {
   flex: 1;
   overflow-y: auto;
+  overflow-x: auto;
   padding: var(--space-2) 0;
 }
 
@@ -2482,6 +2483,8 @@ body {
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
   border-bottom: 1px solid var(--border-secondary);
+  width: max-content;
+  min-width: 100%;
 }
 
 .annotepad-result-item:hover {
@@ -2498,9 +2501,7 @@ body {
 
 .annotepad-result-text {
   color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: pre;
 }
 
 .annotepad-result-hl {
