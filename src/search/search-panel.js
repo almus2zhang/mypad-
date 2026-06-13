@@ -7,6 +7,7 @@
 
 import { SearchCursor, RegExpCursor } from '@codemirror/search';
 import { EditorSelection } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
 
 const SEARCH_HISTORY_KEY = 'mypad_search_history';
 
