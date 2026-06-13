@@ -39,7 +39,7 @@ import { WorkspaceBrowser } from './server-workspace/workspace-browser.js';
 import { createToolbar } from './ui/toolbar.js';
 import { createStatusBar } from './ui/statusbar.js';
 import { createSidebar } from './ui/sidebar.js';
-import { createContextMenu } from './ui/context-menu.js';
+import { createContextMenu, getDefaultMenuItems } from './ui/context-menu.js';
 import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog } from './ui/dialogs.js';
 
 // Utils
@@ -862,20 +862,55 @@ function showToast(message, type = 'info') {
 
 document.getElementById('editor-container').addEventListener('contextmenu', (e) => {
   e.preventDefault();
-  contextMenu.show(e.clientX, e.clientY, [
-    { label: 'Cut', shortcut: 'Ctrl+X', action: () => document.execCommand('cut') },
-    { label: 'Copy', shortcut: 'Ctrl+C', action: () => document.execCommand('copy') },
-    { label: 'Paste', shortcut: 'Ctrl+V', action: () => document.execCommand('paste') },
-    { label: 'Select All', shortcut: 'Ctrl+A', action: () => {
+  
+  const selectedText = editorManager.getSelectionText?.() || '';
+  
+  let menuItems = getDefaultMenuItems({
+    onCut: () => document.execCommand('cut'),
+    onCopy: () => document.execCommand('copy'),
+    onPaste: () => document.execCommand('paste'),
+    onSelectAll: () => {
       if (editorManager.view) {
         const len = editorManager.view.state.doc.length;
         editorManager.view.dispatch({ selection: { anchor: 0, head: len } });
       }
-    }},
-    { type: 'separator' },
-    { label: 'Find', shortcut: 'Ctrl+F', action: () => searchPanel.toggle('find') },
-    { label: 'Replace', shortcut: 'Ctrl+H', action: () => searchPanel.toggle('replace') },
-  ]);
+    },
+    onFind: () => searchPanel.toggle('find'),
+    onReplace: () => searchPanel.toggle('replace'),
+    onHighlight: () => {},
+    onReference: () => {},
+    onIndent: () => { if (editorManager.view) editorManager.view.dispatch({ changes: { from: 0, insert: '' } }) }, // stub for actual indent
+    onOutdent: () => {},
+    onToggleComment: () => {},
+  });
+
+  if (selectedText && selectedText.length > 0 && selectedText.length < 200) {
+    const hlItemIndex = menuItems.findIndex(i => i.id === 'ctx-highlight');
+    if (hlItemIndex !== -1) {
+      menuItems[hlItemIndex].items = [
+        { label: '🟡 Yellow', action: () => highlightManager.addHighlightRule({ pattern: selectedText, color: '#f9e2af' }) },
+        { label: '🟢 Green', action: () => highlightManager.addHighlightRule({ pattern: selectedText, color: '#a6e3a1' }) },
+        { label: '🔵 Blue', action: () => highlightManager.addHighlightRule({ pattern: selectedText, color: '#89b4fa' }) },
+        { label: '🔴 Red', action: () => highlightManager.addHighlightRule({ pattern: selectedText, color: '#f38ba8' }) }
+      ];
+    }
+    
+    const refItemIndex = menuItems.findIndex(i => i.id === 'ctx-reference');
+    if (refItemIndex !== -1) {
+      menuItems[refItemIndex].action = () => {
+        const pos = editorManager.view.state.selection.main.head;
+        searchPanel.showReference(selectedText, pos);
+      };
+    }
+  } else {
+    const hlItemIndex = menuItems.findIndex(i => i.id === 'ctx-highlight');
+    if (hlItemIndex !== -1) menuItems[hlItemIndex].disabled = true;
+    
+    const refItemIndex = menuItems.findIndex(i => i.id === 'ctx-reference');
+    if (refItemIndex !== -1) menuItems[refItemIndex].disabled = true;
+  }
+
+  contextMenu.show(e.clientX, e.clientY, menuItems);
 });
 
 // ============================================================

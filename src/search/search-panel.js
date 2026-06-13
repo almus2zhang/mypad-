@@ -28,6 +28,7 @@ export function createSearchPanel(editorManager) {
   
   let isFindAllMode = false;
   let isLayoutVertical = false;
+  let returnPosition = null;
 
   // Load search history
   let searchHistory = [];
@@ -70,7 +71,7 @@ export function createSearchPanel(editorManager) {
   const findAllBtn = document.createElement('button');
   findAllBtn.className = 'btn';
   findAllBtn.textContent = 'Find All';
-  findAllBtn.title = 'Show all results in a list (Disables syntax highlighting)';
+  findAllBtn.title = 'Show all results in a list';
   findAllBtn.style.padding = '2px 8px';
 
   const layoutBtn = _createToggle('Layout: Side', 'Toggle Results Layout (Bottom/Side)', 'search-layout-btn');
@@ -185,13 +186,14 @@ export function createSearchPanel(editorManager) {
     
     if (isFindAllMode) {
       saveSearchHistory(findInput.value);
-      editorManager.setSyntaxHighlightingEnabled(false);
+      // Removed: editorManager.setSyntaxHighlightingEnabled(false);
       resultsContainer.style.display = 'block';
       layoutBtn.style.display = 'inline-block';
       _setLayout(isLayoutVertical ? 'vertical' : 'horizontal');
       _runFindAll();
     } else {
-      editorManager.setSyntaxHighlightingEnabled(true);
+      // Removed: editorManager.setSyntaxHighlightingEnabled(true);
+      returnPosition = null;
       resultsContainer.style.display = 'none';
       layoutBtn.style.display = 'none';
       const container = document.getElementById('workspace');
@@ -360,8 +362,35 @@ export function createSearchPanel(editorManager) {
 
   function _renderResults() {
     resultsContainer.innerHTML = '';
+    
+    if (returnPosition) {
+      const backItem = document.createElement('div');
+      backItem.className = 'annotepad-result-item';
+      backItem.style.fontWeight = 'bold';
+      backItem.style.backgroundColor = 'var(--bg-secondary)';
+      backItem.style.position = 'sticky';
+      backItem.style.top = '0';
+      backItem.style.zIndex = '1';
+      backItem.innerHTML = '<span>⬅️ 返回跳转前位置 (Go Back)</span>';
+      backItem.addEventListener('click', () => {
+        const view = editorManager.view;
+        if (view) {
+          view.dispatch({
+            selection: { anchor: returnPosition.pos },
+            effects: EditorView.scrollIntoView(returnPosition.pos, {y: 'center'})
+          });
+        }
+        hide();
+      });
+      resultsContainer.appendChild(backItem);
+    }
+
     if (matches.length === 0) {
-      resultsContainer.innerHTML = '<div style="padding: 10px; color: var(--text-tertiary);">No results found.</div>';
+      const empty = document.createElement('div');
+      empty.style.padding = '10px';
+      empty.style.color = 'var(--text-tertiary)';
+      empty.textContent = 'No results found.';
+      resultsContainer.appendChild(empty);
       return;
     }
 
@@ -533,7 +562,30 @@ export function createSearchPanel(editorManager) {
     }
   }
 
-  return { show, hide, toggle, element: panel };
+  function showReference(query, pos) {
+    mode = 'find';
+    isVisible = true;
+    panel.style.display = '';
+    replaceRow.style.display = 'none';
+
+    returnPosition = { pos };
+    
+    isFindAllMode = true;
+    findAllBtn.classList.add('active');
+    
+    isLayoutVertical = false;
+    layoutBtn.textContent = 'Layout: Side';
+    
+    resultsContainer.style.display = 'block';
+    layoutBtn.style.display = 'inline-block';
+    
+    _setLayout('horizontal');
+    
+    findInput.value = query;
+    _runFindAll();
+  }
+
+  return { show, hide, toggle, showReference, element: panel };
 }
 
 /**

@@ -68,7 +68,7 @@ export class HighlightManager {
       const regex = new RegExp(escapeRegExp(rule.pattern), 'g');
       
       const mark = Decoration.mark({
-        attributes: { style: `color: ${rule.color}; background: rgba(255,255,255,0.1); border-radius: 2px;` }
+        attributes: { style: `background-color: ${rule.color}; color: #000; border-radius: 2px;` }
       });
       
       return new MatchDecorator({

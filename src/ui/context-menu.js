@@ -30,6 +30,9 @@ export function getDefaultMenuItems(callbacks = {}) {
     { id: 'ctx-find', label: 'Find', shortcut: 'Ctrl+F', action: callbacks.onFind },
     { id: 'ctx-replace', label: 'Replace', shortcut: 'Ctrl+H', action: callbacks.onReplace },
     { type: 'separator' },
+    { id: 'ctx-highlight', label: 'Highlight', shortcut: '', action: callbacks.onHighlight },
+    { id: 'ctx-reference', label: 'Reference (引用)', shortcut: '', action: callbacks.onReference },
+    { type: 'separator' },
     { id: 'ctx-indent', label: 'Indent', shortcut: 'Tab', action: callbacks.onIndent },
     { id: 'ctx-outdent', label: 'Outdent', shortcut: 'Shift+Tab', action: callbacks.onOutdent },
     { type: 'separator' },
@@ -73,6 +76,17 @@ const MENU_ICONS = {
     <line x1="3" y1="4" x2="21" y2="4"/><line x1="11" y1="9" x2="21" y2="9"/>
     <line x1="11" y1="14" x2="21" y2="14"/><line x1="3" y1="19" x2="21" y2="19"/>
     <polyline points="8 9 4 12 8 15"/>
+  </svg>`,
+  'ctx-highlight': `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+    <line x1="8" y1="11" x2="16" y2="11"/>
+    <line x1="8" y1="15" x2="16" y2="15"/>
+    <line x1="8" y1="19" x2="12" y2="19"/>
+  </svg>`,
+  'ctx-reference': `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
   </svg>`,
   'ctx-toggle-comment': `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <polyline points="4 7 4 4 20 4 20 7"/>
@@ -223,8 +237,16 @@ export function createContextMenu() {
       labelSpan.textContent = item.label;
       el.appendChild(labelSpan);
 
-      // Shortcut hint
-      if (item.shortcut) {
+      // Shortcut hint or submenu arrow
+      if (item.items) {
+        const arrowSpan = document.createElement('span');
+        arrowSpan.className = 'context-menu-item-arrow';
+        arrowSpan.innerHTML = '&#x25B6;'; // Triangle right
+        arrowSpan.style.marginLeft = 'auto';
+        arrowSpan.style.fontSize = '10px';
+        arrowSpan.style.opacity = '0.5';
+        el.appendChild(arrowSpan);
+      } else if (item.shortcut) {
         const shortcutSpan = document.createElement('span');
         shortcutSpan.className = 'context-menu-item-shortcut';
         shortcutSpan.textContent = item.shortcut;
@@ -234,8 +256,18 @@ export function createContextMenu() {
       el.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (typeof item.action === 'function') item.action();
-        hide();
+        if (item.items) {
+          // Add a back button to the submenu
+          const submenu = [
+            { label: '⬅️ Back', action: () => show(x, y, items) },
+            { type: 'separator' },
+            ...item.items
+          ];
+          show(x, y, submenu);
+        } else {
+          if (typeof item.action === 'function') item.action();
+          hide();
+        }
       });
 
       // Hover → visually focus
