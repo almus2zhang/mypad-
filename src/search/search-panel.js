@@ -257,11 +257,11 @@ export function createSearchPanel(editorManager) {
     }
   }
 
-  nextBtn.addEventListener('click', () => _findNext());
-  prevBtn.addEventListener('click', () => _findPrev());
-  closeBtn.addEventListener('click', () => hide());
-  replaceBtn.addEventListener('click', () => _replaceNext());
-  replaceAllBtn.addEventListener('click', () => _replaceAll());
+  nextBtn.addEventListener('click', () => { saveSearchHistory(findInput.value); _findNext(); });
+  prevBtn.addEventListener('click', () => { saveSearchHistory(findInput.value); _findPrev(); });
+  closeBtn.addEventListener('click', () => { saveSearchHistory(findInput.value); hide(); });
+  replaceBtn.addEventListener('click', () => { saveSearchHistory(findInput.value); _replaceNext(); });
+  replaceAllBtn.addEventListener('click', () => { saveSearchHistory(findInput.value); _replaceAll(); });
 
   function saveSearchHistory(query) {
     if (!query) return;
@@ -573,6 +573,7 @@ export function createSearchPanel(editorManager) {
     const selectedText = editorManager.getSelectionText?.();
     if (selectedText && selectedText.length < 200) {
       findInput.value = selectedText;
+      saveSearchHistory(selectedText);
       // Auto-trigger Find All if requested
       if (!isFindAllMode) {
         findAllBtn.click(); // This enables Find All mode and searches

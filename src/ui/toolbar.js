@@ -151,6 +151,10 @@ function createButton({ id, icon, tooltip, onClick, toggle = false }) {
     btn.dataset.toggle = 'true';
   }
 
+  btn.addEventListener('mousedown', (e) => {
+    e.preventDefault(); // Prevent editor from losing focus and selection on touch/click
+  });
+
   btn.addEventListener('click', (e) => {
     e.preventDefault();
     if (toggle) {
