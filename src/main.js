@@ -911,7 +911,7 @@ document.getElementById('editor-container').addEventListener('contextmenu', (e) 
   }
 
   contextMenu.show(e.clientX, e.clientY, menuItems);
-});
+}, true);
 
 // ============================================================
 // Drag & Drop
