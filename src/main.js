@@ -966,28 +966,43 @@ document.addEventListener('drop', async (e) => {
 // Global Keyboard Shortcuts (for when editor doesn't have focus)
 // ============================================================
 
+// Intercept global shortcuts before CodeMirror gets them
+window.addEventListener('keydown', (e) => {
+  const ctrl = e.ctrlKey || e.metaKey;
+  if (!ctrl) return;
+  
+  const key = e.key.toLowerCase();
+
+  if (key === 'f') {
+    e.preventDefault();
+    e.stopPropagation();
+    searchPanel.toggle('find');
+  } else if (key === 'h') {
+    e.preventDefault();
+    e.stopPropagation();
+    searchPanel.toggle('replace');
+  }
+}, true); // CAPTURE PHASE!
+
 document.addEventListener('keydown', (e) => {
   const ctrl = e.ctrlKey || e.metaKey;
+  if (!ctrl) return;
+  
+  const key = e.key.toLowerCase();
 
-  if (ctrl && e.key === 'n') {
+  if (key === 'n') {
     e.preventDefault();
     createNewTab();
-  } else if (ctrl && e.key === 'o') {
+  } else if (key === 'o') {
     e.preventDefault();
     openFile();
-  } else if (ctrl && e.key === 's') {
+  } else if (key === 's') {
     e.preventDefault();
     if (e.shiftKey) {
       saveFileAs();
     } else {
       saveFile();
     }
-  } else if (ctrl && e.key === 'f') {
-    e.preventDefault();
-    searchPanel.toggle('find');
-  } else if (ctrl && e.key === 'h') {
-    e.preventDefault();
-    searchPanel.toggle('replace');
   }
 });
 

@@ -128,7 +128,8 @@ export function createContextMenu() {
     }
     actionItems = [];
     focusedIndex = -1;
-    document.removeEventListener('click', onOutsideClick, true);
+    document.removeEventListener('mousedown', onOutsideClick, true);
+    document.removeEventListener('touchstart', onOutsideClick, true);
     document.removeEventListener('contextmenu', onOutsideClick, true);
     document.removeEventListener('keydown', onKeyDown, true);
     window.removeEventListener('resize', hide);
@@ -306,14 +307,15 @@ export function createContextMenu() {
     menuEl.style.top = `${top}px`;
 
     // ── Register global listeners ────────────────────────────────────────
-    // Delay so the current click/contextmenu event doesn't immediately close
-    requestAnimationFrame(() => {
-      document.addEventListener('click', onOutsideClick, true);
+    // Defer attaching listeners
+    setTimeout(() => {
+      document.addEventListener('mousedown', onOutsideClick, true);
+      document.addEventListener('touchstart', onOutsideClick, true);
       document.addEventListener('contextmenu', onOutsideClick, true);
       document.addEventListener('keydown', onKeyDown, true);
       window.addEventListener('resize', hide);
       window.addEventListener('scroll', hide, true);
-    });
+    }, 50);
 
     // Focus the first item
     if (actionItems.length > 0) {
