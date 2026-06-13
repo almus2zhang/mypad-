@@ -420,7 +420,7 @@ export function createSearchPanel(editorManager) {
       textSpan.innerHTML = html;
 
       item.append(lineNo, textSpan);
-      item.addEventListener('dblclick', () => {
+      item.addEventListener('click', () => {
         // Go to line
         const view = editorManager.view;
         if (!view) return;

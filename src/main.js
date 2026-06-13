@@ -861,8 +861,10 @@ function showToast(message, type = 'info') {
 // ============================================================
 
 window.addEventListener('contextmenu', (e) => {
-  if (!e.target.closest('#editor-container')) return;
-  e.preventDefault();
+  if (!editorManager.view || !editorManager.view.dom.contains(e.target)) return;
+  try {
+    e.preventDefault();
+    e.stopPropagation();
   
   const selectedText = editorManager.getSelectionText?.() || '';
   
@@ -911,7 +913,11 @@ window.addEventListener('contextmenu', (e) => {
     if (refItemIndex !== -1) menuItems[refItemIndex].disabled = true;
   }
 
-  contextMenu.show(e.clientX, e.clientY, menuItems);
+    contextMenu.show(e.clientX, e.clientY, menuItems);
+  } catch (err) {
+    console.error('ContextMenu Error:', err);
+    alert('ContextMenu Error: ' + err.message);
+  }
 }, true);
 
 // ============================================================
