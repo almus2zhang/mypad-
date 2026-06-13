@@ -71,10 +71,11 @@ export function createSearchPanel(editorManager) {
   const findAllBtn = document.createElement('button');
   findAllBtn.className = 'btn';
   findAllBtn.textContent = 'Find All';
-  findAllBtn.title = 'Show all results in a list';
-  findAllBtn.style.padding = '2px 8px';
+  const LAYOUT_SIDE_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="15" y1="3" x2="15" y2="21"></line></svg>`;
+  const LAYOUT_BOTTOM_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="15" x2="21" y2="15"></line></svg>`;
 
-  const layoutBtn = _createToggle('Layout: Side', 'Toggle Results Layout (Bottom/Side)', 'search-layout-btn');
+  const layoutBtn = _createToggle('', 'Toggle Results Layout (Bottom/Side)', 'search-layout-btn');
+  layoutBtn.innerHTML = LAYOUT_SIDE_SVG;
   layoutBtn.style.display = 'none';
 
   const countSpan = document.createElement('span');
@@ -204,7 +205,7 @@ export function createSearchPanel(editorManager) {
 
   layoutBtn.addEventListener('click', () => {
     isLayoutVertical = !isLayoutVertical;
-    layoutBtn.textContent = isLayoutVertical ? 'Layout: Bottom' : 'Layout: Side';
+    layoutBtn.innerHTML = isLayoutVertical ? LAYOUT_BOTTOM_SVG : LAYOUT_SIDE_SVG;
     _setLayout(isLayoutVertical ? 'vertical' : 'horizontal');
   });
 
@@ -427,6 +428,7 @@ export function createSearchPanel(editorManager) {
           selection: { anchor: res.from, head: res.to },
           effects: EditorView.scrollIntoView(res.from, {y: 'center'})
         });
+        view.focus();
       });
       resultsContainer.appendChild(item);
     });

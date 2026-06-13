@@ -860,7 +860,8 @@ function showToast(message, type = 'info') {
 // Context Menu for Editor
 // ============================================================
 
-document.getElementById('editor-container').addEventListener('contextmenu', (e) => {
+window.addEventListener('contextmenu', (e) => {
+  if (!e.target.closest('#editor-container')) return;
   e.preventDefault();
   
   const selectedText = editorManager.getSelectionText?.() || '';
