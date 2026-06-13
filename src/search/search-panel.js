@@ -333,7 +333,7 @@ export function createSearchPanel(editorManager) {
     searchHistory.unshift(query);
     if (searchHistory.length > 20) searchHistory.pop();
     localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
-    updateDatalist();
+    updateHistoryDropdown();
   }
 
   // ---- Search Logic ----
