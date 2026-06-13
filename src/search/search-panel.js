@@ -127,7 +127,45 @@ export function createSearchPanel(editorManager) {
   resultsContainer.className = 'annotepad-results';
   resultsContainer.style.display = 'none'; // Hidden initially
 
-  panel.append(findRow, replaceRow, resultsContainer);
+  // ---- Resizer ----
+  const resizer = document.createElement('div');
+  resizer.className = 'panel-resizer';
+  
+  let isResizing = false;
+  resizer.addEventListener('mousedown', (e) => {
+    if (!isFindAllMode) return;
+    isResizing = true;
+    document.body.style.cursor = isLayoutVertical ? 'ns-resize' : 'ew-resize';
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  });
+
+  function onMouseMove(e) {
+    if (!isResizing) return;
+    if (isLayoutVertical) {
+      const newHeight = window.innerHeight - e.clientY;
+      // Allow dragging up to 1 line of the editor (e.g. max height = window height - 100px)
+      if (newHeight > 50 && newHeight < window.innerHeight - 100) {
+        panel.style.height = `${newHeight}px`;
+        panel.style.flex = 'none';
+      }
+    } else {
+      const newWidth = window.innerWidth - e.clientX;
+      if (newWidth > 150 && newWidth < window.innerWidth - 100) {
+        panel.style.width = `${newWidth}px`;
+        panel.style.flex = 'none';
+      }
+    }
+  }
+
+  function onMouseUp() {
+    isResizing = false;
+    document.body.style.cursor = '';
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  }
+
+  panel.append(resizer, findRow, replaceRow, resultsContainer);
 
   // ---- Event Handlers ----
 

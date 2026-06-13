@@ -2183,6 +2183,58 @@ body {
   padding: var(--space-3);
 }
 
+.hl-color-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--border-primary);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+.hl-color-dot:hover {
+  transform: scale(1.1);
+}
+
+.hl-color-popover {
+  position: absolute;
+  z-index: 1001;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: max-content;
+}
+
+.hl-popover-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hl-popover-dot:hover {
+  opacity: 0.8;
+}
+.hl-popover-dot--active {
+  border-color: var(--text-primary);
+}
+.hl-popover-dot--custom {
+  background: transparent;
+  border: 2px dashed var(--border-primary);
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+}
+
 /* ============================================================
    AnNotePad Mode (Find All)
    ============================================================ */
@@ -2218,7 +2270,7 @@ body {
   width: 100%;
   max-width: none;
   height: 40%;
-  min-height: 200px;
+  min-height: 50px;
   border-radius: 0;
   border: none;
   border-top: 1px solid var(--border-primary);
@@ -2226,6 +2278,39 @@ body {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   background: var(--bg-primary);
+}
+
+.panel-resizer {
+  position: absolute;
+  z-index: 1002;
+}
+
+#workspace.annotepad-vertical .panel-resizer {
+  top: -3px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+#workspace.annotepad-horizontal .panel-resizer {
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+/* Compact search mode in vertical layout */
+#workspace.annotepad-vertical .search-panel {
+  padding: 8px;
+}
+#workspace.annotepad-vertical .search-row {
+  margin-bottom: 4px;
+}
+#workspace.annotepad-vertical .annotepad-results {
+  margin-top: 4px;
+  padding-top: 4px;
 }
 
 .annotepad-results {

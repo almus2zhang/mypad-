@@ -107,6 +107,7 @@ const toolbar = createToolbar({
   onZoomIn: () => zoomIn(),
   onZoomOut: () => zoomOut(),
   onThemeToggle: () => toggleTheme(),
+  onToggleStatusBar: () => toggleStatusBar(),
   onFind: () => searchPanel.toggle('find'),
   onReplace: () => searchPanel.toggle('replace'),
   onNextError: () => { if (editorManager.view) nextDiagnostic(editorManager.view); },
@@ -637,6 +638,8 @@ function toggleTheme() {
   if (metaDark) metaDark.content = currentTheme === 'dark' ? '#1e1e2e' : '#f8f9fb';
 }
 
+let statusBarVisible = loadString('mypad_status_bar', 'false') === 'true';
+
 function toggleWordWrap() {
   wordWrapEnabled = !wordWrapEnabled;
   saveString('mypad_word_wrap', String(wordWrapEnabled));
@@ -644,6 +647,27 @@ function toggleWordWrap() {
     editorManager.setWordWrap(wordWrapEnabled);
   }
 }
+
+function toggleStatusBar() {
+  statusBarVisible = !statusBarVisible;
+  saveString('mypad_status_bar', String(statusBarVisible));
+  applyStatusBarVisibility();
+}
+
+function applyStatusBarVisibility() {
+  const sb = document.getElementById('status-bar-container');
+  if (sb) {
+    sb.style.display = statusBarVisible ? 'flex' : 'none';
+  }
+  const btn = document.getElementById('btn-status-bar');
+  if (btn) {
+    btn.setAttribute('aria-pressed', String(statusBarVisible));
+    btn.classList.toggle('toolbar-btn--active', statusBarVisible);
+  }
+}
+
+// Call applyStatusBarVisibility at initialization
+setTimeout(applyStatusBarVisibility, 100);
 
 async function toggleCompareMode() {
   if (compareManager.isActive) {

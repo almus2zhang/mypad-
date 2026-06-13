@@ -118,6 +118,11 @@ const ICONS = {
     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
     <line x1="12" y1="3" x2="12" y2="21"/>
   </svg>`,
+
+  statusBar: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+    <line x1="3" y1="16" x2="21" y2="16"/>
+  </svg>`,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -233,6 +238,7 @@ export function createToolbar(callbacks = {}) {
   // ── View group ──────────────────────────────────────────────────────────
   const viewGroup = [
     createButton({ id: 'btn-word-wrap', icon: ICONS.wordWrap, tooltip: 'Toggle Word Wrap', onClick: callbacks.onWordWrap, toggle: true }),
+    createButton({ id: 'btn-status-bar', icon: ICONS.statusBar, tooltip: 'Toggle Status Bar', onClick: callbacks.onToggleStatusBar, toggle: true }),
     createButton({ id: 'btn-zoom-in', icon: ICONS.zoomIn, tooltip: 'Zoom In', onClick: callbacks.onZoomIn }),
     createButton({ id: 'btn-zoom-out', icon: ICONS.zoomOut, tooltip: 'Zoom Out', onClick: callbacks.onZoomOut }),
     themeBtn,
