@@ -46,24 +46,72 @@ export function createSearchPanel(editorManager) {
   const findRow = document.createElement('div');
   findRow.className = 'search-row';
 
+  const inputWrapper = document.createElement('div');
+  inputWrapper.className = 'search-input-wrapper';
+  inputWrapper.style.position = 'relative';
+  inputWrapper.style.flex = '1';
+  inputWrapper.style.minWidth = '100px';
+
   const findInput = document.createElement('input');
   findInput.className = 'search-input';
-  findInput.placeholder = 'Find...';
+  findInput.placeholder = '搜索... (支持正则表达式)';
   findInput.id = 'search-find-input';
   findInput.setAttribute('aria-label', 'Find');
-  findInput.setAttribute('list', 'search-history-list');
+  // findInput.setAttribute('list', 'search-history-list'); // Remove native datalist
+  findInput.style.width = '100%';
 
-  const datalist = document.createElement('datalist');
-  datalist.id = 'search-history-list';
-  function updateDatalist() {
-    datalist.innerHTML = '';
-    searchHistory.forEach(q => {
-      const opt = document.createElement('option');
-      opt.value = q;
-      datalist.appendChild(opt);
+  const historyDropdown = document.createElement('div');
+  historyDropdown.className = 'search-history-dropdown';
+
+  function updateHistoryDropdown() {
+    historyDropdown.innerHTML = '';
+    if (searchHistory.length === 0) {
+      historyDropdown.style.display = 'none';
+      return;
+    }
+    searchHistory.forEach((q, idx) => {
+      const item = document.createElement('div');
+      item.className = 'search-history-item';
+      
+      const num = document.createElement('span');
+      num.className = 'search-history-num';
+      num.textContent = idx + 1;
+      
+      const text = document.createElement('span');
+      text.className = 'search-history-text';
+      text.textContent = q;
+      
+      item.appendChild(num);
+      item.appendChild(text);
+      
+      item.addEventListener('mousedown', (e) => {
+        // use mousedown to prevent input blur
+        e.preventDefault();
+        findInput.value = q;
+        historyDropdown.style.display = 'none';
+        saveSearchHistory(q);
+        if (isFindAllMode) _runFindAll();
+        else _runNormalSearch();
+      });
+      
+      historyDropdown.appendChild(item);
     });
   }
-  updateDatalist();
+  updateHistoryDropdown();
+
+  findInput.addEventListener('focus', () => {
+    if (searchHistory.length > 0) {
+      updateHistoryDropdown();
+      historyDropdown.style.display = 'block';
+    }
+  });
+
+  findInput.addEventListener('blur', () => {
+    historyDropdown.style.display = 'none';
+  });
+
+  inputWrapper.appendChild(findInput);
+  inputWrapper.appendChild(historyDropdown);
 
   const caseBtn = _createToggle('Aa', 'Case Sensitive', 'search-case-btn');
   const wordBtn = _createToggle('W', 'Whole Word', 'search-word-btn');
@@ -98,7 +146,7 @@ export function createSearchPanel(editorManager) {
   closeBtn.innerHTML = '&times;';
   closeBtn.title = 'Close (Escape)';
 
-  findRow.append(findInput, datalist, caseBtn, wordBtn, regexBtn, findAllBtn, layoutBtn, countSpan, prevBtn, nextBtn, closeBtn);
+  findRow.append(inputWrapper, caseBtn, wordBtn, regexBtn, findAllBtn, layoutBtn, countSpan, prevBtn, nextBtn, closeBtn);
 
   // ---- Replace Row ----
   const replaceRow = document.createElement('div');
@@ -132,25 +180,39 @@ export function createSearchPanel(editorManager) {
   resizer.className = 'panel-resizer';
   
   let isResizing = false;
-  resizer.addEventListener('mousedown', (e) => {
+  
+  function onDragStart(e) {
     if (!isFindAllMode) return;
     isResizing = true;
     document.body.style.cursor = isLayoutVertical ? 'ns-resize' : 'ew-resize';
+    
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
-  });
+    document.addEventListener('touchmove', onMouseMove, { passive: false });
+    document.addEventListener('touchend', onMouseUp);
+  }
+
+  resizer.addEventListener('mousedown', onDragStart);
+  resizer.addEventListener('touchstart', onDragStart, { passive: true });
 
   function onMouseMove(e) {
     if (!isResizing) return;
+    
+    // Prevent default scrolling on touch devices
+    if (e.touches) e.preventDefault();
+    
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
     if (isLayoutVertical) {
-      const newHeight = window.innerHeight - e.clientY;
+      const newHeight = window.innerHeight - clientY;
       // Allow dragging up to 1 line of the editor (e.g. max height = window height - 100px)
       if (newHeight > 50 && newHeight < window.innerHeight - 100) {
         panel.style.height = `${newHeight}px`;
         panel.style.flex = 'none';
       }
     } else {
-      const newWidth = window.innerWidth - e.clientX;
+      const newWidth = window.innerWidth - clientX;
       if (newWidth > 150 && newWidth < window.innerWidth - 100) {
         panel.style.width = `${newWidth}px`;
         panel.style.flex = 'none';
@@ -163,6 +225,8 @@ export function createSearchPanel(editorManager) {
     document.body.style.cursor = '';
     document.removeEventListener('mousemove', onMouseMove);
     document.removeEventListener('mouseup', onMouseUp);
+    document.removeEventListener('touchmove', onMouseMove);
+    document.removeEventListener('touchend', onMouseUp);
   }
 
   panel.append(resizer, findRow, replaceRow, resultsContainer);

@@ -2286,31 +2286,83 @@ body {
 }
 
 #workspace.annotepad-vertical .panel-resizer {
-  top: -3px;
+  top: -10px;
   left: 0;
   right: 0;
-  height: 6px;
+  height: 20px;
   cursor: ns-resize;
 }
 
 #workspace.annotepad-horizontal .panel-resizer {
   top: 0;
   bottom: 0;
-  left: -3px;
-  width: 6px;
+  left: -10px;
+  width: 20px;
   cursor: ew-resize;
 }
 
 /* Compact search mode in vertical layout */
 #workspace.annotepad-vertical .search-panel {
-  padding: 8px;
+  padding: 4px;
 }
 #workspace.annotepad-vertical .search-row {
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 #workspace.annotepad-vertical .annotepad-results {
+  margin-top: 2px;
+  padding-top: 2px;
+}
+
+/* Custom Search History Dropdown */
+.search-history-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: var(--search-bg);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 2000;
+  max-height: 250px;
+  overflow-y: auto;
   margin-top: 4px;
-  padding-top: 4px;
+  display: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.search-history-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  gap: 12px;
+}
+.search-history-item:hover {
+  background: var(--bg-hover);
+}
+.search-history-item:not(:last-child) {
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.search-history-num {
+  background: rgba(137, 180, 250, 0.2);
+  color: #89b4fa;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.search-history-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .annotepad-results {
