@@ -635,8 +635,8 @@ async function handleWorkspaceFileSave(path) {
 
 async function saveFileToWorkspace(tab) {
   try {
-    const arrayBuffer = await fileHandler.createBufferFromContent(tab.content, tab.encoding);
-    await workspaceBrowser.client.writeFile(tab.workspacePath, arrayBuffer);
+    const encoded = encode(tab.content, tab.encoding);
+    await workspaceBrowser.client.writeFile(tab.workspacePath, encoded.buffer);
 
     tabManager.updateTab(tab.id, {
       filename: tab.filename,
