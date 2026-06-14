@@ -29,6 +29,11 @@ export class CompareManager {
    */
   startCompare(originalContent, modifiedContent, languageSupport, theme, fontSize, originalFileName = 'Original', modifiedFileName = 'Modified') {
     this.isActive = true;
+
+    // Normalize line endings to \n to prevent the diff algorithm from marking unchanged lines as different
+    originalContent = (originalContent || '').replace(/\r\n/g, '\n');
+    modifiedContent = (modifiedContent || '').replace(/\r\n/g, '\n');
+
     this.container.innerHTML = '';
     this.container.style.display = 'flex'; 
     this.container.style.flexDirection = 'column';
