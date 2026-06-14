@@ -61,6 +61,7 @@ export class TabManager extends EventTarget {
       editorState: options.editorState || null,
       fileHandle: options.fileHandle || null,
       webdavPath: options.webdavPath || null,
+      workspacePath: options.workspacePath || null,
       createdAt: Date.now(),
     };
 
@@ -250,6 +251,7 @@ export class TabManager extends EventTarget {
         language: t.language,
         filePath: t.filePath,
         webdavPath: t.webdavPath,
+        workspacePath: t.workspacePath,
       })),
       activeIndex: this.activeTabId ? this.tabOrder.indexOf(this.activeTabId) : 0,
     };
@@ -273,6 +275,7 @@ export class TabManager extends EventTarget {
         language: tabData.language,
         filePath: tabData.filePath,
         webdavPath: tabData.webdavPath,
+        workspacePath: tabData.workspacePath,
       });
       restored.push(tab);
     }

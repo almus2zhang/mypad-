@@ -45,7 +45,7 @@ export class TabBar {
       el.setAttribute('role', 'tab');
       el.setAttribute('aria-selected', tab.id === activeId ? 'true' : 'false');
       el.dataset.tabId = tab.id;
-      el.title = tab.webdavPath || tab.filePath || tab.filename;
+      el.title = tab.workspacePath || tab.webdavPath || tab.filePath || tab.filename;
 
       // Name and Path Container
       const nameContainer = document.createElement('div');
@@ -65,7 +65,7 @@ export class TabBar {
       nameSpan.textContent = tab.filename;
       nameContainer.appendChild(nameSpan);
 
-      const fullPath = tab.webdavPath || tab.filePath || '';
+      const fullPath = tab.workspacePath || tab.webdavPath || tab.filePath || '';
       if (fullPath) {
         const pathSpan = document.createElement('span');
         pathSpan.style.fontSize = '9px';
