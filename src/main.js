@@ -138,7 +138,14 @@ const tabBar = new TabBar(
   document.getElementById('tab-bar-container'),
   tabManager,
   {
-    onTabSwitch: (id) => switchToTab(id),
+    onTabSwitch: (id) => {
+      switchToTab(id);
+      if (!statusBarVisible) {
+        statusBarVisible = true;
+        saveString('mypad_status_bar', 'true');
+        applyStatusBarVisibility();
+      }
+    },
     onTabClose: (id) => closeTab(id),
     onNewTab: () => createNewTab(),
     onTabContextMenu: (id, e) => showTabContextMenu(id, e),
@@ -674,6 +681,21 @@ function applyStatusBarVisibility() {
 
 // Call applyStatusBarVisibility at initialization
 setTimeout(applyStatusBarVisibility, 100);
+
+// Auto-hide status bar when clicking text body or other areas
+document.addEventListener('click', (e) => {
+  if (statusBarVisible) {
+    const isTabBar = e.target.closest('.tab-bar');
+    const isStatusBar = e.target.closest('.statusbar');
+    const isToolbar = e.target.closest('.toolbar');
+    
+    if (!isTabBar && !isStatusBar && !isToolbar) {
+      statusBarVisible = false;
+      saveString('mypad_status_bar', 'false');
+      applyStatusBarVisibility();
+    }
+  }
+});
 
 async function toggleCompareMode() {
   if (compareManager.isActive) {

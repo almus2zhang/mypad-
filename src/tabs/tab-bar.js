@@ -47,46 +47,11 @@ export class TabBar {
       el.dataset.tabId = tab.id;
       el.title = tab.workspacePath || tab.webdavPath || tab.filePath || tab.filename;
 
-      // Name and Path Container
-      const nameContainer = document.createElement('div');
-      nameContainer.style.display = 'flex';
-      nameContainer.style.flexDirection = 'column';
-      nameContainer.style.alignItems = 'flex-start';
-      nameContainer.style.overflow = 'hidden';
-      nameContainer.style.flex = '1';
-      nameContainer.style.justifyContent = 'center';
-
+      // Filename
       const nameSpan = document.createElement('span');
       nameSpan.className = 'tab-name';
-      nameSpan.style.lineHeight = '1.2';
-      nameSpan.style.whiteSpace = 'nowrap';
-      nameSpan.style.overflow = 'hidden';
-      nameSpan.style.textOverflow = 'ellipsis';
       nameSpan.textContent = tab.filename;
-      nameContainer.appendChild(nameSpan);
-
-      const fullPath = tab.workspacePath || tab.webdavPath || tab.filePath || '';
-      if (fullPath) {
-        const pathSpan = document.createElement('span');
-        pathSpan.style.fontSize = '9px';
-        pathSpan.style.opacity = '0.7';
-        pathSpan.style.lineHeight = '1.1';
-        pathSpan.style.whiteSpace = 'nowrap';
-        pathSpan.style.overflow = 'hidden';
-        pathSpan.style.textOverflow = 'ellipsis'; // Actually we will manual truncate
-        pathSpan.style.maxWidth = '100%';
-        
-        // Smart truncate: keep right side of path
-        const maxLength = 35;
-        let displayPath = fullPath;
-        if (displayPath.length > maxLength) {
-          displayPath = '...' + displayPath.slice(-(maxLength - 3));
-        }
-        pathSpan.textContent = displayPath;
-        nameContainer.appendChild(pathSpan);
-      }
-
-      el.appendChild(nameContainer);
+      el.appendChild(nameSpan);
 
       // Modified dot
       if (tab.modified) {
