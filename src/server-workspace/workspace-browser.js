@@ -379,20 +379,21 @@ export class WorkspaceBrowser {
       textContainer.appendChild(name);
 
       const pathLabel = document.createElement('div');
-      pathLabel.style.fontSize = '14px';
-      pathLabel.style.color = 'red';
-      pathLabel.style.fontWeight = 'bold';
+      pathLabel.style.fontSize = '11px';
+      pathLabel.style.color = 'var(--text-tertiary)';
       pathLabel.style.whiteSpace = 'nowrap';
       pathLabel.style.overflow = 'hidden';
       pathLabel.style.textOverflow = 'ellipsis';
-      pathLabel.style.marginTop = '4px';
-      pathLabel.textContent = item.absolutePath || item.path || 'UNKNOWN PATH';
+      pathLabel.style.marginTop = '2px';
       
-      if (pathLabel.textContent) {
+      const fullPath = item.absolutePath || item.path || '';
+      pathLabel.textContent = fullPath;
+      
+      if (fullPath && fullPath !== '/' + item.name) {
         textContainer.appendChild(pathLabel);
       }
 
-      el.title = item.absolutePath || item.path || '';
+      el.title = fullPath;
       el.append(icon, textContainer);
 
       el.onclick = () => {
