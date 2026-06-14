@@ -61,6 +61,52 @@ You can preview the built production app locally using:
 npm run preview
 ```
 
+### Running as a Background Service (Debian/Ubuntu Auto-Start)
+
+The project includes a built-in Node.js server (`server.js`) that serves the production frontend (`dist/`) and provides backend workspace APIs.
+
+To run the server continuously and start automatically on boot under a Debian/Ubuntu environment, you can use **PM2**:
+
+1. **Install PM2 globally:**
+   ```bash
+   sudo npm install -g pm2
+   ```
+
+2. **Start the server with PM2:**
+   Replace the workspace path and password with your desired values.
+   ```bash
+   # From your project root directory:
+   pm2 start server.js --name "mypad" -- --workspace "/path/to/your/workspace" --password "your_password"
+   ```
+
+3. **Set PM2 to start on boot:**
+   ```bash
+   pm2 startup
+   ```
+   *Run the command outputted by the terminal to complete the setup.*
+
+4. **Save the current process list:**
+   ```bash
+   pm2 save
+   ```
+
+Alternatively, you can manage it using **systemd**. Create a service file `/etc/systemd/system/mypad.service`:
+```ini
+[Unit]
+Description=MyPad++ Server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/node /absolute/path/to/mypad-/server.js --workspace "/path/to/workspace" --password "your_password"
+Restart=always
+User=your_username
+Environment=PORT=3000
+
+[Install]
+WantedBy=multi-user.target
+```
+Then enable and start it: `sudo systemctl daemon-reload && sudo systemctl enable --now mypad`
+
 ## 🛠️ Tech Stack
 
 - **Core:** Vanilla JavaScript (ES Modules), HTML5, CSS3 (CSS Variables/Custom Properties)
