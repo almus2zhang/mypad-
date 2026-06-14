@@ -54,7 +54,7 @@ class WorkspaceIndexer {
     this.files = [];
     this.isIndexing = false;
     this.lastIndexed = 0;
-    this.ignoreDirs = new Set(['node_modules', 'dist', 'build', 'out', 'target', 'obj', 'bin']);
+    this.ignoreDirs = new Set(['node_modules', 'dist', '.git', '.repo', '.svn', '.idea']);
   }
 
   async buildIndex() {
@@ -69,14 +69,14 @@ class WorkspaceIndexer {
           const entries = await fs.readdir(dir, { withFileTypes: true });
           
           // Check for ignore files
-          if (entries.some(e => !e.isDirectory() && (e.name === '.mypadignore' || e.name === '.nomedia'))) {
+          if (entries.some(e => !e.isDirectory() && e.name === '.mypadignore')) {
             return;
           }
 
           for (const entry of entries) {
             if (newFiles.length >= 1000000) break;
             if (entry.isDirectory()) {
-              if (entry.name.startsWith('.') || this.ignoreDirs.has(entry.name)) continue;
+              if (this.ignoreDirs.has(entry.name)) continue;
               await walk(path.join(dir, entry.name));
             } else {
               const fullPath = path.join(dir, entry.name);
