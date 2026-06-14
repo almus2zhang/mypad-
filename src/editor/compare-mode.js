@@ -22,8 +22,10 @@ export class CompareManager {
    * @param {import('@codemirror/language').LanguageSupport|null} languageSupport 
    * @param {string} theme - 'light' or 'dark'
    * @param {number} fontSize 
+   * @param {string} originalFileName
+   * @param {string} modifiedFileName
    */
-  startCompare(originalContent, modifiedContent, languageSupport, theme, fontSize) {
+  startCompare(originalContent, modifiedContent, languageSupport, theme, fontSize, originalFileName = 'Original', modifiedFileName = 'Modified') {
     this.isActive = true;
     this.container.innerHTML = '';
     this.container.style.display = 'flex'; 
@@ -34,10 +36,22 @@ export class CompareManager {
     this.container.style.overflow = 'hidden';
 
     this.container.innerHTML = `
-      <div class="compare-header" style="display: flex; justify-content: flex-end; padding: 4px 8px; background: var(--toolbar-bg); border-bottom: 1px solid var(--toolbar-border);">
-        <label style="font-size: 13px; display: flex; align-items: center; gap: 6px; color: var(--text-secondary); cursor: pointer;">
-          <input type="checkbox" id="sync-scroll-cb" checked> Sync Scroll
-        </label>
+      <div class="compare-header" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 12px; background: var(--toolbar-bg); border-bottom: 1px solid var(--toolbar-border);">
+        <div style="display: flex; gap: 20px; flex: 1; min-width: 0;">
+          <div style="flex: 1; text-align: left; font-family: var(--font-mono); font-size: 13px; color: var(--text-primary); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${originalFileName}">${originalFileName} (Original)</div>
+          <div style="flex: 1; text-align: left; font-family: var(--font-mono); font-size: 13px; color: var(--text-primary); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${modifiedFileName}">${modifiedFileName} (Modified)</div>
+        </div>
+        <div style="display: flex; gap: 12px; align-items: center; flex-shrink: 0; margin-left: 12px;">
+          <button id="btn-prev-diff" class="annotepad-btn" style="padding: 2px 6px; display: flex; align-items: center; gap: 4px; font-size: 13px;" title="Previous Diff">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg> Prev Diff
+          </button>
+          <button id="btn-next-diff" class="annotepad-btn" style="padding: 2px 6px; display: flex; align-items: center; gap: 4px; font-size: 13px;" title="Next Diff">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg> Next Diff
+          </button>
+          <label style="font-size: 13px; display: flex; align-items: center; gap: 6px; color: var(--text-secondary); cursor: pointer; margin-left: 8px;">
+            <input type="checkbox" id="sync-scroll-cb" checked> Sync Scroll
+          </label>
+        </div>
       </div>
       <div id="merge-view-wrapper" style="flex: 1; display: flex; flex-direction: column; min-height: 0; min-width: 0;"></div>
     `;
@@ -93,6 +107,13 @@ export class CompareManager {
         ed.style.flexDirection = 'column';
       });
 
+      // Diff navigation buttons
+      const btnPrev = this.container.querySelector('#btn-prev-diff');
+      const btnNext = this.container.querySelector('#btn-next-diff');
+
+      btnPrev.addEventListener('click', () => this.goToPrevDiff());
+      btnNext.addEventListener('click', () => this.goToNextDiff());
+
       // Synchronize scrolling
       const scrollers = this.mergeView.dom.querySelectorAll('.cm-scroller');
       if (scrollers.length === 2) {
@@ -122,6 +143,42 @@ export class CompareManager {
         });
       }
     }
+  }
+
+  goToNextDiff() {
+    if (!this.mergeView) return;
+    const viewB = this.mergeView.b;
+    const currentPos = viewB.state.selection.main.head;
+    
+    const chunks = this.mergeView.chunks || [];
+    if (chunks.length === 0) return;
+
+    let nextChunk = chunks.find(ch => ch.fromB > currentPos);
+    if (!nextChunk) nextChunk = chunks[0]; // loop to start
+    
+    viewB.dispatch({
+      selection: { anchor: nextChunk.fromB },
+      scrollIntoView: true
+    });
+    viewB.focus();
+  }
+
+  goToPrevDiff() {
+    if (!this.mergeView) return;
+    const viewB = this.mergeView.b;
+    const currentPos = viewB.state.selection.main.head;
+    
+    const chunks = this.mergeView.chunks || [];
+    if (chunks.length === 0) return;
+
+    let prevChunk = [...chunks].reverse().find(ch => ch.fromB < currentPos);
+    if (!prevChunk) prevChunk = chunks[chunks.length - 1]; // loop to end
+    
+    viewB.dispatch({
+      selection: { anchor: prevChunk.fromB },
+      scrollIntoView: true
+    });
+    viewB.focus();
   }
 
   /**

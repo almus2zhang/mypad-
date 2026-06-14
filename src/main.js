@@ -727,7 +727,9 @@ async function toggleCompareMode() {
       activeTab.content, // modified (right)
       langSupport,
       currentTheme,
-      currentFontSize
+      currentFontSize,
+      targetTab.filename,
+      activeTab.filename
     );
     
     const compareBtn = document.getElementById('btn-compare');
