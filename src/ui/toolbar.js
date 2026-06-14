@@ -144,6 +144,12 @@ const ICONS = {
     <path d="M7 16h10"/>
     <line x1="2" y1="2" x2="22" y2="22"/>
   </svg>`,
+
+  help: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"></circle>
+    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+  </svg>`,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -222,6 +228,7 @@ function createDivider() {
  * @param {Function} [callbacks.onNextError]   - Jump to next error
  * @param {Function} [callbacks.onCompare]     - Compare tabs
  * @param {Function} [callbacks.onWebDAV]      - Open WebDAV dialog
+ * @param {Function} [callbacks.onHelp]        - Open Help dialog
  * @returns {HTMLElement} The toolbar DOM element.
  */
 export function createToolbar(callbacks = {}) {
@@ -281,6 +288,7 @@ export function createToolbar(callbacks = {}) {
     createButton({ id: 'btn-webdav', icon: ICONS.webdav, tooltip: 'WebDAV', onClick: callbacks.onWebDAV }),
     createButton({ id: 'btn-workspace', icon: ICONS.workspace, tooltip: 'Server Workspace', onClick: callbacks.onWorkspace }),
     createButton({ id: 'btn-highlights', icon: ICONS.highlights, tooltip: 'Custom Highlights', onClick: callbacks.onCustomHighlights }),
+    createButton({ id: 'btn-help', icon: ICONS.help, tooltip: 'Help', onClick: callbacks.onHelp }),
   ];
 
   // ── Assemble ────────────────────────────────────────────────────────────

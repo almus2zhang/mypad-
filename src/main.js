@@ -42,7 +42,7 @@ import { createSymbolBar } from './ui/symbol-bar.js';
 import { createSidebar } from './ui/sidebar.js';
 import { createContextMenu, getDefaultMenuItems } from './ui/context-menu.js';
 import { FileTreeSidebar } from './ui/file-tree-sidebar.js';
-import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog } from './ui/dialogs.js';
+import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog } from './ui/dialogs.js';
 
 // Utils
 import { loadJSON, saveJSON, loadString, saveString } from './utils/storage.js';
@@ -128,6 +128,7 @@ const toolbar = createToolbar({
   },
   onExplorer: () => fileTreeSidebar.toggle(),
   onCustomHighlights: () => highlightManager.toggle(),
+  onHelp: () => showHelpDialog(),
 });
 document.getElementById('toolbar-container').appendChild(toolbar);
 

@@ -262,9 +262,17 @@ export function createHighlightPanel(manager) {
       activeInputIdx = idx;
     },
     fillActiveInput(text) {
-      if (activeInputIdx !== null && panel.style.display !== 'none') {
+      if (panel.style.display !== 'none') {
         const rules = manager.getHighlightRules();
-        if (activeInputIdx < rules.length) {
+        
+        // Find first empty rule
+        const emptyRuleIdx = rules.findIndex(r => !r.pattern || r.pattern.trim() === '');
+        
+        if (emptyRuleIdx !== -1) {
+          manager.updateHighlightRule(emptyRuleIdx, { ...rules[emptyRuleIdx], pattern: text });
+          renderHlRules();
+          activeInputIdx = emptyRuleIdx;
+        } else if (activeInputIdx !== null && activeInputIdx < rules.length) {
           const currentRule = rules[activeInputIdx];
           if (currentRule.pattern !== text) {
             manager.updateHighlightRule(activeInputIdx, { ...currentRule, pattern: text });
