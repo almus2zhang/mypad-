@@ -88,6 +88,44 @@ export class WorkspaceBrowser {
     }
   }
 
+  async searchExtension(ext) {
+    this._currentPath = 'Search: ' + ext;
+    this._loading = true;
+    
+    // Custom breadcrumb for search results
+    this._breadcrumbEl.innerHTML = '';
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = `Workspace Search: ${ext}`;
+    titleSpan.style.fontWeight = 'bold';
+    titleSpan.style.color = 'var(--text-primary)';
+    
+    const backBtn = document.createElement('button');
+    backBtn.textContent = '← Back to root';
+    backBtn.className = 'annotepad-btn';
+    backBtn.style.padding = '2px 8px';
+    backBtn.style.fontSize = '12px';
+    backBtn.style.marginLeft = 'auto';
+    backBtn.addEventListener('click', () => this.navigateTo('/'));
+
+    this._breadcrumbEl.append(titleSpan, backBtn);
+    this._breadcrumbEl.style.display = 'flex';
+    this._breadcrumbEl.style.alignItems = 'center';
+
+    this._fileListEl.innerHTML = '<div style="text-align:center;padding:2rem;">Searching...</div>';
+
+    try {
+      const items = await this.client.searchFiles(ext);
+      this._renderFileList(items);
+    } catch (e) {
+      this._fileListEl.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--danger);">
+        <p>Failed to search</p>
+        <p>${e.message}</p>
+      </div>`;
+    } finally {
+      this._loading = false;
+    }
+  }
+
   // --- UI ---
   _buildUI() {
     this._overlay = document.createElement('div');
@@ -122,12 +160,34 @@ export class WorkspaceBrowser {
     this._breadcrumbEl = document.createElement('div');
     this._breadcrumbEl.className = 'webdav-breadcrumb';
 
+    this._filterBarEl = document.createElement('div');
+    this._filterBarEl.style.padding = '8px 16px';
+    this._filterBarEl.style.display = 'flex';
+    this._filterBarEl.style.gap = '8px';
+    this._filterBarEl.style.flexWrap = 'wrap';
+    this._filterBarEl.style.borderBottom = '1px solid var(--border-color)';
+    this._filterBarEl.style.background = 'var(--bg-secondary)';
+    
+    const exts = ['.c', '.h', '.cpp', '.hpp', '.py', '.js', '.json', '.yaml', '.yml', '.log', '.txt', '.md', '.html', '.css'];
+    exts.forEach(ext => {
+      const btn = document.createElement('button');
+      btn.textContent = ext;
+      btn.className = 'annotepad-btn';
+      btn.style.padding = '2px 8px';
+      btn.style.fontSize = '12px';
+      btn.style.borderRadius = '4px';
+      btn.addEventListener('click', () => {
+        this.searchExtension(ext);
+      });
+      this._filterBarEl.append(btn);
+    });
+
     this._fileListEl = document.createElement('div');
     this._fileListEl.className = 'webdav-file-list';
     this._fileListEl.style.flex = '1';
     this._fileListEl.style.overflowY = 'auto';
 
-    body.append(this._breadcrumbEl, this._fileListEl);
+    body.append(this._breadcrumbEl, this._filterBarEl, this._fileListEl);
 
     this._footerEl = document.createElement('div');
     this._footerEl.className = 'dialog-footer';

@@ -116,6 +116,53 @@ apiRouter.get('/list', async (req, res) => {
   }
 });
 
+apiRouter.get('/search', async (req, res) => {
+  try {
+    const ext = req.query.ext;
+    if (!ext) return res.status(400).json({ error: 'Missing ext parameter' });
+
+    const results = [];
+    async function walk(dir) {
+      // Prevent deeply nested loops or permission errors from crashing the search
+      try {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'dist') continue;
+          
+          const fullPath = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            await walk(fullPath);
+          } else {
+            if (entry.name.endsWith(ext)) {
+              let size = 0, mtime = 0;
+              try {
+                const estats = await fs.stat(fullPath);
+                size = estats.size;
+                mtime = estats.mtimeMs;
+              } catch (e) {}
+              const relPath = path.relative(workspacePath, fullPath).replace(/\\/g, '/');
+              results.push({
+                name: entry.name,
+                path: '/' + relPath,
+                isDirectory: false,
+                size,
+                lastModified: new Date(mtime).toISOString()
+              });
+            }
+          }
+        }
+      } catch (e) {}
+    }
+    
+    await walk(workspacePath);
+    results.sort((a, b) => a.path.localeCompare(b.path));
+    res.json(results.slice(0, 1000));
+  } catch (error) {
+    console.error('Search error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 apiRouter.get('/read', async (req, res) => {
   try {
     const targetPath = resolveAndCheckPath(req.query.path);

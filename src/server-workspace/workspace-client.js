@@ -75,6 +75,16 @@ export class WorkspaceClient {
     return res.json();
   }
 
+  async searchFiles(ext) {
+    const url = `/api/workspace/search?ext=${encodeURIComponent(ext)}&${this._getCacheBuster()}`;
+    const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      this._handleError(res, err);
+    }
+    return res.json();
+  }
+
   async readFile(path) {
     const url = `/api/workspace/read?path=${encodeURIComponent(path)}&${this._getCacheBuster()}`;
     const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store' });
