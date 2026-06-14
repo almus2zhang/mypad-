@@ -66,6 +66,12 @@ class WorkspaceIndexer {
       const walk = async (dir) => {
         try {
           const entries = await fs.readdir(dir, { withFileTypes: true });
+          
+          // Check for ignore files
+          if (entries.some(e => !e.isDirectory() && (e.name === '.mypadignore' || e.name === '.nomedia'))) {
+            return;
+          }
+
           const subdirs = [];
           
           for (const entry of entries) {
@@ -106,8 +112,11 @@ class WorkspaceIndexer {
     if (params.ext) {
       return this.files.filter(f => f.name.endsWith(params.ext));
     } else if (params.q) {
-      const lowerQ = params.q.toLowerCase();
-      return this.files.filter(f => f.path.toLowerCase().includes(lowerQ));
+      const terms = params.q.toLowerCase().split(/\s+/).filter(Boolean);
+      return this.files.filter(f => {
+        const pathLower = f.path.toLowerCase();
+        return terms.every(term => pathLower.includes(term));
+      });
     }
     return [];
   }
