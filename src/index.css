@@ -2621,6 +2621,17 @@ body {
   display: flex;
 }
 
+/* On touch devices (tablets/phones), always show the actions but slightly faded until tapped */
+@media (hover: none) and (pointer: coarse) {
+  .file-tree-actions {
+    display: flex;
+    opacity: 0.7;
+  }
+  .file-tree-item:active .file-tree-actions {
+    opacity: 1;
+  }
+}
+
 .file-tree-children {
   display: flex;
   flex-direction: column;

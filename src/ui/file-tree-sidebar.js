@@ -202,6 +202,13 @@ export class FileTreeSidebar {
       }
     });
 
+    row.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      if (this.options.onContextMenu) {
+        this.options.onContextMenu(e, item, this);
+      }
+    });
+
     // If it's a directory and already expanded (e.g. state restoration), load children
     if (item.isDirectory && this.expandedFolders.has(item.path)) {
       this.loadDirectory(item.path, childrenContainer, paddingLeft + 15);

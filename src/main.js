@@ -240,6 +240,13 @@ const fileTreeSidebar = new FileTreeSidebar(workspaceBrowser.client, {
     workspaceBrowser.client.readFile(item.path)
       .then(buffer => handleWorkspaceFileOpen(item.name, buffer, item.path))
       .catch(e => showToast("Failed to open file: " + e.message, "error"));
+  },
+  onContextMenu: (e, item, tree) => {
+    if (item.isDirectory && (item.path !== '/' || item.isPinned)) {
+      contextMenu.show(e.clientX, e.clientY, [
+        { label: item.isPinned ? 'Unpin from top' : 'Pin to top', action: () => tree.togglePin(item) }
+      ]);
+    }
   }
 });
 const workspaceMain = document.getElementById('workspace');
