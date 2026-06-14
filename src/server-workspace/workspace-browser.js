@@ -369,9 +369,13 @@ export class WorkspaceBrowser {
       textContainer.style.display = 'flex';
       textContainer.style.flexDirection = 'column';
       textContainer.style.overflow = 'hidden';
+      textContainer.style.flex = '1';
+      textContainer.style.minWidth = '0'; // allow text truncation
 
       const name = document.createElement('span');
-      name.className = 'webdav-file-name';
+      name.style.whiteSpace = 'nowrap';
+      name.style.overflow = 'hidden';
+      name.style.textOverflow = 'ellipsis';
       name.textContent = item.name;
 
       textContainer.appendChild(name);
