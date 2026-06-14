@@ -387,12 +387,9 @@ export class WorkspaceBrowser {
       pathLabel.style.overflow = 'hidden';
       pathLabel.style.textOverflow = 'ellipsis';
       pathLabel.style.marginTop = '2px';
-      // Fallback to relative path if absolutePath is missing
       pathLabel.textContent = item.absolutePath || item.path || '';
       
-      // Only show the path label if we are in a search, or if we want to show it everywhere.
-      // Let's show it everywhere to make sure it's visible and useful.
-      if (pathLabel.textContent && pathLabel.textContent !== '/' + item.name) {
+      if (pathLabel.textContent) {
         textContainer.appendChild(pathLabel);
       }
 
