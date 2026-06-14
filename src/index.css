@@ -2610,6 +2610,17 @@ body {
   text-overflow: ellipsis;
 }
 
+.file-tree-actions {
+  display: none;
+  margin-left: auto;
+  align-items: center;
+  gap: 4px;
+}
+
+.file-tree-item:hover .file-tree-actions {
+  display: flex;
+}
+
 .file-tree-children {
   display: flex;
   flex-direction: column;

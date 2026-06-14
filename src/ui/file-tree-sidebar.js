@@ -72,6 +72,11 @@ export class FileTreeSidebar {
     try {
       let items;
       items = await this.client.listDirectory(path);
+
+      if (path === '/') {
+        const pinned = this.getPinnedFolders();
+        items = [...pinned, ...items];
+      }
       
       // Clear container (if root) or remove loader
       if (path === '/') {
@@ -127,7 +132,7 @@ export class FileTreeSidebar {
     const icon = document.createElement('span');
     icon.className = 'file-tree-icon';
     if (item.isDirectory) {
-      icon.textContent = '📁';
+      icon.textContent = item.isPinned ? '⭐' : '📁';
     } else {
       icon.textContent = '📄';
     }
@@ -135,10 +140,27 @@ export class FileTreeSidebar {
     const name = document.createElement('span');
     name.className = 'file-tree-name';
     name.textContent = item.name;
+
+    const actions = document.createElement('div');
+    actions.className = 'file-tree-actions';
+    
+    if (item.isDirectory && (path !== '/' || item.isPinned)) {
+      const pinBtn = document.createElement('span');
+      pinBtn.textContent = '📌';
+      pinBtn.title = item.isPinned ? 'Unpin from top' : 'Pin to top';
+      pinBtn.style.cursor = 'pointer';
+      pinBtn.style.fontSize = '12px';
+      pinBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.togglePin(item);
+      });
+      actions.appendChild(pinBtn);
+    }
     
     row.appendChild(arrow);
     row.appendChild(icon);
     row.appendChild(name);
+    row.appendChild(actions);
     wrapper.appendChild(row);
     
     const childrenContainer = document.createElement('div');
@@ -186,6 +208,38 @@ export class FileTreeSidebar {
     }
 
     return wrapper;
+  }
+
+  getPinnedFolders() {
+    try {
+      const saved = localStorage.getItem('mypad_pinned_folders');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error('Failed to parse pinned folders', e);
+    }
+    return [];
+  }
+
+  togglePin(item) {
+    let pinned = this.getPinnedFolders();
+    const existingIndex = pinned.findIndex(p => p.path === item.path);
+    
+    if (existingIndex >= 0) {
+      pinned.splice(existingIndex, 1);
+    } else {
+      pinned.push({
+        name: item.name,
+        path: item.path,
+        isDirectory: true,
+        isPinned: true
+      });
+    }
+    localStorage.setItem('mypad_pinned_folders', JSON.stringify(pinned));
+    
+    // Refresh root
+    if (this.isVisible) {
+      this.loadDirectory('/');
+    }
   }
 
   _initResizer() {
