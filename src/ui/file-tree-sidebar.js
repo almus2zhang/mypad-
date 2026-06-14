@@ -86,7 +86,7 @@ export class FileTreeSidebar {
       }
 
       items.forEach(item => {
-        const itemEl = this._createTreeItem(item, paddingLeft);
+        const itemEl = this._createTreeItem(item, paddingLeft, path);
         if (path === '/') {
           this.treeContainer.appendChild(itemEl);
         } else {
@@ -112,7 +112,7 @@ export class FileTreeSidebar {
     }
   }
 
-  _createTreeItem(item, paddingLeft) {
+  _createTreeItem(item, paddingLeft, parentPath) {
     const wrapper = document.createElement('div');
     wrapper.className = 'file-tree-node';
     
@@ -144,7 +144,7 @@ export class FileTreeSidebar {
     const actions = document.createElement('div');
     actions.className = 'file-tree-actions';
     
-    if (item.isDirectory && (path !== '/' || item.isPinned)) {
+    if (item.isDirectory && (parentPath !== '/' || item.isPinned)) {
       const pinBtn = document.createElement('span');
       pinBtn.textContent = '📌';
       pinBtn.title = item.isPinned ? 'Unpin from top' : 'Pin to top';
