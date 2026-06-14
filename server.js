@@ -65,6 +65,7 @@ class WorkspaceIndexer {
     try {
       const walk = async (dir) => {
         try {
+          if (newFiles.length >= 1000000) return; // Hard limit to prevent OOM
           const entries = await fs.readdir(dir, { withFileTypes: true });
           
           // Check for ignore files
@@ -73,6 +74,7 @@ class WorkspaceIndexer {
           }
 
           for (const entry of entries) {
+            if (newFiles.length >= 1000000) break;
             if (entry.isDirectory()) {
               if (entry.name.startsWith('.') || this.ignoreDirs.has(entry.name)) continue;
               await walk(path.join(dir, entry.name));
