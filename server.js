@@ -33,6 +33,54 @@ if (serverPassword) {
 }
 
 app.use(cors());
+
+// ==========================================
+// WebDAV Proxy (Bypass CORS)
+// ==========================================
+app.use('/api/proxy', async (req, res) => {
+  const targetUrl = req.headers['x-proxy-target'];
+  if (!targetUrl) {
+    return res.status(400).send('Missing X-Proxy-Target header');
+  }
+
+  const options = {
+    method: req.method,
+    headers: { ...req.headers },
+    // Only attach body for methods that allow it
+    body: ['GET', 'HEAD'].includes(req.method) ? undefined : req,
+    duplex: 'half' // required in node fetch for stream body
+  };
+
+  // Remove internal/proxy-specific headers
+  delete options.headers['host'];
+  delete options.headers['x-proxy-target'];
+  delete options.headers['origin'];
+  delete options.headers['referer'];
+  delete options.headers['connection'];
+
+  try {
+    const response = await fetch(targetUrl, options);
+    
+    res.status(response.status);
+    response.headers.forEach((value, key) => {
+      res.setHeader(key, value);
+    });
+
+    if (response.body) {
+      // Pipe web stream to express response
+      for await (const chunk of response.body) {
+        res.write(chunk);
+      }
+      res.end();
+    } else {
+      res.end();
+    }
+  } catch (err) {
+    console.error(`[Proxy Error] ${req.method} ${targetUrl}:`, err.message);
+    res.status(502).send('Proxy Error: ' + err.message);
+  }
+});
+
 app.use(express.json({ limit: '50mb' }));
 
 // Security check function

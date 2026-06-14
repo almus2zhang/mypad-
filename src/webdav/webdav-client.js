@@ -63,7 +63,7 @@ export class WebDAVClient {
   async listDirectory(path) {
     const url = this._resolvePath(path);
 
-    const response = await fetch(url, {
+    const response = await this._fetch(url, {
       method: 'PROPFIND',
       headers: {
         ...this._getHeaders(),
@@ -98,7 +98,7 @@ export class WebDAVClient {
   async readFile(path) {
     const url = this._resolvePath(path);
 
-    const response = await fetch(url, {
+    const response = await this._fetch(url, {
       method: 'GET',
       headers: this._getHeaders(),
     });
@@ -119,7 +119,7 @@ export class WebDAVClient {
   async writeFile(path, data) {
     const url = this._resolvePath(path);
 
-    const response = await fetch(url, {
+    const response = await this._fetch(url, {
       method: 'PUT',
       headers: {
         ...this._getHeaders(),
@@ -141,7 +141,7 @@ export class WebDAVClient {
   async createDirectory(path) {
     const url = this._resolvePath(path);
 
-    const response = await fetch(url, {
+    const response = await this._fetch(url, {
       method: 'MKCOL',
       headers: this._getHeaders(),
     });
@@ -159,7 +159,7 @@ export class WebDAVClient {
   async deleteItem(path) {
     const url = this._resolvePath(path);
 
-    const response = await fetch(url, {
+    const response = await this._fetch(url, {
       method: 'DELETE',
       headers: this._getHeaders(),
     });
@@ -179,7 +179,7 @@ export class WebDAVClient {
     const url = this._resolvePath(fromPath);
     const destUrl = this._resolvePath(toPath);
 
-    const response = await fetch(url, {
+    const response = await this._fetch(url, {
       method: 'MOVE',
       headers: {
         ...this._getHeaders(),
@@ -201,7 +201,7 @@ export class WebDAVClient {
   async exists(path) {
     const url = this._resolvePath(path);
     try {
-      const response = await fetch(url, {
+      const response = await this._fetch(url, {
         method: 'HEAD',
         headers: this._getHeaders(),
       });
@@ -281,6 +281,21 @@ export class WebDAVClient {
       headers['Authorization'] = this._authHeader;
     }
     return headers;
+  }
+
+  /**
+   * Proxy-aware fetch wrapper
+   * Sends request to our NodeJS backend proxy to bypass CORS
+   */
+  async _fetch(url, options = {}) {
+    const proxyOptions = {
+      ...options,
+      headers: {
+        ...(options.headers || {}),
+        'X-Proxy-Target': url,
+      },
+    };
+    return fetch('/api/proxy', proxyOptions);
   }
 
   /**
