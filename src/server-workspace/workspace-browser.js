@@ -380,18 +380,23 @@ export class WorkspaceBrowser {
 
       textContainer.appendChild(name);
 
-      if (item.absolutePath || this._currentPath.startsWith('Search:')) {
-        const pathLabel = document.createElement('span');
-        pathLabel.style.fontSize = '10px';
-        pathLabel.style.color = 'var(--text-tertiary)';
-        pathLabel.style.whiteSpace = 'nowrap';
-        pathLabel.style.overflow = 'hidden';
-        pathLabel.style.textOverflow = 'ellipsis';
-        pathLabel.textContent = item.absolutePath || item.path;
+      const pathLabel = document.createElement('span');
+      pathLabel.style.fontSize = '11px';
+      pathLabel.style.color = 'var(--text-tertiary)';
+      pathLabel.style.whiteSpace = 'nowrap';
+      pathLabel.style.overflow = 'hidden';
+      pathLabel.style.textOverflow = 'ellipsis';
+      pathLabel.style.marginTop = '2px';
+      // Fallback to relative path if absolutePath is missing
+      pathLabel.textContent = item.absolutePath || item.path || '';
+      
+      // Only show the path label if we are in a search, or if we want to show it everywhere.
+      // Let's show it everywhere to make sure it's visible and useful.
+      if (pathLabel.textContent && pathLabel.textContent !== '/' + item.name) {
         textContainer.appendChild(pathLabel);
       }
 
-      el.title = item.absolutePath || item.path;
+      el.title = item.absolutePath || item.path || '';
       el.append(icon, textContainer);
 
       el.onclick = () => {
