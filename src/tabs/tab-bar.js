@@ -73,9 +73,16 @@ export class TabBar {
         pathSpan.style.lineHeight = '1.1';
         pathSpan.style.whiteSpace = 'nowrap';
         pathSpan.style.overflow = 'hidden';
-        pathSpan.style.textOverflow = 'ellipsis';
+        pathSpan.style.textOverflow = 'ellipsis'; // Actually we will manual truncate
         pathSpan.style.maxWidth = '100%';
-        pathSpan.textContent = fullPath;
+        
+        // Smart truncate: keep right side of path
+        const maxLength = 35;
+        let displayPath = fullPath;
+        if (displayPath.length > maxLength) {
+          displayPath = '...' + displayPath.slice(-(maxLength - 3));
+        }
+        pathSpan.textContent = displayPath;
         nameContainer.appendChild(pathSpan);
       }
 

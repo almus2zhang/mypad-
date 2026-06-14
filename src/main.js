@@ -800,16 +800,21 @@ function showGoToLine() {
 // ============================================================
 
 function updateStatusBar() {
+  const tab = tabManager.getActiveTab();
   if (!editorManager.hasView) {
     statusBar.setCursorPosition(0, 0);
     statusBar.setSelection('', 0);
     statusBar.setEncoding('', null);
     statusBar.setLanguage('', null);
+    if (tab) {
+        statusBar.setFilePath(tab.workspacePath || tab.webdavPath || tab.filePath || '');
+    }
     return;
   }
 
   const pos = editorManager.getCursorPosition();
   statusBar.setCursorPosition(pos.line, pos.col);
+  statusBar.setFilePath(tab?.workspacePath || tab?.webdavPath || tab?.filePath || '');
 
   const selText = editorManager.getSelectionText();
   if (selText) {
@@ -819,7 +824,6 @@ function updateStatusBar() {
     statusBar.setSelection('', 0);
   }
 
-  const tab = tabManager.getActiveTab();
   if (tab) {
     statusBar.setEncoding(getEncodingDisplayName(tab.encoding) || tab.encoding, () => {
       showEncodingPicker(tab.encoding, (newEnc) => {

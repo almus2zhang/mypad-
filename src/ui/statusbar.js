@@ -78,12 +78,19 @@ export function createStatusBar() {
   const leftSection = document.createElement('div');
   leftSection.className = 'statusbar-section statusbar-section--left';
 
+  const pathLabel = createStatusLabel('status-file-path', '');
+  pathLabel.title = 'File Path';
+  pathLabel.style.color = 'var(--text-tertiary)';
+  pathLabel.style.marginRight = 'var(--space-3)';
+  pathLabel.style.maxWidth = '40vw'; // Don't take up too much space
+
   const cursorLabel = createStatusLabel('status-cursor', 'Ln 1, Col 1');
   cursorLabel.title = 'Cursor Position';
 
   const selectionLabel = createStatusLabel('status-selection', '');
   selectionLabel.title = 'Selection';
 
+  leftSection.appendChild(pathLabel);
   leftSection.appendChild(cursorLabel);
   leftSection.appendChild(selectionLabel);
 
@@ -133,6 +140,20 @@ export function createStatusBar() {
 
   return {
     element: bar,
+
+    /**
+     * Update file path display.
+     * @param {string} path
+     */
+    setFilePath(path) {
+      if (!path) {
+        pathLabel.textContent = '';
+        pathLabel.style.display = 'none';
+        return;
+      }
+      pathLabel.textContent = path;
+      pathLabel.style.display = '';
+    },
 
     /**
      * Update cursor position display.
