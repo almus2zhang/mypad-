@@ -4,9 +4,10 @@
   "description": "A powerful code editor for Android tablets with syntax highlighting, multi-tab support, and WebDAV integration.",
   "start_url": "./index.html",
   "scope": "./",
-  "display": "fullscreen",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "orientation": "any",
-  "theme_color": "#1e66f5",
+  "theme_color": "#f8f9fb",
   "background_color": "#ffffff",
   "categories": ["developer", "productivity", "utilities"],
   "icons": [
