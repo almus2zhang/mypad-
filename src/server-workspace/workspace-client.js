@@ -5,11 +5,16 @@
 export class WorkspaceClient {
   constructor() {
     this._connected = false;
-    this._password = '';
+    this._password = localStorage.getItem('mypad_workspace_pwd') || '';
   }
 
   setPassword(pwd) {
     this._password = pwd;
+    if (pwd) {
+      localStorage.setItem('mypad_workspace_pwd', pwd);
+    } else {
+      localStorage.removeItem('mypad_workspace_pwd');
+    }
   }
 
   _getHeaders(additionalHeaders = {}) {
@@ -18,6 +23,10 @@ export class WorkspaceClient {
       headers['x-workspace-password'] = this._password;
     }
     return headers;
+  }
+
+  _getCacheBuster() {
+    return `_t=${Date.now()}`;
   }
 
   _handleError(res, errData) {
@@ -31,7 +40,7 @@ export class WorkspaceClient {
 
   async checkConnection() {
     try {
-      const res = await fetch('/api/workspace/list?path=/', {
+      const res = await fetch(`/api/workspace/list?path=/&${this._getCacheBuster()}`, {
         headers: this._getHeaders(),
         cache: 'no-store'
       });
@@ -57,7 +66,7 @@ export class WorkspaceClient {
   }
 
   async listDirectory(path) {
-    const url = `/api/workspace/list?path=${encodeURIComponent(path)}`;
+    const url = `/api/workspace/list?path=${encodeURIComponent(path)}&${this._getCacheBuster()}`;
     const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store' });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -67,7 +76,7 @@ export class WorkspaceClient {
   }
 
   async readFile(path) {
-    const url = `/api/workspace/read?path=${encodeURIComponent(path)}`;
+    const url = `/api/workspace/read?path=${encodeURIComponent(path)}&${this._getCacheBuster()}`;
     const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store' });
     if (!res.ok) {
       this._handleError(res, {});
