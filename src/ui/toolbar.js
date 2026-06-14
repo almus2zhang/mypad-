@@ -88,10 +88,9 @@ const ICONS = {
   </svg>`,
 
   replace: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M14 4h6v6"/>
-    <path d="M20 4L10 14"/>
-    <path d="M10 20H4v-6"/>
-    <path d="M4 20l10-10"/>
+    <path d="M8 4h6a4 4 0 0 1 0 8H8"/>
+    <path d="M8 4v16"/>
+    <path d="M13.5 12L18 20"/>
   </svg>`,
 
   explorer: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -118,9 +117,9 @@ const ICONS = {
   </svg>`,
 
   nextError: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="10"></circle>
-    <line x1="12" y1="8" x2="12" y2="12"></line>
-    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
   </svg>`,
 
   compare: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
