@@ -369,6 +369,7 @@ export class WorkspaceBrowser {
       name.className = 'webdav-file-name';
       name.textContent = this._currentPath.startsWith('Search:') ? item.path : item.name;
 
+      el.title = item.path;
       el.append(icon, name);
 
       el.onclick = () => {
