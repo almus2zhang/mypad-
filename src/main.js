@@ -587,7 +587,6 @@ async function handleWorkspaceFileOpen(filename, arrayBuffer, path) {
     openEditorForTab(tab);
     recentFiles.add({ name: filename, workspacePath: path, encoding: fileInfo.encoding });
     sidebar.updateRecentFiles(recentFiles.getAll());
-    updateSidebar();
   } catch (e) {
     showToast('Failed to open workspace file: ' + e.message, 'error');
   }
