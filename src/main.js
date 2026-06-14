@@ -77,7 +77,10 @@ const fileHandler = new FileHandler({
 });
 const recentFiles = new RecentFiles();
 const webdavClient = new WebDAVClient();
-const compareManager = new CompareManager(document.getElementById('compare-container'));
+const compareManager = new CompareManager(
+  document.getElementById('compare-container'),
+  () => toggleCompareMode()
+);
 
 // ============================================================
 // Search Panel

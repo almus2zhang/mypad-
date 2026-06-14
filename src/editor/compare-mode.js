@@ -8,11 +8,13 @@ import { createExtensions } from './extensions.js';
 export class CompareManager {
   /**
    * @param {HTMLElement} containerElement - The DOM element that will host the merge view
+   * @param {Function} [onClose] - Callback when the close button is clicked
    */
-  constructor(containerElement) {
+  constructor(containerElement, onClose = () => {}) {
     this.container = containerElement;
     this.mergeView = null;
     this.isActive = false;
+    this.onClose = onClose;
   }
 
   /**
@@ -51,6 +53,9 @@ export class CompareManager {
           <label style="font-size: 13px; display: flex; align-items: center; gap: 6px; color: var(--text-secondary); cursor: pointer; margin-left: 8px;">
             <input type="checkbox" id="sync-scroll-cb" checked> Sync Scroll
           </label>
+          <button id="btn-close-compare" class="annotepad-btn" style="padding: 2px 6px; display: flex; align-items: center; justify-content: center; margin-left: 8px; color: var(--text-secondary);" title="Close Compare">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
         </div>
       </div>
       <div id="merge-view-wrapper" style="flex: 1; display: flex; flex-direction: column; min-height: 0; min-width: 0;"></div>
@@ -110,9 +115,15 @@ export class CompareManager {
       // Diff navigation buttons
       const btnPrev = this.container.querySelector('#btn-prev-diff');
       const btnNext = this.container.querySelector('#btn-next-diff');
+      const btnClose = this.container.querySelector('#btn-close-compare');
 
       btnPrev.addEventListener('click', () => this.goToPrevDiff());
       btnNext.addEventListener('click', () => this.goToNextDiff());
+      btnClose.addEventListener('click', () => {
+        if (typeof this.onClose === 'function') {
+          this.onClose();
+        }
+      });
 
       // Synchronize scrolling
       const scrollers = this.mergeView.dom.querySelectorAll('.cm-scroller');
