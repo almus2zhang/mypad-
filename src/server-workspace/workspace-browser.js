@@ -366,13 +366,11 @@ export class WorkspaceBrowser {
       icon.textContent = item.isDirectory ? '📁' : '📄';
 
       const textContainer = document.createElement('div');
-      textContainer.style.display = 'flex';
-      textContainer.style.flexDirection = 'column';
       textContainer.style.overflow = 'hidden';
       textContainer.style.flex = '1';
       textContainer.style.minWidth = '0'; // allow text truncation
 
-      const name = document.createElement('span');
+      const name = document.createElement('div');
       name.style.whiteSpace = 'nowrap';
       name.style.overflow = 'hidden';
       name.style.textOverflow = 'ellipsis';
@@ -380,7 +378,7 @@ export class WorkspaceBrowser {
 
       textContainer.appendChild(name);
 
-      const pathLabel = document.createElement('span');
+      const pathLabel = document.createElement('div');
       pathLabel.style.fontSize = '11px';
       pathLabel.style.color = 'var(--text-tertiary)';
       pathLabel.style.whiteSpace = 'nowrap';
