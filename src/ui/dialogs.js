@@ -811,7 +811,7 @@ export function showHelpDialog() {
   body.style.overflowY = 'auto';
   body.style.lineHeight = '1.6';
 
-  body.innerHTML = \`
+  body.innerHTML = `
     <style>
       .help-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; vertical-align: middle; color: var(--text-primary); background: var(--bg-secondary); border-radius: 4px; margin: 0 4px; }
       .help-icon svg { width: 16px; height: 16px; }
@@ -844,7 +844,7 @@ export function showHelpDialog() {
     <p style="margin-top: 20px; color: var(--text-tertiary); font-size: 0.9em;">
       提示: 很多操作都支持标准快捷键（如 Ctrl+S 保存，Ctrl+F 查找），建议搭配外接键盘使用获得最佳体验。
     </p>
-  \`;
+  `;
 
   const footer = document.createElement('div');
   footer.className = 'dialog-footer';
