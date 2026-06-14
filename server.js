@@ -46,6 +46,94 @@ function resolveAndCheckPath(reqPath) {
   return targetPath;
 }
 
+// ==========================================
+// In-Memory Workspace Indexer
+// ==========================================
+class WorkspaceIndexer {
+  constructor() {
+    this.files = [];
+    this.isIndexing = false;
+    this.lastIndexed = 0;
+    this.ignoreDirs = new Set(['node_modules', 'dist', 'build', 'out', 'target', 'obj', 'bin']);
+  }
+
+  async buildIndex() {
+    if (this.isIndexing) return;
+    this.isIndexing = true;
+    
+    const newFiles = [];
+    try {
+      const walk = async (dir) => {
+        try {
+          const entries = await fs.readdir(dir, { withFileTypes: true });
+          const subdirs = [];
+          
+          for (const entry of entries) {
+            if (entry.isDirectory()) {
+              if (entry.name.startsWith('.') || this.ignoreDirs.has(entry.name)) continue;
+              subdirs.push(path.join(dir, entry.name));
+            } else {
+              const fullPath = path.join(dir, entry.name);
+              const relPath = path.relative(workspacePath, fullPath).replace(/\\/g, '/');
+              newFiles.push({
+                name: entry.name,
+                path: '/' + relPath,
+                isDirectory: false,
+                size: 0,
+                lastModified: ''
+              });
+            }
+          }
+          await Promise.all(subdirs.map(d => walk(d)));
+        } catch (e) {}
+      };
+
+      await walk(workspacePath);
+      // Sort for binary search or just clean presentation
+      newFiles.sort((a, b) => a.path.localeCompare(b.path));
+      
+      this.files = newFiles;
+      this.lastIndexed = Date.now();
+      console.log(`[Indexer] Finished. Indexed ${this.files.length} files.`);
+    } catch (e) {
+      console.error('[Indexer] Failed to build index:', e.message);
+    } finally {
+      this.isIndexing = false;
+    }
+  }
+
+  search(ext) {
+    if (!ext) return [];
+    // Fast memory filter
+    return this.files.filter(f => f.name.endsWith(ext));
+  }
+
+  addFile(relPath) {
+    // Expected relPath: "/src/main.c"
+    const name = relPath.split('/').pop();
+    // Check if already exists to avoid duplicates
+    if (!this.files.find(f => f.path === relPath)) {
+      this.files.push({
+        name,
+        path: relPath,
+        isDirectory: false,
+        size: 0,
+        lastModified: ''
+      });
+    }
+  }
+
+  removeFile(relPath) {
+    this.files = this.files.filter(f => !f.path.startsWith(relPath));
+  }
+}
+
+const indexer = new WorkspaceIndexer();
+// Start initial indexing in the background
+indexer.buildIndex();
+// Re-index every 5 minutes (300,000 ms) to catch external git pulls/changes
+setInterval(() => indexer.buildIndex(), 300 * 1000);
+
 // API Endpoints
 const apiRouter = express.Router();
 
@@ -121,48 +209,28 @@ apiRouter.get('/search', async (req, res) => {
     const ext = req.query.ext;
     if (!ext) return res.status(400).json({ error: 'Missing ext parameter' });
 
-    const results = [];
-    const MAX_RESULTS = 1000;
-    const IGNORE_DIRS = new Set(['node_modules', 'dist', 'build', 'out', 'target', 'obj', 'bin']);
-
-    async function walk(dir) {
-      if (results.length >= MAX_RESULTS) return;
-      try {
-        const entries = await fs.readdir(dir, { withFileTypes: true });
-        const dirs = [];
-        
-        for (const entry of entries) {
-          if (results.length >= MAX_RESULTS) break;
-          
-          if (entry.isDirectory()) {
-            // Ignore hidden directories (.git, .repo, .svn) and common build outputs
-            if (entry.name.startsWith('.') || IGNORE_DIRS.has(entry.name)) continue;
-            dirs.push(path.join(dir, entry.name));
-          } else {
-            if (entry.name.endsWith(ext)) {
-              const fullPath = path.join(dir, entry.name);
-              const relPath = path.relative(workspacePath, fullPath).replace(/\\/g, '/');
-              results.push({
-                name: entry.name,
-                path: '/' + relPath,
-                isDirectory: false,
-                size: 0, // Skipped fs.stat for massive speedup
-                lastModified: ''
-              });
-            }
-          }
-        }
-        
-        // Process subdirectories in parallel
-        await Promise.all(dirs.map(d => walk(d)));
-      } catch (e) {}
+    if (indexer.isIndexing && indexer.files.length === 0) {
+      return res.status(503).json({ error: 'Index is still building, please try again in a few seconds.' });
     }
+
+    let results = indexer.search(ext);
+    // Limit to 1000 items to prevent massive payloads
+    if (results.length > 1000) results = results.slice(0, 1000);
     
-    await walk(workspacePath);
-    results.sort((a, b) => a.path.localeCompare(b.path));
     res.json(results);
   } catch (error) {
     console.error('Search error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+apiRouter.get('/reindex', async (req, res) => {
+  try {
+    // Fire and forget, or await. Given we want it fast, we can await it.
+    await indexer.buildIndex();
+    res.json({ success: true, count: indexer.files.length });
+  } catch (error) {
+    console.error('Reindex error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -171,7 +239,6 @@ apiRouter.get('/read', async (req, res) => {
   try {
     const targetPath = resolveAndCheckPath(req.query.path);
     const content = await fs.readFile(targetPath);
-    // Send as binary buffer
     res.send(content);
   } catch (error) {
     console.error('Read error:', error.message);
@@ -181,11 +248,16 @@ apiRouter.get('/read', async (req, res) => {
 
 apiRouter.post('/write', async (req, res) => {
   try {
-    const targetPath = resolveAndCheckPath(req.query.path);
+    const reqPath = req.query.path || '';
+    const targetPath = resolveAndCheckPath(reqPath);
     const { base64Content } = req.body;
     if (typeof base64Content === 'string') {
       const buffer = Buffer.from(base64Content, 'base64');
       await fs.writeFile(targetPath, buffer);
+      
+      // Update index
+      indexer.addFile('/' + reqPath.replace(/\\/g, '/').replace(/^\/+/, ''));
+      
       res.json({ success: true });
     } else {
       res.status(400).json({ error: 'Missing base64Content in body' });
@@ -209,8 +281,13 @@ apiRouter.post('/mkdir', async (req, res) => {
 
 apiRouter.post('/delete', async (req, res) => {
   try {
-    const targetPath = resolveAndCheckPath(req.query.path);
+    const reqPath = req.query.path || '';
+    const targetPath = resolveAndCheckPath(reqPath);
     await fs.rm(targetPath, { recursive: true, force: true });
+    
+    // Update index (removes file or entire directory prefix)
+    indexer.removeFile('/' + reqPath.replace(/\\/g, '/').replace(/^\/+/, ''));
+    
     res.json({ success: true });
   } catch (error) {
     console.error('Delete error:', error.message);

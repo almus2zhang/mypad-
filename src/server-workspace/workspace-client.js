@@ -79,6 +79,19 @@ export class WorkspaceClient {
     const url = `/api/workspace/search?ext=${encodeURIComponent(ext)}&${this._getCacheBuster()}`;
     const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store' });
     if (!res.ok) {
+      if (res.status === 503) {
+        throw new Error('Index is still building, please try again in a few seconds.');
+      }
+      const err = await res.json().catch(() => ({}));
+      this._handleError(res, err);
+    }
+    return res.json();
+  }
+
+  async reindex() {
+    const url = `/api/workspace/reindex?${this._getCacheBuster()}`;
+    const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store' });
+    if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       this._handleError(res, err);
     }

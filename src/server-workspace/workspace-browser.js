@@ -182,6 +182,35 @@ export class WorkspaceBrowser {
       this._filterBarEl.append(btn);
     });
 
+    const refreshBtn = document.createElement('button');
+    refreshBtn.textContent = '🔄 Rebuild Index';
+    refreshBtn.className = 'annotepad-btn';
+    refreshBtn.style.padding = '2px 8px';
+    refreshBtn.style.fontSize = '12px';
+    refreshBtn.style.borderRadius = '4px';
+    refreshBtn.style.marginLeft = 'auto';
+    refreshBtn.addEventListener('click', async () => {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = 'Rebuilding...';
+      try {
+        await this.client.reindex();
+        // If we are currently searching, re-run the search
+        if (this._currentPath.startsWith('Search: ')) {
+          const ext = this._currentPath.replace('Search: ', '');
+          await this.searchExtension(ext);
+        } else {
+          // just reload current dir
+          await this.navigateTo(this._currentPath);
+        }
+      } catch (e) {
+        alert('Failed to rebuild index: ' + e.message);
+      } finally {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = '🔄 Rebuild Index';
+      }
+    });
+    this._filterBarEl.append(refreshBtn);
+
     this._fileListEl = document.createElement('div');
     this._fileListEl.className = 'webdav-file-list';
     this._fileListEl.style.flex = '1';
