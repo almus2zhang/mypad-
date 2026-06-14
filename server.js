@@ -72,12 +72,10 @@ class WorkspaceIndexer {
             return;
           }
 
-          const subdirs = [];
-          
           for (const entry of entries) {
             if (entry.isDirectory()) {
               if (entry.name.startsWith('.') || this.ignoreDirs.has(entry.name)) continue;
-              subdirs.push(path.join(dir, entry.name));
+              await walk(path.join(dir, entry.name));
             } else {
               const fullPath = path.join(dir, entry.name);
               const relPath = path.relative(workspacePath, fullPath).replace(/\\/g, '/');
@@ -90,8 +88,9 @@ class WorkspaceIndexer {
               });
             }
           }
-          await Promise.all(subdirs.map(d => walk(d)));
-        } catch (e) {}
+        } catch (e) {
+          console.error(`[Indexer] Error reading ${dir}: ${e.message}`);
+        }
       };
 
       await walk(workspacePath);
