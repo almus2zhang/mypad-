@@ -419,23 +419,7 @@ export class WorkspaceBrowser {
         }
       };
 
-      const delBtn = document.createElement('button');
-      delBtn.className = 'btn';
-      delBtn.style.padding = '2px 8px';
-      delBtn.style.fontSize = '12px';
-      delBtn.textContent = 'Delete';
-      delBtn.onclick = async (e) => {
-        e.stopPropagation();
-        if (confirm(`Delete ${item.name}?`)) {
-          try {
-            await this.client.deletePath(item.path);
-            this.navigateTo(this._currentPath);
-          } catch(err) {
-            alert('Failed to delete: ' + err.message);
-          }
-        }
-      };
-      el.appendChild(delBtn);
+
 
       this._fileListEl.appendChild(el);
     });
