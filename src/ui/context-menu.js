@@ -317,6 +317,11 @@ export function createContextMenu() {
       window.addEventListener('scroll', hide, true);
     }, 50);
 
+    // Trigger animation
+    requestAnimationFrame(() => {
+      if (menuEl) menuEl.classList.add('visible');
+    });
+
     // Focus the first item
     if (actionItems.length > 0) {
       focusItem(0);

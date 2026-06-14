@@ -1012,9 +1012,27 @@ window.addEventListener('contextmenu', (e) => {
   const selectedText = editorManager.getSelectionText?.() || '';
   
   let menuItems = getDefaultMenuItems({
-    onCut: () => document.execCommand('cut'),
-    onCopy: () => document.execCommand('copy'),
-    onPaste: () => document.execCommand('paste'),
+    onCut: async () => {
+      if (selectedText) {
+        await navigator.clipboard.writeText(selectedText);
+        if (editorManager.view) editorManager.view.dispatch(editorManager.view.state.replaceSelection(''));
+      }
+    },
+    onCopy: async () => {
+      if (selectedText) {
+        await navigator.clipboard.writeText(selectedText);
+      }
+    },
+    onPaste: async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text && editorManager.view) {
+          editorManager.view.dispatch(editorManager.view.state.replaceSelection(text));
+        }
+      } catch (e) {
+        showToast('无法读取剪贴板，请允许剪贴板权限或使用 Ctrl+V', 'error');
+      }
+    },
     onSelectAll: () => {
       if (editorManager.view) {
         const len = editorManager.view.state.doc.length;
