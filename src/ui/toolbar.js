@@ -62,6 +62,10 @@ const ICONS = {
     <line x1="8" y1="11" x2="14" y2="11"/>
   </svg>`,
 
+  fullscreen: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+  </svg>`,
+
   themeDark: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
   </svg>`,
@@ -262,6 +266,7 @@ export function createToolbar(callbacks = {}) {
     createButton({ id: 'btn-word-wrap', icon: ICONS.wordWrap, tooltip: 'Toggle Word Wrap', onClick: callbacks.onWordWrap, toggle: true }),
     createButton({ id: 'btn-status-bar', icon: ICONS.statusBar, tooltip: 'Toggle Status Bar', onClick: callbacks.onToggleStatusBar, toggle: true }),
     createButton({ id: 'btn-keyboard', icon: ICONS.keyboardOff, tooltip: 'Toggle Touch Keyboard', onClick: callbacks.onToggleKeyboard, toggle: true }),
+    createButton({ id: 'btn-fullscreen', icon: ICONS.fullscreen, tooltip: 'Toggle Fullscreen', onClick: callbacks.onFullscreen, toggle: true }),
     createButton({ id: 'btn-zoom-in', icon: ICONS.zoomIn, tooltip: 'Zoom In', onClick: callbacks.onZoomIn }),
     createButton({ id: 'btn-zoom-out', icon: ICONS.zoomOut, tooltip: 'Zoom Out', onClick: callbacks.onZoomOut }),
     themeBtn,

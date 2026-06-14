@@ -116,6 +116,7 @@ const toolbar = createToolbar({
   onThemeToggle: () => toggleTheme(),
   onToggleStatusBar: () => toggleStatusBar(),
   onToggleKeyboard: () => toggleKeyboard(),
+  onFullscreen: () => toggleFullscreen(),
   onFind: () => searchPanel.toggle('find'),
   onReplace: () => searchPanel.toggle('replace'),
   onNextError: () => { if (editorManager.view) nextDiagnostic(editorManager.view); },
@@ -800,6 +801,27 @@ function zoomOut() {
   currentFontSize = Math.max(currentFontSize - 2, 10);
   applyFontSize();
 }
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      showToast('Error enabling fullscreen: ' + err.message, 'error');
+    });
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+document.addEventListener('fullscreenchange', () => {
+  const btn = document.getElementById('btn-fullscreen');
+  if (btn) {
+    if (document.fullscreenElement) {
+      btn.classList.add('toolbar-btn--active');
+    } else {
+      btn.classList.remove('toolbar-btn--active');
+    }
+  }
+});
 
 function toggleKeyboard() {
   keyboardEnabled = !keyboardEnabled;
