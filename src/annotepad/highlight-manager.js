@@ -29,6 +29,17 @@ export class HighlightManager {
       });
     }
 
+    const selectedText = this.editorManager.getSelectionText();
+    if (selectedText && this.ui.element.style.display === 'none') {
+      const exists = this.highlightRules.some(r => r.pattern === selectedText);
+      if (!exists) {
+        const presetColors = ['#ff8a8a', '#a6e3a1', '#89b4fa', '#fab387', '#cba6f7', '#f9e2af', '#94e2d5', '#f5c2e7'];
+        const color = presetColors[this.highlightRules.length % presetColors.length];
+        // addHighlightRule calls _applyHighlights internally
+        this.addHighlightRule({ pattern: selectedText, color });
+      }
+    }
+
     this.ui.show();
   }
 

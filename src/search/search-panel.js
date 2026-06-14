@@ -208,14 +208,14 @@ export function createSearchPanel(editorManager) {
       const newHeight = window.innerHeight - clientY;
       // Allow dragging up to 1 line of the editor (e.g. max height = window height - 100px)
       if (newHeight > 50 && newHeight < window.innerHeight - 100) {
-        panel.style.height = `${newHeight}px`;
-        panel.style.flex = 'none';
+        panel.style.flex = `0 0 ${newHeight}px`;
+        panel.style.height = 'auto';
       }
     } else {
       const newWidth = window.innerWidth - clientX;
       if (newWidth > 150 && newWidth < window.innerWidth - 100) {
-        panel.style.width = `${newWidth}px`;
-        panel.style.flex = 'none';
+        panel.style.flex = `0 0 ${newWidth}px`;
+        panel.style.width = 'auto';
       }
     }
   }
