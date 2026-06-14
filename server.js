@@ -36,10 +36,19 @@ if (passArgIdx !== -1 && args[passArgIdx + 1]) {
   serverPassword = args[passArgIdx + 1];
 }
 
+const clientIdsArgIdx = args.indexOf('--client-ids');
+let allowedClientIds = [];
+if (clientIdsArgIdx !== -1 && args[clientIdsArgIdx + 1]) {
+  allowedClientIds = args[clientIdsArgIdx + 1].split(',').map(id => id.trim()).filter(Boolean);
+}
+
 console.log(`Starting MyPad++ Server`);
 console.log(`Workspaces: ${workspaces.map(w => w.name + ' (' + w.path + ')').join(', ')}`);
 if (serverPassword) {
   console.log(`Remote Access: Enabled (Password Protected)`);
+  if (allowedClientIds.length > 0) {
+    console.log(`Allowed Client IDs: ${allowedClientIds.join(', ')}`);
+  }
 } else {
   console.log(`Remote Access: Disabled (No password configured)`);
 }
@@ -253,6 +262,14 @@ apiRouter.use((req, res, next) => {
   const clientPassword = req.headers['x-workspace-password'];
   if (clientPassword !== serverPassword) {
     return res.status(401).json({ error: 'Password required or incorrect' });
+  }
+
+  // Client ID Check
+  if (allowedClientIds.length > 0) {
+    const clientId = req.headers['x-client-id'];
+    if (!clientId || !allowedClientIds.includes(clientId)) {
+      return res.status(403).json({ error: 'Access Denied: Client ID not authorized' });
+    }
   }
 
   next();

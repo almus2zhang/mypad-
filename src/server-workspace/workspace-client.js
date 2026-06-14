@@ -6,6 +6,14 @@ export class WorkspaceClient {
   constructor() {
     this._connected = false;
     this._password = localStorage.getItem('mypad_workspace_pwd') || '';
+    
+    let clientId = localStorage.getItem('mypad_client_id');
+    if (!clientId) {
+      clientId = 'client_' + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem('mypad_client_id', clientId);
+    }
+    this._clientId = clientId;
+    console.log('[MyPad++] Your unique Client ID is:', this._clientId);
   }
 
   setPassword(pwd) {
@@ -21,6 +29,9 @@ export class WorkspaceClient {
     const headers = { ...additionalHeaders };
     if (this._password) {
       headers['x-workspace-password'] = this._password;
+    }
+    if (this._clientId) {
+      headers['x-client-id'] = this._clientId;
     }
     return headers;
   }
