@@ -313,7 +313,7 @@ export function createSearchPanel(editorManager) {
   });
 
   function _setLayout(layout) {
-    const container = document.getElementById('workspace');
+    const container = document.getElementById('editor-layout-wrapper');
     if (!container) return;
     container.classList.remove('annotepad-horizontal', 'annotepad-vertical');
     if (isVisible && isFindAllMode) {

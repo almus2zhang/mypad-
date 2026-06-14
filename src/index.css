@@ -2256,15 +2256,15 @@ body {
    AnNotePad Mode (Find All)
    ============================================================ */
 
-#workspace.annotepad-horizontal {
+#editor-layout-wrapper.annotepad-horizontal {
   flex-direction: row;
 }
 
-#workspace.annotepad-vertical {
+#editor-layout-wrapper.annotepad-vertical {
   flex-direction: column;
 }
 
-#workspace.annotepad-horizontal .search-panel {
+#editor-layout-wrapper.annotepad-horizontal .search-panel {
   position: relative;
   top: 0;
   right: 0;
@@ -2280,7 +2280,7 @@ body {
   background: var(--bg-primary);
 }
 
-#workspace.annotepad-vertical .search-panel {
+#editor-layout-wrapper.annotepad-vertical .search-panel {
   position: relative;
   top: 0;
   right: 0;
@@ -2302,7 +2302,7 @@ body {
   z-index: 1002;
 }
 
-#workspace.annotepad-vertical .panel-resizer {
+#editor-layout-wrapper.annotepad-vertical .panel-resizer {
   top: -10px;
   left: 0;
   right: 0;
@@ -2310,7 +2310,7 @@ body {
   cursor: ns-resize;
 }
 
-#workspace.annotepad-horizontal .panel-resizer {
+#editor-layout-wrapper.annotepad-horizontal .panel-resizer {
   top: 0;
   bottom: 0;
   left: -10px;
@@ -2319,16 +2319,16 @@ body {
 }
 
 /* Compact search mode in vertical and horizontal layouts */
-#workspace.annotepad-vertical .search-panel,
-#workspace.annotepad-horizontal .search-panel {
+#editor-layout-wrapper.annotepad-vertical .search-panel,
+#editor-layout-wrapper.annotepad-horizontal .search-panel {
   padding: 2px 4px;
 }
-#workspace.annotepad-vertical .search-row,
-#workspace.annotepad-horizontal .search-row {
+#editor-layout-wrapper.annotepad-vertical .search-row,
+#editor-layout-wrapper.annotepad-horizontal .search-row {
   margin-bottom: 2px;
 }
-#workspace.annotepad-vertical .annotepad-results,
-#workspace.annotepad-horizontal .annotepad-results {
+#editor-layout-wrapper.annotepad-vertical .annotepad-results,
+#editor-layout-wrapper.annotepad-horizontal .annotepad-results {
   margin-top: 2px;
   padding-top: 2px;
 }

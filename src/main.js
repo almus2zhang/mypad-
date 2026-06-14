@@ -163,7 +163,7 @@ document.getElementById('statusbar-container').appendChild(statusBar.element);
 
 // --- Search Panel (floating overlay inside workspace) ---
 const workspace = document.getElementById('workspace');
-workspace.appendChild(searchPanel.element);
+document.getElementById('editor-layout-wrapper').appendChild(searchPanel.element);
 
 // --- Sidebar ---
 const sidebar = createSidebar();
@@ -250,7 +250,8 @@ const fileTreeSidebar = new FileTreeSidebar(workspaceBrowser.client, {
   }
 });
 const workspaceMain = document.getElementById('workspace');
-workspaceMain.insertBefore(fileTreeSidebar.element, document.getElementById('editor-container'));
+const editorLayoutWrapper = document.getElementById('editor-layout-wrapper');
+workspaceMain.insertBefore(fileTreeSidebar.element, editorLayoutWrapper);
 
 // --- Highlight Manager ---
 // Initialization has been moved to the top level via hoisted imports
