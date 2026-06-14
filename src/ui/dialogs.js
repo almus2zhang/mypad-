@@ -4,6 +4,7 @@
  */
 
 import { LANGUAGE_LIST } from '../editor/languages.js';
+import { ICONS } from './toolbar.js';
 
 // ─── Encoding data ───────────────────────────────────────────────────────────
 
@@ -810,35 +811,40 @@ export function showHelpDialog() {
   body.style.overflowY = 'auto';
   body.style.lineHeight = '1.6';
 
-  body.innerHTML = `
+  body.innerHTML = \`
+    <style>
+      .help-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; vertical-align: middle; color: var(--text-primary); background: var(--bg-secondary); border-radius: 4px; margin: 0 4px; }
+      .help-icon svg { width: 16px; height: 16px; }
+      .help-ul li { margin-bottom: 8px; display: flex; align-items: center; }
+    </style>
     <h3 style="margin-top: 0;">工具栏图标说明</h3>
-    <ul style="padding-left: 20px; color: var(--text-secondary);">
-      <li><b>📄 📂 💾</b> : 新建 / 打开 / 保存 / 另存为</li>
-      <li><b>↩ ↪</b> : 撤销 / 重做</li>
-      <li><b>自动换行</b> : 切换长文本自动换行</li>
-      <li><b>底部状态栏</b> : 显示/隐藏底部的编码和光标信息</li>
-      <li><b>虚拟键盘</b> : 显示/隐藏专门适配触摸屏的符号键盘</li>
-      <li><b>⛶ 全屏</b> : 沉浸式全屏模式，隐藏系统状态栏</li>
-      <li><b>+ / -</b> : 放大 / 缩小字体</li>
-      <li><b>🌙 / ☀️</b> : 切换深色 / 浅色主题</li>
+    <ul class="help-ul" style="padding-left: 20px; color: var(--text-secondary);">
+      <li><span class="help-icon">\${ICONS.newFile}</span><span class="help-icon">\${ICONS.open}</span><span class="help-icon">\${ICONS.save}</span><span class="help-icon">\${ICONS.saveAs}</span> : 新建 / 打开 / 保存 / 另存为</li>
+      <li><span class="help-icon">\${ICONS.undo}</span><span class="help-icon">\${ICONS.redo}</span> : 撤销 / 重做</li>
+      <li><span class="help-icon">\${ICONS.wordWrap}</span> : 切换长文本自动换行</li>
+      <li><span class="help-icon">\${ICONS.statusBar}</span> : 显示 / 隐藏底部的编码和光标信息状态栏</li>
+      <li><span class="help-icon">\${ICONS.keyboardOff}</span> : 禁止软键盘自动弹出 (适合外接键盘时使用)</li>
+      <li><span class="help-icon">\${ICONS.fullscreen}</span> : 沉浸式全屏模式，隐藏系统状态栏</li>
+      <li><span class="help-icon">\${ICONS.zoomIn}</span><span class="help-icon">\${ICONS.zoomOut}</span> : 放大 / 缩小字体</li>
+      <li><span class="help-icon">\${ICONS.themeDark}</span> / <span class="help-icon">\${ICONS.themeLight}</span> : 切换深色 / 浅色主题</li>
     </ul>
 
     <h3 style="margin-top: 20px;">高级功能说明</h3>
-    <ul style="padding-left: 20px; color: var(--text-secondary);">
-      <li><b>树状目录</b> : 左侧滑出的文件浏览器，可查看当前工作区的所有文件。</li>
-      <li><b>🔍 查找</b> : 强大的本地搜索（快捷键 Ctrl+F），支持正则表达式。</li>
-      <li><b>R 替换</b> : 在当前文件内进行文本替换。</li>
-      <li><b>⚠ 查找错误</b> : 跳转到代码中的语法错误或警告位置。</li>
-      <li><b>对比模式</b> : 双排对比模式，智能对齐不同版本文件的差异。</li>
-      <li><b>☁ WebDAV</b> : 连接到远程 WebDAV 服务器读写文件。</li>
-      <li><b>服务器工作区</b> : 将远程目录作为本地工作区使用，支持跨端同步。</li>
-      <li><b>高亮设置</b> : 支持自定义关键词的颜色高亮，划选词语后打开此菜单即可自动创建高亮。</li>
+    <ul class="help-ul" style="padding-left: 20px; color: var(--text-secondary);">
+      <li><span class="help-icon">\${ICONS.explorer}</span> <b>树状目录</b> : 左侧滑出的文件浏览器，可查看当前工作区的所有文件。</li>
+      <li><span class="help-icon">\${ICONS.find}</span> <b>查找</b> : 强大的本地搜索（快捷键 Ctrl+F），支持正则表达式。</li>
+      <li><span class="help-icon">\${ICONS.replace}</span> <b>替换</b> : 在当前文件内进行文本替换。</li>
+      <li><span class="help-icon">\${ICONS.nextError}</span> <b>查找错误</b> : 跳转到代码中的语法错误或警告位置。</li>
+      <li><span class="help-icon">\${ICONS.compare}</span> <b>对比模式</b> : 双排对比模式，智能对齐不同版本文件的差异。</li>
+      <li><span class="help-icon">\${ICONS.webdav}</span> <b>WebDAV</b> : 连接到远程 WebDAV 服务器读写文件。</li>
+      <li><span class="help-icon">\${ICONS.workspace}</span> <b>服务器工作区</b> : 将远程目录作为本地工作区使用，支持跨端同步。</li>
+      <li><span class="help-icon">\${ICONS.highlights}</span> <b>高亮设置</b> : 支持自定义关键词的颜色高亮，划选词语后打开此菜单即可自动创建高亮。</li>
     </ul>
 
     <p style="margin-top: 20px; color: var(--text-tertiary); font-size: 0.9em;">
       提示: 很多操作都支持标准快捷键（如 Ctrl+S 保存，Ctrl+F 查找），建议搭配外接键盘使用获得最佳体验。
     </p>
-  `;
+  \`;
 
   const footer = document.createElement('div');
   footer.className = 'dialog-footer';
