@@ -96,10 +96,10 @@
   --tab-modified: #dd6b20;
 
   /* Status bar */
-  --statusbar-bg: #1e66f5;
-  --statusbar-text: #ffffff;
-  --statusbar-hover: rgba(255, 255, 255, 0.12);
-  --statusbar-border: transparent;
+  --statusbar-bg: rgba(30, 102, 245, 0.08);
+  --statusbar-text: #4c4f69;
+  --statusbar-hover: rgba(30, 102, 245, 0.15);
+  --statusbar-border: rgba(30, 102, 245, 0.2);
 
   /* Sidebar */
   --sidebar-bg: #f8f9fb;
@@ -189,10 +189,10 @@
   --tab-indicator: #89b4fa;
   --tab-modified: #fab387;
 
-  --statusbar-bg: #181825;
-  --statusbar-text: #a6adc8;
-  --statusbar-hover: rgba(137, 180, 250, 0.12);
-  --statusbar-border: #313244;
+  --statusbar-bg: rgba(137, 180, 250, 0.08);
+  --statusbar-text: #cdd6f4;
+  --statusbar-hover: rgba(137, 180, 250, 0.15);
+  --statusbar-border: rgba(137, 180, 250, 0.2);
 
   --sidebar-bg: #181825;
   --sidebar-border: #313244;
@@ -574,14 +574,16 @@ body {
 .statusbar {
   display: flex;
   align-items: center;
-  height: 26px;
-  padding: 0 var(--space-4);
+  height: 32px;
+  padding: 0 var(--space-3);
   background: var(--statusbar-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   color: var(--statusbar-text);
   border-top: 1px solid var(--statusbar-border);
-  font-size: var(--font-size-xs);
+  font-size: 11px;
   font-family: var(--font-ui);
-  gap: 0;
+  gap: var(--space-2);
   overflow: hidden;
 }
 
@@ -596,11 +598,12 @@ body {
 .statusbar-section--right {
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: var(--space-2);
   flex-shrink: 1;
   overflow-x: auto;
   scrollbar-width: none;
   min-width: 0;
+  padding-right: var(--space-2);
 }
 
 .statusbar-section--right::-webkit-scrollbar {
@@ -611,21 +614,34 @@ body {
   display: flex;
   align-items: center;
   padding: 0 var(--space-3);
-  height: 26px;
+  height: 22px;
+  border-radius: 11px;
+  background: rgba(128, 128, 128, 0.08);
   cursor: default;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   min-width: 0;
-  transition: background var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .statusbar-item.clickable {
   cursor: pointer;
+  background: rgba(128, 128, 128, 0.15);
 }
 
 .statusbar-item.clickable:hover {
   background: var(--statusbar-hover);
+  transform: translateY(-1px);
+}
+
+.statusbar-label {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ---------- Symbol Bar ---------- */
