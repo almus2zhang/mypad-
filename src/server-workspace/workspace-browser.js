@@ -71,6 +71,16 @@ export class WorkspaceBrowser {
 
   async navigateTo(path) {
     this._currentPath = path || '/';
+    
+    // Intercept search pseudo-paths
+    if (this._currentPath.startsWith('Search: q=')) {
+      const q = this._currentPath.substring('Search: q='.length);
+      return this.searchGlobal(q);
+    } else if (this._currentPath.startsWith('Search: ext=')) {
+      const ext = this._currentPath.substring('Search: ext='.length);
+      return this.searchExtension(ext);
+    }
+
     this._loading = true;
     this._renderBreadcrumb();
     this._fileListEl.innerHTML = '<div style="text-align:center;padding:2rem;">Loading...</div>';
