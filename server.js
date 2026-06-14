@@ -220,14 +220,15 @@ apiRouter.get('/list', async (req, res) => {
 
 apiRouter.get('/search', async (req, res) => {
   try {
-    const ext = req.query.ext;
-    if (!ext) return res.status(400).json({ error: 'Missing ext parameter' });
+    const ext = req.query.ext || '';
+    const q = req.query.q || '';
+    if (!ext && !q) return res.status(400).json({ error: 'Missing ext or q parameter' });
 
     if (indexer.isIndexing && indexer.files.length === 0) {
       return res.status(503).json({ error: 'Index is still building, please try again in a few seconds.' });
     }
 
-    let results = indexer.search(ext);
+    let results = indexer.search({ ext, q });
     // Limit to 1000 items to prevent massive payloads
     if (results.length > 1000) results = results.slice(0, 1000);
     
