@@ -314,11 +314,24 @@ apiRouter.post('/delete', async (req, res) => {
 app.use('/api/workspace', apiRouter);
 
 // Serve frontend static files
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(path.join(__dirname, 'dist'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('index.html')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('Surrogate-Control', 'no-store');
+    }
+  }
+}));
 
 // Fallback to index.html for SPA
 app.use((req, res, next) => {
   if (req.method === 'GET' && req.accepts('html')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
   } else {
     next();
