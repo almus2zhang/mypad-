@@ -213,7 +213,7 @@ export function createSearchPanel(editorManager) {
       }
     } else {
       const newWidth = window.innerWidth - clientX;
-      if (newWidth > 150 && newWidth < window.innerWidth - 100) {
+      if (newWidth > 50 && newWidth < window.innerWidth - 100) {
         panel.style.flex = `0 0 ${newWidth}px`;
         panel.style.width = 'auto';
       }
@@ -624,11 +624,19 @@ export function createSearchPanel(editorManager) {
     isVisible = true;
     panel.style.display = '';
     replaceRow.style.display = mode === 'replace' ? '' : 'none';
-    
-    // Add layout class if Find All mode is active
-    if (isFindAllMode) {
-      _setLayout(isLayoutVertical ? 'vertical' : 'horizontal');
+
+    // Force Find All mode by default if not already active
+    if (!isFindAllMode) {
+      isFindAllMode = true;
+      findAllBtn.classList.add('active');
+      resultsContainer.style.display = 'block';
+      layoutBtn.style.display = '';
+      if (!returnPosition && editorManager.view) {
+        returnPosition = editorManager.view.state.selection.main.head;
+      }
     }
+
+    _setLayout(isLayoutVertical ? 'vertical' : 'horizontal');
 
     findInput.focus();
     findInput.select();
@@ -638,14 +646,11 @@ export function createSearchPanel(editorManager) {
     if (selectedText && selectedText.length < 200) {
       findInput.value = selectedText;
       saveSearchHistory(selectedText);
-      // Auto-trigger Find All if requested
-      if (!isFindAllMode) {
-        findAllBtn.click(); // This enables Find All mode and searches
-      } else {
-        _runFindAll();
-      }
-    } else {
-      if (isFindAllMode) _runFindAll();
+    }
+    
+    // Auto-run search if there's text
+    if (findInput.value) {
+      _runFindAll();
     }
   }
 
