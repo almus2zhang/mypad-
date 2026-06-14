@@ -379,13 +379,14 @@ export class WorkspaceBrowser {
       textContainer.appendChild(name);
 
       const pathLabel = document.createElement('div');
-      pathLabel.style.fontSize = '11px';
-      pathLabel.style.color = 'var(--text-tertiary)';
+      pathLabel.style.fontSize = '14px';
+      pathLabel.style.color = 'red';
+      pathLabel.style.fontWeight = 'bold';
       pathLabel.style.whiteSpace = 'nowrap';
       pathLabel.style.overflow = 'hidden';
       pathLabel.style.textOverflow = 'ellipsis';
-      pathLabel.style.marginTop = '2px';
-      pathLabel.textContent = item.absolutePath || item.path || '';
+      pathLabel.style.marginTop = '4px';
+      pathLabel.textContent = item.absolutePath || item.path || 'UNKNOWN PATH';
       
       if (pathLabel.textContent) {
         textContainer.appendChild(pathLabel);
