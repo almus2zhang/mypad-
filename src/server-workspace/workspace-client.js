@@ -32,7 +32,8 @@ export class WorkspaceClient {
   async checkConnection() {
     try {
       const res = await fetch('/api/workspace/list?path=/', {
-        headers: this._getHeaders()
+        headers: this._getHeaders(),
+        cache: 'no-store'
       });
       if (res.ok) {
         this._connected = true;
@@ -57,7 +58,7 @@ export class WorkspaceClient {
 
   async listDirectory(path) {
     const url = `/api/workspace/list?path=${encodeURIComponent(path)}`;
-    const res = await fetch(url, { headers: this._getHeaders() });
+    const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store' });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       this._handleError(res, err);
@@ -67,7 +68,7 @@ export class WorkspaceClient {
 
   async readFile(path) {
     const url = `/api/workspace/read?path=${encodeURIComponent(path)}`;
-    const res = await fetch(url, { headers: this._getHeaders() });
+    const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store' });
     if (!res.ok) {
       this._handleError(res, {});
     }
