@@ -967,6 +967,13 @@ function showToast(message, type = 'info') {
 
 window.addEventListener('contextmenu', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  
+  // Skip global context menu for UI elements that have their own
+  const target = e.target;
+  if (target.closest('.file-tree-sidebar') || target.closest('.tab-bar') || target.closest('.dialog-overlay')) {
+    return; // Let the specific component handle it
+  }
+
   try {
     e.preventDefault();
     e.stopPropagation();
