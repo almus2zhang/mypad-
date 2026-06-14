@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -41,6 +42,83 @@ let allowedClientIds = [];
 if (clientIdsArgIdx !== -1 && args[clientIdsArgIdx + 1]) {
   allowedClientIds = args[clientIdsArgIdx + 1].split(',').map(id => id.trim()).filter(Boolean);
 }
+
+const adminPortArgIdx = args.indexOf('--admin-port');
+const adminPort = adminPortArgIdx !== -1 && args[adminPortArgIdx + 1] ? parseInt(args[adminPortArgIdx + 1], 10) : 3001;
+
+class ClientManager {
+  constructor(initialAllowedIds = []) {
+    this.clientsFile = path.join(__dirname, 'clients.json');
+    this.data = { approved: [], pending: [] };
+    this.load();
+    
+    // Merge initial CLI allowed IDs
+    if (initialAllowedIds.length > 0) {
+      initialAllowedIds.forEach(id => {
+        if (!this.data.approved.includes(id)) {
+          this.data.approved.push(id);
+        }
+      });
+      this.save();
+    }
+  }
+
+  load() {
+    try {
+      if (fsSync.existsSync(this.clientsFile)) {
+        this.data = JSON.parse(fsSync.readFileSync(this.clientsFile, 'utf8'));
+      }
+    } catch (e) {
+      console.error('Failed to load clients.json', e.message);
+    }
+  }
+
+  save() {
+    try {
+      fsSync.writeFileSync(this.clientsFile, JSON.stringify(this.data, null, 2));
+    } catch (e) {
+      console.error('Failed to save clients.json', e.message);
+    }
+  }
+
+  isApproved(clientId) {
+    return this.data.approved.includes(clientId);
+  }
+
+  addPending(clientId, ip) {
+    if (!clientId) return;
+    if (this.isApproved(clientId)) return;
+    const existing = this.data.pending.find(p => p.id === clientId);
+    if (!existing) {
+      this.data.pending.push({ id: clientId, ip, timestamp: Date.now() });
+      this.save();
+    } else {
+      existing.timestamp = Date.now();
+      existing.ip = ip;
+      this.save();
+    }
+  }
+
+  approve(clientId) {
+    if (!this.isApproved(clientId)) {
+      this.data.approved.push(clientId);
+    }
+    this.data.pending = this.data.pending.filter(p => p.id !== clientId);
+    this.save();
+  }
+
+  revoke(clientId) {
+    this.data.approved = this.data.approved.filter(id => id !== clientId);
+    this.save();
+  }
+
+  clearPending() {
+    this.data.pending = [];
+    this.save();
+  }
+}
+
+const clientManager = new ClientManager(allowedClientIds);
 
 console.log(`Starting MyPad++ Server`);
 console.log(`Workspaces: ${workspaces.map(w => w.name + ' (' + w.path + ')').join(', ')}`);
@@ -265,11 +343,15 @@ apiRouter.use((req, res, next) => {
   }
 
   // Client ID Check
-  if (allowedClientIds.length > 0) {
+  if (clientManager.data.approved.length > 0) {
     const clientId = req.headers['x-client-id'];
-    if (!clientId || !allowedClientIds.includes(clientId)) {
+    if (!clientId || !clientManager.isApproved(clientId)) {
+      clientManager.addPending(clientId, req.ip);
       return res.status(403).json({ error: 'Access Denied: Client ID not authorized' });
     }
+  } else if (req.headers['x-client-id']) {
+    // Track pending even if no approved list exists to let them approve the first device easily
+    clientManager.addPending(req.headers['x-client-id'], req.ip);
   }
 
   next();
@@ -447,6 +529,174 @@ app.use((req, res, next) => {
   }
 });
 
+// ==========================================
+// Admin Portal Server
+// ==========================================
+const adminApp = express();
+adminApp.use(cors());
+adminApp.use(express.json());
+
+adminApp.use((req, res, next) => {
+  if (!serverPassword) {
+    return res.status(403).send('Admin portal is disabled because no server password is set.');
+  }
+  // Allow OPTIONS
+  if (req.method === 'OPTIONS') return next();
+  
+  const b64auth = (req.headers.authorization || '').split(' ')[1] || '';
+  const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':');
+
+  if (login && password === serverPassword) {
+    return next();
+  }
+  
+  res.set('WWW-Authenticate', 'Basic realm="401"');
+  res.status(401).send('Authentication required. Username can be anything, Password is the --password value.');
+});
+
+adminApp.get('/api/clients', (req, res) => {
+  res.json(clientManager.data);
+});
+
+adminApp.post('/api/clients/approve', (req, res) => {
+  const { id } = req.body;
+  if (id) clientManager.approve(id);
+  res.json({ success: true });
+});
+
+adminApp.post('/api/clients/revoke', (req, res) => {
+  const { id } = req.body;
+  if (id) clientManager.revoke(id);
+  res.json({ success: true });
+});
+
+adminApp.delete('/api/clients/pending', (req, res) => {
+  clientManager.clearPending();
+  res.json({ success: true });
+});
+
+adminApp.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>MyPad++ Admin Portal</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <style>
+        body { font-family: system-ui, sans-serif; background: #f4f4f5; margin: 0; padding: 20px; color: #18181b; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { font-size: 24px; margin-bottom: 20px; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        h2 { font-size: 18px; margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #e4e4e7; }
+        li:last-child { border-bottom: none; padding-bottom: 0; }
+        .client-info { display: flex; flex-direction: column; }
+        .client-id { font-weight: 600; font-family: monospace; }
+        .client-meta { font-size: 12px; color: #71717a; margin-top: 4px; }
+        button { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 500; transition: 0.2s; }
+        button.approve { background: #10b981; color: white; }
+        button.approve:hover { background: #059669; }
+        button.revoke { background: #ef4444; color: white; }
+        button.revoke:hover { background: #dc2626; }
+        button.clear { background: #f4f4f5; color: #71717a; }
+        button.clear:hover { background: #e4e4e7; }
+        .empty { color: #a1a1aa; font-style: italic; font-size: 14px; padding: 10px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>MyPad++ Admin Portal</h1>
+        
+        <div class="card">
+          <h2>Pending Requests <button class="clear" onclick="clearPending()">Clear All</button></h2>
+          <ul id="pending-list">Loading...</ul>
+        </div>
+
+        <div class="card">
+          <h2>Approved Clients</h2>
+          <ul id="approved-list">Loading...</ul>
+        </div>
+      </div>
+
+      <script>
+        async function fetchClients() {
+          const res = await fetch('/api/clients');
+          const data = await res.json();
+          render(data);
+        }
+
+        function render(data) {
+          const pendingList = document.getElementById('pending-list');
+          if (data.pending.length === 0) {
+            pendingList.innerHTML = '<div class="empty">No pending requests</div>';
+          } else {
+            pendingList.innerHTML = data.pending.map(p => \`
+              <li>
+                <div class="client-info">
+                  <span class="client-id">\${p.id}</span>
+                  <span class="client-meta">IP: \${p.ip} | Last seen: \${new Date(p.timestamp).toLocaleString()}</span>
+                </div>
+                <button class="approve" onclick="approve('\${p.id}')">Approve</button>
+              </li>
+            \`).join('');
+          }
+
+          const approvedList = document.getElementById('approved-list');
+          if (data.approved.length === 0) {
+            approvedList.innerHTML = '<div class="empty">No approved clients</div>';
+          } else {
+            approvedList.innerHTML = data.approved.map(id => \`
+              <li>
+                <div class="client-info">
+                  <span class="client-id">\${id}</span>
+                </div>
+                <button class="revoke" onclick="revoke('\${id}')">Revoke</button>
+              </li>
+            \`).join('');
+          }
+        }
+
+        async function approve(id) {
+          await fetch('/api/clients/approve', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+          });
+          fetchClients();
+        }
+
+        async function revoke(id) {
+          if (!confirm('Are you sure you want to revoke this client?')) return;
+          await fetch('/api/clients/revoke', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id })
+          });
+          fetchClients();
+        }
+
+        async function clearPending() {
+          await fetch('/api/clients/pending', { method: 'DELETE' });
+          fetchClients();
+        }
+
+        setInterval(fetchClients, 3000);
+        fetchClients();
+      </script>
+    </body>
+    </html>
+  `);
+});
+
 app.listen(port, '0.0.0.0', () => {
-  console.log(`Server listening on port ${port}`);
+  console.log(`Workspace API: http://0.0.0.0:${port}`);
+});
+
+adminApp.listen(adminPort, '0.0.0.0', () => {
+  if (serverPassword) {
+    console.log(`Admin Portal:  http://0.0.0.0:${adminPort}/`);
+  } else {
+    console.log(`Admin Portal:  Disabled (Requires --password)`);
+  }
 });
