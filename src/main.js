@@ -684,6 +684,9 @@ setTimeout(applyStatusBarVisibility, 100);
 
 // Auto-hide status bar when clicking text body or other areas
 document.addEventListener('click', (e) => {
+  // If target was detached from DOM during event bubbling (e.g. tab re-render), ignore it
+  if (!document.body.contains(e.target)) return;
+
   if (statusBarVisible) {
     const isTabBar = e.target.closest('.tab-bar');
     const isStatusBar = e.target.closest('.statusbar');
