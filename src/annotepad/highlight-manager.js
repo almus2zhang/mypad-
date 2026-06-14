@@ -36,6 +36,12 @@ export class HighlightManager {
     return this.highlightRules;
   }
 
+  fillActiveInput(text) {
+    if (this.ui && this.ui.fillActiveInput) {
+      this.ui.fillActiveInput(text);
+    }
+  }
+
   addHighlightRule(rule) {
     this.highlightRules.push(rule);
     this._applyHighlights();

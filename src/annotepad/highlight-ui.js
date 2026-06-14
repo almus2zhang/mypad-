@@ -156,6 +156,12 @@ export function createHighlightPanel(manager) {
         const currentRule = manager.getHighlightRules()[idx];
         manager.updateHighlightRule(idx, { ...currentRule, pattern: textInp.value });
       });
+      
+      textInp.addEventListener('focus', () => {
+        // Need to refer to the method added in the returned object, 
+        // but we can just set the activeInputIdx variable directly since it's in the same scope
+        activeInputIdx = idx;
+      });
 
       const rmBtn = document.createElement('button');
       rmBtn.className = 'annotepad-btn';
@@ -223,6 +229,8 @@ export function createHighlightPanel(manager) {
     document.removeEventListener('mouseup', onMouseUp);
   }
 
+  let activeInputIdx = null;
+
   return {
     element: panel,
     show() {
@@ -237,12 +245,36 @@ export function createHighlightPanel(manager) {
         }
       } else {
         panel.style.display = 'none';
+        activeInputIdx = null;
+      }
+      
+      if (manager.getHighlightRules().length === 0) {
+        manager.addHighlightRule({ pattern: '', color: presetColors[0] });
       }
       renderHlRules();
     },
     hide() {
       panel.style.display = 'none';
       closePopover();
+      activeInputIdx = null;
+    },
+    setActiveInput(idx) {
+      activeInputIdx = idx;
+    },
+    fillActiveInput(text) {
+      if (activeInputIdx !== null && panel.style.display !== 'none') {
+        const rules = manager.getHighlightRules();
+        if (activeInputIdx < rules.length) {
+          const currentRule = rules[activeInputIdx];
+          if (currentRule.pattern !== text) {
+            manager.updateHighlightRule(activeInputIdx, { ...currentRule, pattern: text });
+            renderHlRules();
+          }
+        }
+      }
+    },
+    get isVisible() {
+      return panel.style.display !== 'none';
     }
   };
 }

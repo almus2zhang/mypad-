@@ -339,6 +339,13 @@ function handleEditorUpdate(update, tabId) {
 
   if (update.selectionSet || update.docChanged) {
     updateStatusBar();
+    
+    if (update.selectionSet && highlightManager.ui.isVisible) {
+      const selectedText = editorManager.getSelectionText();
+      if (selectedText) {
+        highlightManager.fillActiveInput(selectedText);
+      }
+    }
   }
 }
 
