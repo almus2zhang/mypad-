@@ -38,8 +38,10 @@ import { WorkspaceBrowser } from './server-workspace/workspace-browser.js';
 // UI
 import { createToolbar } from './ui/toolbar.js';
 import { createStatusBar } from './ui/statusbar.js';
+import { createSymbolBar } from './ui/symbol-bar.js';
 import { createSidebar } from './ui/sidebar.js';
-import { createContextMenu, getDefaultMenuItems } from './ui/context-menu.js';
+import { createContextMenu } from './ui/context-menu.js';
+import { FileTreeSidebar } from './ui/file-tree-sidebar.js';
 import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog } from './ui/dialogs.js';
 
 // Utils
@@ -123,6 +125,7 @@ const toolbar = createToolbar({
     const tab = tabManager.getActiveTab();
     workspaceBrowser.show('open', tab?.filename);
   },
+  onExplorer: () => fileTreeSidebar.toggle(),
   onCustomHighlights: () => highlightManager.toggle(),
 });
 document.getElementById('toolbar-container').appendChild(toolbar);
@@ -228,6 +231,19 @@ const workspaceBrowser = new WorkspaceBrowser({
   onFileSave: handleWorkspaceFileSave,
   onError: (msg) => showToast(msg, 'error'),
 });
+
+// --- File Tree Sidebar ---
+const fileTreeSidebar = new FileTreeSidebar(workspaceBrowser.client, {
+  onFileSelect: (item) => {
+    // Open the file in a new tab
+    if (item.isDirectory) return;
+    workspaceBrowser.client.readFile(item.path)
+      .then(buffer => handleWorkspaceFileOpen(item.name, buffer, item.path))
+      .catch(e => showToast("Failed to open file: " + e.message, "error"));
+  }
+});
+const workspaceMain = document.getElementById('workspace');
+workspaceMain.insertBefore(fileTreeSidebar.element, document.getElementById('editor-container'));
 
 // --- Highlight Manager ---
 // Initialization has been moved to the top level via hoisted imports

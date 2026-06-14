@@ -1,0 +1,244 @@
+/**
+ * @module file-tree-sidebar
+ * A VSCode-style resizable file tree explorer for the main workspace.
+ */
+
+export class FileTreeSidebar {
+  /**
+   * @param {Object} workspaceClient The client to fetch directories
+   * @param {Object} options Options containing callbacks
+   */
+  constructor(workspaceClient, options = {}) {
+    this.client = workspaceClient;
+    this.options = options;
+    
+    // UI Elements
+    this.element = document.createElement('div');
+    this.element.className = 'file-tree-sidebar';
+    this.element.style.display = 'none'; // Hidden by default
+    
+    // Main tree container
+    this.treeContainer = document.createElement('div');
+    this.treeContainer.className = 'file-tree-content';
+    
+    // Resizer handle
+    this.resizer = document.createElement('div');
+    this.resizer.className = 'file-tree-resizer';
+    
+    this.element.appendChild(this.treeContainer);
+    this.element.appendChild(this.resizer);
+    
+    // State
+    this.isVisible = false;
+    this.expandedFolders = new Set(['/']); // Root always expanded
+    this.width = 250;
+    this.element.style.width = `${this.width}px`;
+    
+    this._initResizer();
+  }
+
+  toggle() {
+    if (this.isVisible) {
+      this.hide();
+    } else {
+      this.show();
+    }
+  }
+
+  show() {
+    this.isVisible = true;
+    this.element.style.display = 'flex';
+    if (this.treeContainer.innerHTML === '') {
+      this.loadDirectory('/');
+    }
+  }
+
+  hide() {
+    this.isVisible = false;
+    this.element.style.display = 'none';
+  }
+
+  async loadDirectory(path, containerEl = this.treeContainer, paddingLeft = 10) {
+    if (path === '/') {
+      this.treeContainer.innerHTML = '<div style="padding:10px;color:var(--text-tertiary);font-size:13px;">Loading workspaces...</div>';
+    } else {
+      const loader = document.createElement('div');
+      loader.className = 'file-tree-item';
+      loader.style.paddingLeft = `${paddingLeft}px`;
+      loader.textContent = 'Loading...';
+      containerEl.appendChild(loader);
+    }
+
+    try {
+      let items;
+      items = await this.client.listDirectory(path);
+      
+      // Clear container (if root) or remove loader
+      if (path === '/') {
+        this.treeContainer.innerHTML = '';
+      } else {
+        containerEl.innerHTML = ''; // Clear children of folder
+      }
+
+      items.forEach(item => {
+        const itemEl = this._createTreeItem(item, paddingLeft);
+        if (path === '/') {
+          this.treeContainer.appendChild(itemEl);
+        } else {
+          containerEl.appendChild(itemEl);
+        }
+      });
+      
+      if (items.length === 0 && path !== '/') {
+        const empty = document.createElement('div');
+        empty.className = 'file-tree-item';
+        empty.style.paddingLeft = `${paddingLeft}px`;
+        empty.style.color = 'var(--text-tertiary)';
+        empty.style.fontStyle = 'italic';
+        empty.textContent = '(empty)';
+        containerEl.appendChild(empty);
+      }
+    } catch (e) {
+      if (path === '/') {
+        this.treeContainer.innerHTML = `<div style="padding:10px;color:var(--danger);font-size:13px;">Error loading workspace: ${e.message}</div>`;
+      } else {
+        containerEl.innerHTML = `<div class="file-tree-item" style="padding-left:${paddingLeft}px;color:var(--danger);">Error</div>`;
+      }
+    }
+  }
+
+  _createTreeItem(item, paddingLeft) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'file-tree-node';
+    
+    const row = document.createElement('div');
+    row.className = 'file-tree-item';
+    row.style.paddingLeft = `${paddingLeft}px`;
+    row.title = item.path;
+    
+    const arrow = document.createElement('span');
+    arrow.className = 'file-tree-arrow';
+    if (item.isDirectory) {
+      arrow.textContent = this.expandedFolders.has(item.path) ? '▼' : '▶';
+    } else {
+      arrow.innerHTML = '&nbsp;';
+    }
+    
+    const icon = document.createElement('span');
+    icon.className = 'file-tree-icon';
+    if (item.isDirectory) {
+      icon.textContent = '📁';
+    } else {
+      icon.textContent = '📄';
+    }
+    
+    const name = document.createElement('span');
+    name.className = 'file-tree-name';
+    name.textContent = item.name;
+    
+    row.appendChild(arrow);
+    row.appendChild(icon);
+    row.appendChild(name);
+    wrapper.appendChild(row);
+    
+    const childrenContainer = document.createElement('div');
+    childrenContainer.className = 'file-tree-children';
+    if (item.isDirectory && !this.expandedFolders.has(item.path)) {
+      childrenContainer.style.display = 'none';
+    }
+    wrapper.appendChild(childrenContainer);
+
+    // Event handlers
+    row.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Remove previous active
+      const prevActive = this.treeContainer.querySelector('.file-tree-item.active');
+      if (prevActive) prevActive.classList.remove('active');
+      row.classList.add('active');
+
+      if (item.isDirectory) {
+        // Toggle folder
+        if (this.expandedFolders.has(item.path)) {
+          // Collapse
+          this.expandedFolders.delete(item.path);
+          arrow.textContent = '▶';
+          childrenContainer.style.display = 'none';
+        } else {
+          // Expand
+          this.expandedFolders.add(item.path);
+          arrow.textContent = '▼';
+          childrenContainer.style.display = 'block';
+          if (childrenContainer.children.length === 0) {
+            this.loadDirectory(item.path, childrenContainer, paddingLeft + 15);
+          }
+        }
+      } else {
+        // File click
+        if (this.options.onFileSelect) {
+          this.options.onFileSelect(item);
+        }
+      }
+    });
+
+    // If it's a directory and already expanded (e.g. state restoration), load children
+    if (item.isDirectory && this.expandedFolders.has(item.path)) {
+      this.loadDirectory(item.path, childrenContainer, paddingLeft + 15);
+    }
+
+    return wrapper;
+  }
+
+  _initResizer() {
+    let isResizing = false;
+    let startX;
+    let startWidth;
+
+    const onMouseMove = (e) => {
+      if (!isResizing) return;
+      const dx = e.clientX - startX;
+      let newWidth = startWidth + dx;
+      if (newWidth < 150) newWidth = 150;
+      if (newWidth > 600) newWidth = 600;
+      this.width = newWidth;
+      this.element.style.width = `${newWidth}px`;
+    };
+
+    const onMouseUp = () => {
+      if (isResizing) {
+        isResizing = false;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onMouseUp);
+        document.body.style.cursor = '';
+      }
+    };
+
+    const onTouchMove = (e) => {
+      if (e.touches.length > 0) {
+        e.clientX = e.touches[0].clientX;
+        onMouseMove(e);
+      }
+    };
+
+    this.resizer.addEventListener('mousedown', (e) => {
+      isResizing = true;
+      startX = e.clientX;
+      startWidth = this.width;
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+      document.body.style.cursor = 'col-resize';
+      e.preventDefault();
+    });
+
+    this.resizer.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 0) {
+        isResizing = true;
+        startX = e.touches[0].clientX;
+        startWidth = this.width;
+        document.addEventListener('touchmove', onTouchMove, { passive: false });
+        document.addEventListener('touchend', onMouseUp);
+      }
+    });
+  }
+}

@@ -90,6 +90,11 @@ const ICONS = {
     <path d="M4 20l10-10"/>
   </svg>`,
 
+  explorer: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+    <line x1="9" y1="3" x2="9" y2="21"/>
+  </svg>`,
+
   webdav: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
   </svg>`,
@@ -264,6 +269,7 @@ export function createToolbar(callbacks = {}) {
 
   // ── Tools group ─────────────────────────────────────────────────────────
   const toolsGroup = [
+    createButton({ id: 'btn-explorer', icon: ICONS.explorer, tooltip: 'File Explorer', onClick: callbacks.onExplorer, toggle: true }),
     createButton({ id: 'btn-find', icon: ICONS.find, tooltip: 'Find', onClick: callbacks.onFind }),
     createButton({ id: 'btn-replace', icon: ICONS.replace, tooltip: 'Replace', onClick: callbacks.onReplace }),
     createButton({ id: 'btn-next-error', icon: ICONS.nextError, tooltip: 'Next Error', onClick: callbacks.onNextError }),

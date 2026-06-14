@@ -12,10 +12,22 @@ const port = process.env.PORT || 3000;
 
 // Parse args for --workspace and --password
 const args = process.argv.slice(2);
-const workspaceArgIdx = args.indexOf('--workspace');
-let workspacePath = process.cwd();
-if (workspaceArgIdx !== -1 && args[workspaceArgIdx + 1]) {
-  workspacePath = path.resolve(args[workspaceArgIdx + 1]);
+const workspaces = [];
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--workspace' && args[i + 1]) {
+    const wsPath = path.resolve(args[i + 1]);
+    workspaces.push({
+      name: path.basename(wsPath) || 'workspace',
+      path: wsPath
+    });
+    i++; // skip the path argument
+  }
+}
+if (workspaces.length === 0) {
+  workspaces.push({
+    name: 'cwd',
+    path: process.cwd()
+  });
 }
 
 const passArgIdx = args.indexOf('--password');
@@ -25,7 +37,7 @@ if (passArgIdx !== -1 && args[passArgIdx + 1]) {
 }
 
 console.log(`Starting MyPad++ Server`);
-console.log(`Workspace Path: ${workspacePath}`);
+console.log(`Workspaces: ${workspaces.map(w => w.name + ' (' + w.path + ')').join(', ')}`);
 if (serverPassword) {
   console.log(`Remote Access: Enabled (Password Protected)`);
 } else {
@@ -85,10 +97,25 @@ app.use(express.json({ limit: '50mb' }));
 
 // Security check function
 function resolveAndCheckPath(reqPath) {
-  // Normalize Windows separators for URL pathing if needed
-  if (!reqPath) reqPath = '';
-  const targetPath = path.normalize(path.join(workspacePath, reqPath));
-  if (!targetPath.startsWith(workspacePath)) {
+  if (!reqPath || reqPath === '/') {
+    return null;
+  }
+  
+  const normalizedReq = reqPath.replace(/\\/g, '/');
+  const parts = normalizedReq.split('/').filter(Boolean);
+  if (parts.length === 0) return null;
+  
+  const wsName = parts[0];
+  const ws = workspaces.find(w => w.name === wsName);
+  if (!ws) {
+    throw new Error(`Workspace not found: ${wsName}`);
+  }
+  
+  const subPath = parts.slice(1).join('/');
+  const targetPath = path.normalize(path.join(ws.path, subPath));
+  
+  const wsPathNormalized = path.normalize(ws.path);
+  if (targetPath !== wsPathNormalized && !targetPath.startsWith(wsPathNormalized + path.sep)) {
     throw new Error('Access Denied: Path traversal detected');
   }
   return targetPath;
@@ -111,7 +138,7 @@ class WorkspaceIndexer {
     
     const newFiles = [];
     try {
-      const walk = async (dir) => {
+      const walk = async (dir, wsName, wsPath) => {
         try {
           if (newFiles.length >= 1000000) return; // Hard limit to prevent OOM
           const entries = await fs.readdir(dir, { withFileTypes: true });
@@ -125,13 +152,13 @@ class WorkspaceIndexer {
             if (newFiles.length >= 1000000) break;
             if (entry.isDirectory()) {
               if (this.ignoreDirs.has(entry.name)) continue;
-              await walk(path.join(dir, entry.name));
+              await walk(path.join(dir, entry.name), wsName, wsPath);
             } else {
               const fullPath = path.join(dir, entry.name);
-              const relPath = path.relative(workspacePath, fullPath).replace(/\\/g, '/');
+              const relPath = path.relative(wsPath, fullPath).replace(/\\/g, '/');
               newFiles.push({
                 name: entry.name,
-                path: '/' + relPath,
+                path: '/' + wsName + '/' + relPath,
                 absolutePath: fullPath,
                 isDirectory: false,
                 size: 0,
@@ -144,7 +171,10 @@ class WorkspaceIndexer {
         }
       };
 
-      await walk(workspacePath);
+      for (const ws of workspaces) {
+        await walk(ws.path, ws.name, ws.path);
+      }
+      
       // Sort for binary search or just clean presentation
       newFiles.sort((a, b) => a.path.localeCompare(b.path));
       
@@ -159,11 +189,17 @@ class WorkspaceIndexer {
   }
 
   search(params) {
+    let files = this.files;
+    if (params.workspaces && params.workspaces.length > 0) {
+      const allowed = params.workspaces.map(w => '/' + w + '/');
+      files = files.filter(f => allowed.some(prefix => f.path.startsWith(prefix)));
+    }
+
     if (params.ext) {
-      return this.files.filter(f => f.name.endsWith(params.ext));
+      return files.filter(f => f.name.endsWith(params.ext));
     } else if (params.q) {
       const terms = params.q.toLowerCase().split(/\s+/).filter(Boolean);
-      return this.files.filter(f => {
+      return files.filter(f => {
         const pathLower = f.path.toLowerCase();
         return terms.every(term => pathLower.includes(term));
       });
@@ -224,13 +260,31 @@ apiRouter.use((req, res, next) => {
 
 apiRouter.get('/list', async (req, res) => {
   try {
+    const reqPath = req.query.path || '';
+    const normalizedReq = reqPath.replace(/\\/g, '/');
+    const parts = normalizedReq.split('/').filter(Boolean);
+    const wsName = parts.length > 0 ? parts[0] : null;
+
     const targetPath = resolveAndCheckPath(req.query.path);
+    if (!targetPath) {
+      const items = workspaces.map(ws => ({
+        name: ws.name,
+        path: '/' + ws.name,
+        isDirectory: true,
+        size: 0,
+        lastModified: 0
+      }));
+      return res.json(items);
+    }
+
     const stat = await fs.stat(targetPath);
     if (!stat.isDirectory()) {
       return res.status(400).json({ error: 'Not a directory' });
     }
     const entries = await fs.readdir(targetPath, { withFileTypes: true });
     
+    const ws = workspaces.find(w => w.name === wsName);
+
     const items = await Promise.all(entries.map(async (entry) => {
       const fullPath = path.join(targetPath, entry.name);
       let size = 0;
@@ -242,10 +296,10 @@ apiRouter.get('/list', async (req, res) => {
       } catch (e) {
         // ignore unreadable
       }
-      const relPath = path.relative(workspacePath, fullPath).replace(/\\/g, '/');
+      const relPath = path.relative(ws.path, fullPath).replace(/\\/g, '/');
       return {
         name: entry.name,
-        path: '/' + relPath,
+        path: '/' + ws.name + '/' + relPath,
         absolutePath: fullPath,
         isDirectory: entry.isDirectory(),
         size,
@@ -271,13 +325,16 @@ apiRouter.get('/search', async (req, res) => {
   try {
     const ext = req.query.ext || '';
     const q = req.query.q || '';
+    const workspacesParam = req.query.workspaces;
+    const workspacesList = workspacesParam ? workspacesParam.split(',') : [];
+
     if (!ext && !q) return res.status(400).json({ error: 'Missing ext or q parameter' });
 
     if (indexer.isIndexing && indexer.files.length === 0) {
       return res.status(503).json({ error: 'Index is still building, please try again in a few seconds.' });
     }
 
-    let results = indexer.search({ ext, q });
+    let results = indexer.search({ ext, q, workspaces: workspacesList });
     // Limit to 1000 items to prevent massive payloads
     if (results.length > 1000) results = results.slice(0, 1000);
     

@@ -62,6 +62,7 @@ export class WorkspaceBrowser {
     }
 
     this._updateFooter();
+    this._loadWorkspacesForSearch();
     await this.navigateTo(this._currentPath);
   }
 
@@ -126,7 +127,8 @@ export class WorkspaceBrowser {
     this._fileListEl.innerHTML = '<div style="text-align:center;padding:2rem;">Searching...</div>';
 
     try {
-      const items = await this.client.searchFiles({ ext });
+      const workspaces = this._getSelectedWorkspaces();
+      const items = await this.client.searchFiles({ ext, workspaces });
       this._renderFileList(items);
     } catch (e) {
       this._fileListEl.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--danger);">
@@ -166,7 +168,8 @@ export class WorkspaceBrowser {
     this._fileListEl.innerHTML = '<div style="text-align:center;padding:2rem;">Searching...</div>';
 
     try {
-      const items = await this.client.searchFiles({ q });
+      const workspaces = this._getSelectedWorkspaces();
+      const items = await this.client.searchFiles({ q, workspaces });
       this._renderFileList(items);
     } catch (e) {
       this._fileListEl.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--danger);">
@@ -176,6 +179,43 @@ export class WorkspaceBrowser {
     } finally {
       this._loading = false;
     }
+  }
+
+  async _loadWorkspacesForSearch() {
+    this._workspaceSelectorEl.innerHTML = '<span style="color:var(--text-tertiary);">Loading directories...</span>';
+    try {
+      const items = await this.client.listDirectory('/');
+      this._workspaceSelectorEl.innerHTML = '<span style="color:var(--text-secondary);font-weight:bold;">Search in:</span>';
+      items.forEach(item => {
+        if (!item.isDirectory) return;
+        const label = document.createElement('label');
+        label.style.display = 'flex';
+        label.style.alignItems = 'center';
+        label.style.gap = '4px';
+        label.style.cursor = 'pointer';
+        
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.value = item.name;
+        cb.checked = true; // Default to checked
+        
+        const text = document.createTextNode(item.name);
+        
+        label.append(cb, text);
+        this._workspaceSelectorEl.append(label);
+      });
+    } catch (e) {
+      this._workspaceSelectorEl.innerHTML = `<span style="color:var(--danger);">Failed to load dirs: ${e.message}</span>`;
+    }
+  }
+
+  _getSelectedWorkspaces() {
+    if (!this._workspaceSelectorEl) return '';
+    const checkboxes = Array.from(this._workspaceSelectorEl.querySelectorAll('input[type="checkbox"]'));
+    if (checkboxes.length === 0) return '';
+    // If all checked, we don't strictly need to pass it, but passing it explicitly is fine.
+    const checked = checkboxes.filter(cb => cb.checked).map(cb => cb.value);
+    return checked.join(',');
   }
 
   // --- UI ---
@@ -295,12 +335,22 @@ export class WorkspaceBrowser {
 
     this._filterBarEl.append(searchInput, refreshBtn);
 
+    this._workspaceSelectorEl = document.createElement('div');
+    this._workspaceSelectorEl.style.padding = '4px 16px';
+    this._workspaceSelectorEl.style.display = 'flex';
+    this._workspaceSelectorEl.style.gap = '12px';
+    this._workspaceSelectorEl.style.flexWrap = 'wrap';
+    this._workspaceSelectorEl.style.borderBottom = '1px solid var(--border-color)';
+    this._workspaceSelectorEl.style.background = 'var(--bg-secondary)';
+    this._workspaceSelectorEl.style.fontSize = '12px';
+    this._workspaceSelectorEl.style.alignItems = 'center';
+
     this._fileListEl = document.createElement('div');
     this._fileListEl.className = 'webdav-file-list';
     this._fileListEl.style.flex = '1';
     this._fileListEl.style.overflowY = 'auto';
 
-    body.append(this._breadcrumbEl, this._filterBarEl, this._fileListEl);
+    body.append(this._breadcrumbEl, this._filterBarEl, this._workspaceSelectorEl, this._fileListEl);
 
     this._footerEl = document.createElement('div');
     this._footerEl.className = 'dialog-footer';
