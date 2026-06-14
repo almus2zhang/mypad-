@@ -365,13 +365,30 @@ export class WorkspaceBrowser {
       icon.className = 'webdav-file-icon';
       icon.textContent = item.isDirectory ? '📁' : '📄';
 
+      const textContainer = document.createElement('div');
+      textContainer.style.display = 'flex';
+      textContainer.style.flexDirection = 'column';
+      textContainer.style.overflow = 'hidden';
+
       const name = document.createElement('span');
       name.className = 'webdav-file-name';
-      name.textContent = this._currentPath.startsWith('Search:') ? item.path : item.name;
+      name.textContent = item.name;
 
-      el.title = item.path;
-      name.title = item.path;
-      el.append(icon, name);
+      textContainer.appendChild(name);
+
+      if (item.absolutePath || this._currentPath.startsWith('Search:')) {
+        const pathLabel = document.createElement('span');
+        pathLabel.style.fontSize = '10px';
+        pathLabel.style.color = 'var(--text-tertiary)';
+        pathLabel.style.whiteSpace = 'nowrap';
+        pathLabel.style.overflow = 'hidden';
+        pathLabel.style.textOverflow = 'ellipsis';
+        pathLabel.textContent = item.absolutePath || item.path;
+        textContainer.appendChild(pathLabel);
+      }
+
+      el.title = item.absolutePath || item.path;
+      el.append(icon, textContainer);
 
       el.onclick = () => {
         if (item.isDirectory) {

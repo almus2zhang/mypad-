@@ -84,6 +84,7 @@ class WorkspaceIndexer {
               newFiles.push({
                 name: entry.name,
                 path: '/' + relPath,
+                absolutePath: fullPath,
                 isDirectory: false,
                 size: 0,
                 lastModified: ''
@@ -193,11 +194,11 @@ apiRouter.get('/list', async (req, res) => {
       } catch (e) {
         // ignore unreadable
       }
-      // Return relative path to workspace using forward slashes
       const relPath = path.relative(workspacePath, fullPath).replace(/\\/g, '/');
       return {
         name: entry.name,
         path: '/' + relPath,
+        absolutePath: fullPath,
         isDirectory: entry.isDirectory(),
         size,
         lastModified: new Date(mtime).toISOString(),
