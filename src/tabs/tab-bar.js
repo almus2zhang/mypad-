@@ -47,11 +47,39 @@ export class TabBar {
       el.dataset.tabId = tab.id;
       el.title = tab.webdavPath || tab.filePath || tab.filename;
 
-      // Filename
+      // Name and Path Container
+      const nameContainer = document.createElement('div');
+      nameContainer.style.display = 'flex';
+      nameContainer.style.flexDirection = 'column';
+      nameContainer.style.alignItems = 'flex-start';
+      nameContainer.style.overflow = 'hidden';
+      nameContainer.style.flex = '1';
+      nameContainer.style.justifyContent = 'center';
+
       const nameSpan = document.createElement('span');
       nameSpan.className = 'tab-name';
+      nameSpan.style.lineHeight = '1.2';
+      nameSpan.style.whiteSpace = 'nowrap';
+      nameSpan.style.overflow = 'hidden';
+      nameSpan.style.textOverflow = 'ellipsis';
       nameSpan.textContent = tab.filename;
-      el.appendChild(nameSpan);
+      nameContainer.appendChild(nameSpan);
+
+      const fullPath = tab.webdavPath || tab.filePath || '';
+      if (fullPath && fullPath !== '/' + tab.filename) {
+        const pathSpan = document.createElement('span');
+        pathSpan.style.fontSize = '9px';
+        pathSpan.style.opacity = '0.7';
+        pathSpan.style.lineHeight = '1.1';
+        pathSpan.style.whiteSpace = 'nowrap';
+        pathSpan.style.overflow = 'hidden';
+        pathSpan.style.textOverflow = 'ellipsis';
+        pathSpan.style.maxWidth = '100%';
+        pathSpan.textContent = fullPath;
+        nameContainer.appendChild(pathSpan);
+      }
+
+      el.appendChild(nameContainer);
 
       // Modified dot
       if (tab.modified) {
