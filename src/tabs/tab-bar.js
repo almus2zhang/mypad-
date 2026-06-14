@@ -66,7 +66,7 @@ export class TabBar {
       nameContainer.appendChild(nameSpan);
 
       const fullPath = tab.webdavPath || tab.filePath || '';
-      if (fullPath && fullPath !== '/' + tab.filename) {
+      if (fullPath) {
         const pathSpan = document.createElement('span');
         pathSpan.style.fontSize = '9px';
         pathSpan.style.opacity = '0.7';
