@@ -486,7 +486,7 @@ export function showSaveConfirmDialog(filename, onSave, onDiscard, onCancel) {
   body.appendChild(hint);
   dialog.appendChild(body);
 
-  dialog.appendChild(createDialogFooter([
+  const footer = createDialogFooter([
     {
       label: 'Yes',
       className: 'dialog-btn--primary',
@@ -502,7 +502,12 @@ export function showSaveConfirmDialog(filename, onSave, onDiscard, onCancel) {
       className: 'dialog-btn--secondary',
       onClick: () => { close(); if (typeof onCancel === 'function') onCancel(); },
     },
-  ]));
+  ]);
+  
+  // Center the buttons for this specific dialog
+  footer.style.justifyContent = 'center';
+  
+  dialog.appendChild(footer);
 }
 
 /**
