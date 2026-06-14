@@ -75,8 +75,10 @@ export class WorkspaceClient {
     return res.json();
   }
 
-  async searchFiles(ext) {
-    const url = `/api/workspace/search?ext=${encodeURIComponent(ext)}&${this._getCacheBuster()}`;
+  async searchFiles({ ext, q }) {
+    let url = `/api/workspace/search?${this._getCacheBuster()}`;
+    if (ext) url += `&ext=${encodeURIComponent(ext)}`;
+    if (q) url += `&q=${encodeURIComponent(q)}`;
     const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store' });
     if (!res.ok) {
       if (res.status === 503) {

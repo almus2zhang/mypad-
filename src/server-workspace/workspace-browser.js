@@ -89,13 +89,12 @@ export class WorkspaceBrowser {
   }
 
   async searchExtension(ext) {
-    this._currentPath = 'Search: ' + ext;
+    this._currentPath = 'Search: ext=' + ext;
     this._loading = true;
     
-    // Custom breadcrumb for search results
     this._breadcrumbEl.innerHTML = '';
     const titleSpan = document.createElement('span');
-    titleSpan.textContent = `Workspace Search: ${ext}`;
+    titleSpan.textContent = `Search Extension: ${ext}`;
     titleSpan.style.fontWeight = 'bold';
     titleSpan.style.color = 'var(--text-primary)';
     
@@ -105,7 +104,10 @@ export class WorkspaceBrowser {
     backBtn.style.padding = '2px 8px';
     backBtn.style.fontSize = '12px';
     backBtn.style.marginLeft = 'auto';
-    backBtn.addEventListener('click', () => this.navigateTo('/'));
+    backBtn.addEventListener('click', () => {
+      this._filterBarEl.querySelector('input').value = '';
+      this.navigateTo('/');
+    });
 
     this._breadcrumbEl.append(titleSpan, backBtn);
     this._breadcrumbEl.style.display = 'flex';
@@ -114,7 +116,47 @@ export class WorkspaceBrowser {
     this._fileListEl.innerHTML = '<div style="text-align:center;padding:2rem;">Searching...</div>';
 
     try {
-      const items = await this.client.searchFiles(ext);
+      const items = await this.client.searchFiles({ ext });
+      this._renderFileList(items);
+    } catch (e) {
+      this._fileListEl.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--danger);">
+        <p>Failed to search</p>
+        <p>${e.message}</p>
+      </div>`;
+    } finally {
+      this._loading = false;
+    }
+  }
+
+  async searchQuery(q) {
+    this._currentPath = 'Search: q=' + q;
+    this._loading = true;
+    
+    this._breadcrumbEl.innerHTML = '';
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = `Search: "${q}"`;
+    titleSpan.style.fontWeight = 'bold';
+    titleSpan.style.color = 'var(--text-primary)';
+    
+    const backBtn = document.createElement('button');
+    backBtn.textContent = '← Back to root';
+    backBtn.className = 'annotepad-btn';
+    backBtn.style.padding = '2px 8px';
+    backBtn.style.fontSize = '12px';
+    backBtn.style.marginLeft = 'auto';
+    backBtn.addEventListener('click', () => {
+      this._filterBarEl.querySelector('input').value = '';
+      this.navigateTo('/');
+    });
+
+    this._breadcrumbEl.append(titleSpan, backBtn);
+    this._breadcrumbEl.style.display = 'flex';
+    this._breadcrumbEl.style.alignItems = 'center';
+
+    this._fileListEl.innerHTML = '<div style="text-align:center;padding:2rem;">Searching...</div>';
+
+    try {
+      const items = await this.client.searchFiles({ q });
       this._renderFileList(items);
     } catch (e) {
       this._fileListEl.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--danger);">
@@ -196,10 +238,13 @@ export class WorkspaceBrowser {
         await this.client.reindex();
         // If we are currently searching, re-run the search
         if (this._currentPath.startsWith('Search: ')) {
-          const ext = this._currentPath.replace('Search: ', '');
-          await this.searchExtension(ext);
+          const params = this._currentPath.replace('Search: ', '');
+          if (params.startsWith('ext=')) {
+            await this.searchExtension(params.substring(4));
+          } else if (params.startsWith('q=')) {
+            await this.searchQuery(params.substring(2));
+          }
         } else {
-          // just reload current dir
           await this.navigateTo(this._currentPath);
         }
       } catch (e) {
@@ -209,7 +254,36 @@ export class WorkspaceBrowser {
         refreshBtn.textContent = '🔄 Rebuild Index';
       }
     });
-    this._filterBarEl.append(refreshBtn);
+
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Search by name...';
+    searchInput.className = 'annotepad-input';
+    searchInput.style.padding = '2px 8px';
+    searchInput.style.fontSize = '12px';
+    searchInput.style.borderRadius = '4px';
+    searchInput.style.border = '1px solid var(--border-color)';
+    searchInput.style.background = 'var(--bg-primary)';
+    searchInput.style.color = 'var(--text-primary)';
+    searchInput.style.marginLeft = '8px';
+    searchInput.style.width = '140px';
+
+    let searchTimeout = null;
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.trim();
+      clearTimeout(searchTimeout);
+      if (!q) {
+        if (this._currentPath.startsWith('Search: q=')) {
+          this.navigateTo('/');
+        }
+        return;
+      }
+      searchTimeout = setTimeout(() => {
+        this.searchQuery(q);
+      }, 300);
+    });
+
+    this._filterBarEl.append(searchInput, refreshBtn);
 
     this._fileListEl = document.createElement('div');
     this._fileListEl.className = 'webdav-file-list';

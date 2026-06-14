@@ -102,10 +102,14 @@ class WorkspaceIndexer {
     }
   }
 
-  search(ext) {
-    if (!ext) return [];
-    // Fast memory filter
-    return this.files.filter(f => f.name.endsWith(ext));
+  search(params) {
+    if (params.ext) {
+      return this.files.filter(f => f.name.endsWith(params.ext));
+    } else if (params.q) {
+      const lowerQ = params.q.toLowerCase();
+      return this.files.filter(f => f.path.toLowerCase().includes(lowerQ));
+    }
+    return [];
   }
 
   addFile(relPath) {
