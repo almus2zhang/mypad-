@@ -254,28 +254,83 @@ export function createContextMenu() {
         el.appendChild(shortcutSpan);
       }
 
-      el.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (item.items) {
-          // Add a back button to the submenu
-          const submenu = [
-            { label: '⬅️ Back', action: () => show(x, y, items) },
-            { type: 'separator' },
-            ...item.items
-          ];
-          show(x, y, submenu);
-        } else {
+      // Setup submenu if it exists
+      if (item.items) {
+        el.style.position = 'relative';
+
+        const submenuEl = document.createElement('div');
+        submenuEl.className = 'context-menu';
+        submenuEl.style.position = 'absolute';
+        submenuEl.style.top = '-4px';
+        submenuEl.style.left = '100%';
+        submenuEl.style.display = 'none';
+        submenuEl.style.opacity = '1';
+        submenuEl.style.pointerEvents = 'auto';
+        submenuEl.style.transform = 'scale(1)';
+
+        item.items.forEach(subItem => {
+          if (subItem.type === 'separator') {
+            const sep = document.createElement('div');
+            sep.className = 'context-menu-separator';
+            submenuEl.appendChild(sep);
+            return;
+          }
+          const subEl = document.createElement('button');
+          subEl.type = 'button';
+          subEl.className = 'context-menu-item';
+          subEl.innerHTML = `<span class="context-menu-item-icon"></span><span class="context-menu-item-label">${subItem.label}</span>`;
+          subEl.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (subItem.action) subItem.action();
+            hide();
+          });
+          submenuEl.appendChild(subEl);
+        });
+
+        el.appendChild(submenuEl);
+
+        let hoverTimeout;
+        el.addEventListener('mouseenter', () => {
+          const idx = actionItems.indexOf(el);
+          if (idx !== -1) focusItem(idx);
+          clearTimeout(hoverTimeout);
+          submenuEl.style.display = 'block';
+          
+          // Collision detection
+          const rect = submenuEl.getBoundingClientRect();
+          if (rect.right > window.innerWidth) {
+            submenuEl.style.left = 'auto';
+            submenuEl.style.right = '100%';
+          }
+        });
+
+        el.addEventListener('mouseleave', () => {
+          hoverTimeout = setTimeout(() => {
+            submenuEl.style.display = 'none';
+          }, 100);
+        });
+
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const isBlock = submenuEl.style.display === 'block';
+          submenuEl.style.display = isBlock ? 'none' : 'block';
+        });
+
+      } else {
+        el.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
           if (typeof item.action === 'function') item.action();
           hide();
-        }
-      });
+        });
 
-      // Hover → visually focus
-      el.addEventListener('mouseenter', () => {
-        const idx = actionItems.indexOf(el);
-        if (idx !== -1) focusItem(idx);
-      });
+        el.addEventListener('mouseenter', () => {
+          const idx = actionItems.indexOf(el);
+          if (idx !== -1) focusItem(idx);
+        });
+      }
 
       menuEl.appendChild(el);
       if (!item.disabled) {

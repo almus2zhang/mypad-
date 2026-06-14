@@ -831,7 +831,7 @@ export function showHelpDialog() {
 
     <h3 style="margin-top: 20px;">高级功能说明</h3>
     <ul class="help-ul" style="padding-left: 20px; color: var(--text-secondary);">
-      <li><span class="help-icon">${ICONS.explorer}</span> <b>树状目录</b> : 左侧滑出的文件浏览器，可查看当前工作区的所有文件。</li>
+      <li><span class="help-icon">${ICONS.explorer}</span> <b>树状目录</b> : 左侧滑出的文件浏览器，可查看当前工作区的所有文件。右键点击目录可将其<b>“钉在顶部”</b>，方便快速访问深层文件夹。</li>
       <li><span class="help-icon">${ICONS.find}</span> <b>查找</b> : 强大的本地搜索（快捷键 Ctrl+F），支持正则表达式。</li>
       <li><span class="help-icon">${ICONS.replace}</span> <b>替换</b> : 在当前文件内进行文本替换。</li>
       <li><span class="help-icon">${ICONS.nextError}</span> <b>查找错误</b> : 跳转到代码中的语法错误或警告位置。</li>
