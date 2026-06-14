@@ -122,41 +122,45 @@ apiRouter.get('/search', async (req, res) => {
     if (!ext) return res.status(400).json({ error: 'Missing ext parameter' });
 
     const results = [];
+    const MAX_RESULTS = 1000;
+    const IGNORE_DIRS = new Set(['node_modules', 'dist', 'build', 'out', 'target', 'obj', 'bin']);
+
     async function walk(dir) {
-      // Prevent deeply nested loops or permission errors from crashing the search
+      if (results.length >= MAX_RESULTS) return;
       try {
         const entries = await fs.readdir(dir, { withFileTypes: true });
+        const dirs = [];
+        
         for (const entry of entries) {
-          if (entry.name === 'node_modules' || entry.name === '.git' || entry.name === 'dist') continue;
+          if (results.length >= MAX_RESULTS) break;
           
-          const fullPath = path.join(dir, entry.name);
           if (entry.isDirectory()) {
-            await walk(fullPath);
+            // Ignore hidden directories (.git, .repo, .svn) and common build outputs
+            if (entry.name.startsWith('.') || IGNORE_DIRS.has(entry.name)) continue;
+            dirs.push(path.join(dir, entry.name));
           } else {
             if (entry.name.endsWith(ext)) {
-              let size = 0, mtime = 0;
-              try {
-                const estats = await fs.stat(fullPath);
-                size = estats.size;
-                mtime = estats.mtimeMs;
-              } catch (e) {}
+              const fullPath = path.join(dir, entry.name);
               const relPath = path.relative(workspacePath, fullPath).replace(/\\/g, '/');
               results.push({
                 name: entry.name,
                 path: '/' + relPath,
                 isDirectory: false,
-                size,
-                lastModified: new Date(mtime).toISOString()
+                size: 0, // Skipped fs.stat for massive speedup
+                lastModified: ''
               });
             }
           }
         }
+        
+        // Process subdirectories in parallel
+        await Promise.all(dirs.map(d => walk(d)));
       } catch (e) {}
     }
     
     await walk(workspacePath);
     results.sort((a, b) => a.path.localeCompare(b.path));
-    res.json(results.slice(0, 1000));
+    res.json(results);
   } catch (error) {
     console.error('Search error:', error.message);
     res.status(500).json({ error: error.message });

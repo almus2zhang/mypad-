@@ -264,7 +264,7 @@ export class WorkspaceBrowser {
 
       const name = document.createElement('span');
       name.className = 'webdav-file-name';
-      name.textContent = item.name;
+      name.textContent = this._currentPath.startsWith('Search:') ? item.path : item.name;
 
       el.append(icon, name);
 
