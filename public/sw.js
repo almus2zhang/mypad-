@@ -1,5 +1,5 @@
 // MyPad++ Service Worker — Offline Support
-const CACHE_NAME = 'mypad-v1';
+const CACHE_NAME = 'mypad-v2';
 
 // App shell files to cache for offline use
 const APP_SHELL = [
@@ -58,18 +58,35 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // HTML / Navigation requests: Network-First
+  if (event.request.mode === 'navigate' || event.request.headers.get('accept').includes('text/html')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   // App assets: stale-while-revalidate
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetchPromise = fetch(event.request)
         .then((response) => {
-          if (response && response.status === 200) {
+          // Only cache valid OK responses
+          if (response && response.status === 200 && response.type === 'basic') {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return response;
         })
-        .catch(() => cached);
+        .catch(() => {
+          // Ignore fetch errors
+        });
 
       return cached || fetchPromise;
     })
