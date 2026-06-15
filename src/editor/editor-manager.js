@@ -294,6 +294,31 @@ export class EditorManager {
     this.view.dispatch(this.view.state.replaceSelection(text));
   }
 
+  /**
+   * Move the cursor to a specific line and column, and scroll it into view.
+   * @param {number} line - 1-based line number
+   * @param {number} [col=1] - 1-based column number
+   */
+  goToLine(line, col = 1) {
+    this._assertView();
+    const doc = this.view.state.doc;
+    if (line < 1) line = 1;
+    if (line > doc.lines) line = doc.lines;
+    
+    const lineObj = doc.line(line);
+    let pos = lineObj.from;
+    
+    if (col > 1) {
+      pos += (col - 1);
+    }
+    if (pos > lineObj.to) pos = lineObj.to;
+
+    this.view.dispatch({
+      selection: { anchor: pos, head: pos },
+      effects: EditorView.scrollIntoView(pos, { y: 'center' })
+    });
+  }
+
   /* ================================================================ */
   /*  Dynamic reconfiguration                                          */
   /* ================================================================ */
