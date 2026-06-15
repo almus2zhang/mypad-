@@ -112,7 +112,7 @@ document.getElementById('workspace').appendChild(highlightManager.element);
 // ============================================================
 
 
-function handleGoToDefinition(word) {
+async function handleGoToDefinition(word) {
   const currentTab = tabManager.getActiveTab();
   if (!currentTab) return;
 
@@ -123,7 +123,9 @@ function handleGoToDefinition(word) {
     const loc = findDefinitionInContent(word, tab.content);
     if (loc) {
       if (tab.id !== currentTab.id) {
-        switchToTab(tab.id);
+        await switchToTab(tab.id);
+        // Wait for CodeMirror to initialize
+        await new Promise(r => setTimeout(r, 50));
       }
       editorManager.goToLine(loc.line, loc.col);
       showToast(t('Found definition in') + ' ' + tab.filename, 'success');

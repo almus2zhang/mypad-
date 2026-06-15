@@ -397,8 +397,14 @@ body {
 }
 
 .toolbar-btn.active {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--btn-hover);
+  color: var(--primary);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .toolbar-btn svg {

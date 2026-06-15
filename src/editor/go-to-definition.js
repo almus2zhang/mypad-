@@ -43,17 +43,20 @@ export function goToDefinition(onGoToDefinition) {
  * @returns {{line: number, col: number} | null} - The line and column of the definition, if found.
  */
 export function findDefinitionInContent(word, content) {
+  // Escape special regex characters in word just in case
+  const safeWord = word.replace(/[-\\/\\\\^$*+?.()|[\\]{}]/g, '\\\\$&');
+  
   const patterns = [
-    // function foo
-    new RegExp(`(?:function|func|fn|def)\\s+${word}\\b`),
-    // class foo
-    new RegExp(`(?:class|struct|interface|type)\\s+${word}\\b`),
-    // const/let/var foo =
-    new RegExp(`(?:const|let|var)\\s+${word}\\s*=`),
-    // foo: function or foo = function
-    new RegExp(`${word}\\s*[:=]\\s*(?:function|\\(|\\w+\\s*=>)`),
-    // foo(args) { ... } (methods in classes)
-    new RegExp(`^\\s*${word}\\s*\\([^)]*\\)\\s*\\{`, 'm')
+    // JS/Python/Go/Rust: function/def/fn/func/class/struct foo
+    new RegExp(`(?:function|func|fn|def|class|struct|interface|type|trait|enum|impl)\\s+${safeWord}\\b`),
+    // JS: const/let/var foo =
+    new RegExp(`(?:const|let|var)\\s+${safeWord}\\s*=`),
+    // JS: foo: function or foo = function or foo = () =>
+    new RegExp(`${safeWord}\\s*[:=]\\s*(?:function|\\(|\\w+\\s*=>)`),
+    // C/C++/Java/TS methods/functions: Type foo(args) { ... }
+    new RegExp(`\\b${safeWord}\\s*\\([^)]*\\)\\s*(?:const\\s*)?(?:->[^{]+)?(?::\\s*[^{]+)?\\{`),
+    // Go/Rust methods: func (r Receiver) foo() { ... }
+    new RegExp(`\\)\\s+${safeWord}\\s*\\(`),
   ];
 
   for (const pattern of patterns) {
