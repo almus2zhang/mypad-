@@ -2774,15 +2774,5 @@ body {
 
 .cm-mergeView {
   flex: 1;
-  display: flex;
-  overflow: hidden;
-}
-
-.cm-mergeView .cm-editor {
-  flex: 1;
-  height: 100%;
-}
-
-.cm-mergeView .cm-scroller {
   overflow: auto;
 }
