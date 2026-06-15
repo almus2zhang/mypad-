@@ -43,6 +43,8 @@ import { createToolbar } from './ui/toolbar.js';
 import { createStatusBar } from './ui/statusbar.js';
 import { createSymbolBar } from './ui/symbol-bar.js';
 import { createSidebar } from './ui/sidebar.js';
+import { NavigationManager } from './editor/navigation-manager.js';
+import { findDefinitionInContent } from './editor/go-to-definition.js';
 import { showHistoryDialog } from './ui/history-dialog.js';
 import { createContextMenu, getDefaultMenuItems } from './ui/context-menu.js';
 import { FileTreeSidebar } from './ui/file-tree-sidebar.js';
@@ -76,6 +78,7 @@ let keyboardEnabled = loadString('mypad_keyboard_enabled', 'true') === 'true';
 // Initialize Core Services
 // ============================================================
 
+const navigationManager = new NavigationManager();
 const tabManager = new TabManager();
 const editorManager = new EditorManager(document.getElementById('editor-container'));
 const fileHandler = new FileHandler({
@@ -108,7 +111,32 @@ document.getElementById('workspace').appendChild(highlightManager.element);
 // Toolbar & UI
 // ============================================================
 
+
+function handleGoToDefinition(word) {
+  const currentTab = tabManager.getActiveTab();
+  if (!currentTab) return;
+
+  const tabs = tabManager.getAllTabs();
+  const sortedTabs = [currentTab, ...tabs.filter(t => t.id !== currentTab.id)];
+
+  for (const tab of sortedTabs) {
+    const loc = findDefinitionInContent(word, tab.content);
+    if (loc) {
+      if (tab.id !== currentTab.id) {
+        switchToTab(tab.id);
+      }
+      editorManager.goToLine(loc.line, loc.col);
+      showToast(t('Found definition in') + ' ' + tab.filename, 'success');
+      return;
+    }
+  }
+
+  showToast(t('Definition not found in open files.'), 'warning');
+}
+
 const toolbar = createToolbar({
+  onNavBack: () => { const tab = tabManager.getActiveTab(); if (tab) { const loc = navigationManager.goBack(tab.id); if (loc) editorManager.goToLine(loc.line, loc.col); } },
+  onNavForward: () => { const tab = tabManager.getActiveTab(); if (tab) { const loc = navigationManager.goForward(tab.id); if (loc) editorManager.goToLine(loc.line, loc.col); } },
   onNew: () => createNewTab(),
   onOpen: () => openFile(),
   onRecent: () => {
@@ -1440,3 +1468,8 @@ function init() {
 // Run init
 init();
 
+window.addEventListener('mypad-goto-definition', (e) => {
+  if (typeof handleGoToDefinition === 'function') {
+    handleGoToDefinition(e.detail.word);
+  }
+});

@@ -43,6 +43,7 @@ import { defaultKeymap, indentWithTab } from '@codemirror/commands';
 import { lintGutter } from '@codemirror/lint';
 import { syntaxErrorLinter } from './linter.js';
 import { activeMatchField } from '../search/active-match.js';
+import { goToDefinition } from './go-to-definition.js';
 
 /**
  * @typedef {Object} ExtensionOptions
@@ -88,6 +89,10 @@ export function createExtensions(options = {}) {
     highlightSelectionMatches({
       highlightWordAroundCursor: true,
       minSelectionLength: 2,
+    }),
+    goToDefinition((word) => {
+      const evt = new CustomEvent('mypad-goto-definition', { detail: { word } });
+      window.dispatchEvent(evt);
     }),
     lintGutter(),
     syntaxErrorLinter,
