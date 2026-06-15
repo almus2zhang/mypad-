@@ -221,6 +221,30 @@ export class EditorManager {
   }
 
   /* ================================================================ */
+  /*  Scroll Position                                                 */
+  /* ================================================================ */
+
+  getScrollPosition() {
+    this._assertView();
+    const scroller = this.view.scrollDOM;
+    return {
+      top: scroller.scrollTop,
+      left: scroller.scrollLeft,
+    };
+  }
+
+  setScrollPosition(pos) {
+    if (!pos) return;
+    this._assertView();
+    // We need to requestAnimationFrame because CM6 might not have finished layout
+    requestAnimationFrame(() => {
+      const scroller = this.view.scrollDOM;
+      scroller.scrollTop = pos.top || 0;
+      scroller.scrollLeft = pos.left || 0;
+    });
+  }
+
+  /* ================================================================ */
   /*  Focus                                                            */
   /* ================================================================ */
 

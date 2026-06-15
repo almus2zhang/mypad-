@@ -323,6 +323,14 @@ async function openEditorForTab(tab) {
     fontSize: currentFontSize,
   });
 
+  // Restore cursor and scroll position
+  if (tab.selection) {
+    editorManager.view.dispatch({ selection: tab.selection });
+  }
+  if (tab.scrollPos) {
+    editorManager.setScrollPosition(tab.scrollPos);
+  }
+
   editorManager.setKeyboardEnabled(keyboardEnabled);
   editorManager.focus();
   updateStatusBar();
@@ -377,7 +385,8 @@ async function switchToTab(id) {
   const prevTab = tabManager.getActiveTab();
   if (prevTab && editorManager.hasView) {
     prevTab.content = editorManager.getContent();
-    prevTab.editorState = editorManager.getState();
+    prevTab.selection = editorManager.getState().selection;
+    prevTab.scrollPos = editorManager.getScrollPosition();
   }
 
   tabManager.switchTab(id);
