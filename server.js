@@ -120,6 +120,59 @@ class ClientManager {
 
 const clientManager = new ClientManager(allowedClientIds);
 
+class OperationLogger {
+  constructor(maxLogs = 10000) {
+    this.logFile = path.join(__dirname, 'operation_logs.json');
+    this.maxLogs = maxLogs;
+    this.logs = [];
+    this.load();
+  }
+
+  load() {
+    try {
+      if (fsSync.existsSync(this.logFile)) {
+        this.logs = JSON.parse(fsSync.readFileSync(this.logFile, 'utf8'));
+      }
+    } catch (e) {
+      console.error('Failed to load operation_logs.json', e.message);
+    }
+  }
+
+  save() {
+    try {
+      fsSync.writeFileSync(this.logFile, JSON.stringify(this.logs, null, 2));
+    } catch (e) {
+      console.error('Failed to save operation_logs.json', e.message);
+    }
+  }
+
+  log(clientId, action, filePath) {
+    const entry = {
+      timestamp: Date.now(),
+      clientId: clientId || 'Unknown',
+      action,
+      filePath
+    };
+    this.logs.unshift(entry); // Add to beginning (newest first)
+    
+    if (this.logs.length > this.maxLogs) {
+      this.logs = this.logs.slice(0, this.maxLogs);
+    }
+    
+    // Throttle saving? Since operations might be frequent, a sync save might block.
+    // For simplicity, we just save synchronously. For high load, async would be better.
+    fsSync.writeFile(this.logFile, JSON.stringify(this.logs, null, 2), (err) => {
+      if (err) console.error('Failed to async save operation_logs.json', err.message);
+    });
+  }
+
+  getLogs() {
+    return this.logs;
+  }
+}
+
+const opLogger = new OperationLogger(10000);
+
 console.log(`Starting MyPad++ Server`);
 console.log(`Workspaces: ${workspaces.map(w => w.name + ' (' + w.path + ')').join(', ')}`);
 if (serverPassword) {
@@ -459,6 +512,7 @@ apiRouter.get('/read', async (req, res) => {
   try {
     const targetPath = resolveAndCheckPath(req.query.path);
     const content = await fs.readFile(targetPath);
+    opLogger.log(req.headers['x-client-id'] || req.ip, 'OPEN', targetPath);
     res.send(content);
   } catch (error) {
     console.error('Read error:', error.message);
@@ -477,6 +531,7 @@ apiRouter.post('/write', async (req, res) => {
       
       // Update index
       indexer.addFile('/' + reqPath.replace(/\\/g, '/').replace(/^\/+/, ''));
+      opLogger.log(req.headers['x-client-id'] || req.ip, 'SAVE', targetPath);
       
       res.json({ success: true });
     } else {
@@ -507,6 +562,7 @@ apiRouter.post('/delete', async (req, res) => {
     
     // Update index (removes file or entire directory prefix)
     indexer.removeFile('/' + reqPath.replace(/\\/g, '/').replace(/^\/+/, ''));
+    opLogger.log(req.headers['x-client-id'] || req.ip, 'DELETE', targetPath);
     
     res.json({ success: true });
   } catch (error) {
@@ -575,6 +631,12 @@ adminApp.delete('/api/clients/pending', (req, res) => {
   res.json({ success: true });
 });
 
+adminApp.get('/api/logs', (req, res) => {
+  // Send max 1000 logs to the frontend at a time for performance, unless specified
+  const limit = parseInt(req.query.limit) || 1000;
+  res.json(opLogger.getLogs().slice(0, limit));
+});
+
 adminApp.get('/', (req, res) => {
   res.send(`
     <!DOCTYPE html>
@@ -602,6 +664,18 @@ adminApp.get('/', (req, res) => {
         button.clear { background: #f4f4f5; color: #71717a; }
         button.clear:hover { background: #e4e4e7; }
         .empty { color: #a1a1aa; font-style: italic; font-size: 14px; padding: 10px 0; }
+        
+        /* Logs table styles */
+        .logs-table-container { max-height: 400px; overflow-y: auto; margin-top: 10px; border: 1px solid #e4e4e7; border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        th, td { padding: 8px 12px; border-bottom: 1px solid #e4e4e7; }
+        th { background: #f4f4f5; position: sticky; top: 0; z-index: 10; font-weight: 600; color: #3f3f46; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #fafafa; }
+        .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .tag.open { background: #dbeafe; color: #1e3a8a; }
+        .tag.save { background: #dcfce7; color: #14532d; }
+        .tag.delete { background: #fee2e2; color: #7f1d1d; }
       </style>
     </head>
     <body>
@@ -617,6 +691,25 @@ adminApp.get('/', (req, res) => {
           <h2>Approved Clients</h2>
           <ul id="approved-list">Loading...</ul>
         </div>
+
+        <div class="card">
+          <h2>File Operation Logs</h2>
+          <div class="logs-table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Action</th>
+                  <th>Client ID</th>
+                  <th>File Path</th>
+                </tr>
+              </thead>
+              <tbody id="logs-list">
+                <tr><td colspan="4" class="empty" style="text-align: center;">Loading logs...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <script>
@@ -624,6 +717,12 @@ adminApp.get('/', (req, res) => {
           const res = await fetch('/api/clients');
           const data = await res.json();
           render(data);
+        }
+
+        async function fetchLogs() {
+          const res = await fetch('/api/logs?limit=500');
+          const data = await res.json();
+          renderLogs(data);
         }
 
         function render(data) {
@@ -681,8 +780,29 @@ adminApp.get('/', (req, res) => {
           fetchClients();
         }
 
-        setInterval(fetchClients, 3000);
+        function renderLogs(logs) {
+          const logsList = document.getElementById('logs-list');
+          if (logs.length === 0) {
+            logsList.innerHTML = '<tr><td colspan="4" class="empty" style="text-align: center;">No operations recorded</td></tr>';
+          } else {
+            logsList.innerHTML = logs.map(log => \`
+              <tr>
+                <td style="white-space: nowrap; color: #71717a;">\${new Date(log.timestamp).toLocaleString()}</td>
+                <td><span class="tag \${log.action.toLowerCase()}">\${log.action}</span></td>
+                <td class="client-id" style="font-size: 12px;">\${log.clientId}</td>
+                <td style="word-break: break-all;">\${log.filePath}</td>
+              </tr>
+            \`).join('');
+          }
+        }
+
+        setInterval(() => {
+          fetchClients();
+          fetchLogs();
+        }, 3000);
+        
         fetchClients();
+        fetchLogs();
       </script>
     </body>
     </html>
