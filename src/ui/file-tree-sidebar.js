@@ -57,6 +57,10 @@ export class FileTreeSidebar {
         const collapsed = section.classList.toggle('sidebar-section-collapsed');
         const iconSpan = header.querySelector('.sidebar-section-icon');
         if (iconSpan) iconSpan.textContent = collapsed ? '▸' : '▾';
+        
+        if (isFlex) {
+          section.style.flex = collapsed ? 'none' : '1';
+        }
       });
 
       section.appendChild(header);
