@@ -445,6 +445,13 @@ function handleEditorUpdate(update, tabId) {
         highlightManager.fillActiveInput(selectedText);
       }
     }
+    
+    if (update.selectionSet && !update.docChanged) {
+      const pos = editorManager.getCursorPosition();
+      if (pos) {
+        navigationManager.pushState(tabId, pos.line, pos.col);
+      }
+    }
   }
 }
 
