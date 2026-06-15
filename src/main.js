@@ -299,6 +299,29 @@ const keymapCallbacks = {
  * @param {import('./tabs/tab-manager.js').Tab} tab
  */
 async function openEditorForTab(tab) {
+  const editorContainer = document.getElementById('editor-container');
+  const pdfContainer = document.getElementById('pdf-container');
+
+  if (tab.type === 'pdf') {
+    editorManager.destroyView();
+    editorContainer.style.display = 'none';
+    pdfContainer.style.display = 'block';
+
+    if (!tab.pdfUrl) {
+      const blob = new Blob([tab.content], { type: 'application/pdf' });
+      tab.pdfUrl = URL.createObjectURL(blob);
+    }
+
+    pdfContainer.innerHTML = `<iframe src="${tab.pdfUrl}" style="width: 100%; height: 100%; border: none;"></iframe>`;
+    updateStatusBar();
+    return;
+  }
+
+  // Text mode
+  editorContainer.style.display = 'block';
+  pdfContainer.style.display = 'none';
+  pdfContainer.innerHTML = '';
+
   // Load language support
   let langSupport = null;
   try {
@@ -383,7 +406,7 @@ async function switchToTab(id) {
 
   // Save current tab state
   const prevTab = tabManager.getActiveTab();
-  if (prevTab && editorManager.hasView) {
+  if (prevTab && prevTab.type !== 'pdf' && editorManager.hasView) {
     prevTab.content = editorManager.getContent();
     prevTab.selection = editorManager.getState().selection;
     prevTab.scrollPos = editorManager.getScrollPosition();
@@ -399,6 +422,9 @@ async function switchToTab(id) {
 async function closeTab(id) {
   const tab = tabManager.getTab(id);
   if (!tab) return;
+  if (tab.pdfUrl) {
+    URL.revokeObjectURL(tab.pdfUrl);
+  }
 
   if (tab.modified) {
     showSaveConfirmDialog(
@@ -573,15 +599,26 @@ function showWebDAV() {
 
 async function handleWebDAVFileOpen(path, arrayBuffer, filename) {
   try {
-    const fileInfo = await fileHandler.openFileFromBuffer(arrayBuffer, filename);
+    const isPDF = filename.toLowerCase().endsWith('.pdf');
+    let content, encoding, langName;
 
-    const langName = getLanguageNameByFilename(filename);
+    if (isPDF) {
+      content = arrayBuffer;
+      encoding = 'binary';
+      langName = 'PDF';
+    } else {
+      const fileInfo = await fileHandler.openFileFromBuffer(arrayBuffer, filename);
+      content = fileInfo.content;
+      encoding = fileInfo.encoding;
+      langName = getLanguageNameByFilename(filename);
+    }
 
     const tab = tabManager.createTab({
       filename,
-      content: fileInfo.content,
-      encoding: fileInfo.encoding,
+      content,
+      encoding,
       language: langName,
+      type: isPDF ? 'pdf' : 'text',
       webdavPath: path,
     });
     openEditorForTab(tab);
@@ -627,14 +664,26 @@ async function saveFileToWebDAV(tab) {
 
 async function handleWorkspaceFileOpen(filename, arrayBuffer, path) {
   try {
-    const fileInfo = await fileHandler.openFileFromBuffer(arrayBuffer, filename);
-    const langName = getLanguageNameByFilename(filename);
+    const isPDF = filename.toLowerCase().endsWith('.pdf');
+    let content, encoding, langName;
+
+    if (isPDF) {
+      content = arrayBuffer;
+      encoding = 'binary';
+      langName = 'PDF';
+    } else {
+      const fileInfo = await fileHandler.openFileFromBuffer(arrayBuffer, filename);
+      content = fileInfo.content;
+      encoding = fileInfo.encoding;
+      langName = getLanguageNameByFilename(filename);
+    }
 
     const tab = tabManager.createTab({
       filename,
-      content: fileInfo.content,
-      encoding: fileInfo.encoding,
+      content,
+      encoding,
       language: langName,
+      type: isPDF ? 'pdf' : 'text',
       workspacePath: path,
     });
     openEditorForTab(tab);
