@@ -111,6 +111,16 @@ document.getElementById('workspace').appendChild(highlightManager.element);
 const toolbar = createToolbar({
   onNew: () => createNewTab(),
   onOpen: () => openFile(),
+  onRecent: () => {
+    sidebar.updateRecentFiles(recentFiles.getAll());
+    sidebar.toggle();
+    const btn = document.getElementById('btn-recent');
+    if (btn) {
+      const isPressed = btn.getAttribute('aria-pressed') === 'true';
+      btn.setAttribute('aria-pressed', String(!isPressed));
+      btn.classList.toggle('toolbar-btn--active', !isPressed);
+    }
+  },
   onSave: () => saveFile(),
   onSaveAs: () => saveFileAs(),
   onUndo: () => { if (editorManager.view) undo(editorManager.view); },

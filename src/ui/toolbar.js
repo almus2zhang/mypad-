@@ -20,6 +20,13 @@ export const ICONS = {
     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
   </svg>`,
 
+  recent: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <circle cx="12" cy="14" r="3"/>
+    <polyline points="12 13 12 14 13 15"/>
+  </svg>`,
+
   save: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
     <polyline points="17 21 17 13 7 13 7 21"/>
@@ -273,6 +280,7 @@ export function createToolbar(callbacks = {}) {
   const fileGroup = [
     createButton({ id: 'btn-new', icon: ICONS.newFile, tooltip: t('New File'), onClick: callbacks.onNew }),
     createButton({ id: 'btn-open', icon: ICONS.open, tooltip: t('Open'), onClick: callbacks.onOpen }),
+    createButton({ id: 'btn-recent', icon: ICONS.recent, tooltip: t('Recent Files'), onClick: callbacks.onRecent, toggle: true }),
     createButton({ id: 'btn-save', icon: ICONS.save, tooltip: t('Save'), onClick: callbacks.onSave }),
     createButton({ id: 'btn-save-as', icon: ICONS.saveAs, tooltip: t('Save As'), onClick: callbacks.onSaveAs }),
   ];
