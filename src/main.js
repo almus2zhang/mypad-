@@ -79,6 +79,21 @@ let keyboardEnabled = loadString('mypad_keyboard_enabled', 'true') === 'true';
 // ============================================================
 
 const navigationManager = new NavigationManager();
+
+function updateNavButtons(tabId) {
+  const btnBack = document.getElementById('btn-nav-back');
+  const btnForward = document.getElementById('btn-nav-forward');
+  if (btnBack) btnBack.disabled = !navigationManager.canGoBack(tabId);
+  if (btnForward) btnForward.disabled = !navigationManager.canGoForward(tabId);
+}
+
+navigationManager.setCallback((canBack, canForward) => {
+  const btnBack = document.getElementById('btn-nav-back');
+  const btnForward = document.getElementById('btn-nav-forward');
+  if (btnBack) btnBack.disabled = !canBack;
+  if (btnForward) btnForward.disabled = !canForward;
+});
+
 const tabManager = new TabManager();
 const editorManager = new EditorManager(document.getElementById('editor-container'));
 const fileHandler = new FileHandler({
@@ -1399,6 +1414,7 @@ tabManager.addEventListener('tabSwitched', () => {
   // Editor opening is done by switchToTab/createTab — just update UI
   sidebar.updateOpenFiles(mapTabsForSidebar());
   updateStatusBar();
+  updateNavButtons(tabManager.activeTabId);
 });
 
 tabManager.addEventListener('tabClosed', () => {
@@ -1408,6 +1424,7 @@ tabManager.addEventListener('tabClosed', () => {
 tabManager.addEventListener('tabUpdated', () => {
   sidebar.updateOpenFiles(mapTabsForSidebar());
   updateStatusBar();
+  updateNavButtons(tabManager.activeTabId);
 });
 
 tabManager.addEventListener('tabModified', () => {
