@@ -36,6 +36,8 @@ import { WebDAVBrowser } from './webdav/webdav-browser.js';
 import { WorkspaceBrowser } from './server-workspace/workspace-browser.js';
 
 // UI
+import '@fontsource/inter';
+import '@fontsource/jetbrains-mono';
 import { createToolbar } from './ui/toolbar.js';
 import { createStatusBar } from './ui/statusbar.js';
 import { createSymbolBar } from './ui/symbol-bar.js';
