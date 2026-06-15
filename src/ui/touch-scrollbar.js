@@ -71,6 +71,7 @@ export function createTouchScrollbar(scroller) {
   function onDragStart(e) {
     e.preventDefault();
     isDragging = true;
+    if (hideTimeout) clearTimeout(hideTimeout);
     scrollbar.classList.add('visible', 'dragging');
     
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
