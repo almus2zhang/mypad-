@@ -1,0 +1,53 @@
+/* ============================================================
+   Custom Touch Scrollbar
+   ============================================================ */
+
+.touch-scrollbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 16px;
+  height: 100%;
+  z-index: 100;
+  pointer-events: none; /* Initially non-interactive to not block clicks */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.touch-scrollbar.visible {
+  opacity: 1;
+  pointer-events: auto; /* Becomes draggable when visible */
+}
+
+.touch-scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  width: 12px;
+  background-color: var(--accent);
+  opacity: 0.6;
+  border-radius: 8px;
+  cursor: grab;
+  /* Prevent text selection during drag */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.touch-scrollbar.dragging .touch-scrollbar-thumb {
+  opacity: 0.9;
+  cursor: grabbing;
+  width: 14px; /* Slightly wider when dragging */
+  right: 1px;
+}
+
+.touch-scrollbar-thumb:hover {
+  opacity: 0.8;
+}
+
+/* Hide native scrollbar for the scroller when we want to rely on the custom one */
+/* Only hiding it partially or making it transparent is better, because if we completely 
+   remove it, scrolling via wheel might behave weirdly on some browsers. */
+.cm-scroller::-webkit-scrollbar {
+  width: 0px; /* Hide native scrollbar completely to let custom one shine */
+  background: transparent;
+}

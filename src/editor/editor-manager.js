@@ -10,6 +10,7 @@
 import { EditorView } from '@codemirror/view';
 import { EditorState, Compartment } from '@codemirror/state';
 import { getTheme } from './themes.js';
+import { createTouchScrollbar } from '../ui/touch-scrollbar.js';
 
 /* ------------------------------------------------------------------ */
 /*  EditorManager                                                      */
@@ -39,6 +40,9 @@ export class EditorManager {
 
     /** @type {EditorView | null} */
     this.view = null;
+
+    /** @type {Object | null} */
+    this.touchScrollbar = null;
 
     /* ---- Compartments for dynamic reconfiguration ---- */
 
@@ -143,6 +147,11 @@ export class EditorManager {
       parent: this.container,
     });
 
+    const scroller = this.view.scrollDOM;
+    if (scroller) {
+      this.touchScrollbar = createTouchScrollbar(scroller);
+    }
+
     return this.view;
   }
 
@@ -150,6 +159,10 @@ export class EditorManager {
    * Destroy the current view and remove it from the DOM.
    */
   destroyView() {
+    if (this.touchScrollbar) {
+      this.touchScrollbar.destroy();
+      this.touchScrollbar = null;
+    }
     if (this.view) {
       this.view.destroy();
       this.view = null;

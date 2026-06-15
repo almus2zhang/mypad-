@@ -5,6 +5,7 @@
  */
 
 import './index.css';
+import './ui/touch-scrollbar.css';
 
 // Editor
 import { EditorManager } from './editor/editor-manager.js';
