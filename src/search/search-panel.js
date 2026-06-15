@@ -549,14 +549,14 @@ export function createSearchPanel(editorManager) {
     if (matches.length === 0) return;
     currentMatch = (currentMatch + 1) % matches.length;
     _updateCount();
-    _goToMatch(currentMatch, true);
+    _goToMatch(currentMatch, false);
   }
 
   function _findPrev() {
     if (matches.length === 0) return;
     currentMatch = (currentMatch - 1 + matches.length) % matches.length;
     _updateCount();
-    _goToMatch(currentMatch, true);
+    _goToMatch(currentMatch, false);
   }
 
   function _goToMatch(index, focusEditor = false) {
@@ -673,10 +673,13 @@ export function createSearchPanel(editorManager) {
 
   function toggle(m = 'find', initialQuery = '') {
     if (isVisible && mode === m) {
-      hide();
-    } else {
-      show(m, initialQuery);
+      const isFocused = document.activeElement === findInput || document.activeElement === replaceInput;
+      if (isFocused) {
+        hide();
+        return;
+      }
     }
+    show(m, initialQuery);
   }
 
   function showReference(query, pos) {
