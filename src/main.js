@@ -342,6 +342,14 @@ const fileTreeSidebar = new FileTreeSidebar(workspaceBrowser.client, {
         { label: item.isPinned ? 'Unpin from top' : 'Pin to top', action: () => tree.togglePin(item) }
       ]);
     }
+  },
+  onBookmarkSelect: (bm) => {
+    editorManager.goToLine(bm.line, 1);
+    editorManager.focus();
+  },
+  onOutlineSelect: (item) => {
+    editorManager.goToLine(item.line, 1);
+    editorManager.focus();
   }
 });
 const workspaceMain = document.getElementById('workspace');
@@ -466,11 +474,17 @@ function updateSidebarPanels() {
   const currentTab = tabManager.getActiveTab();
   if (currentTab && editorManager.hasView) {
     const state = editorManager.getState();
-    sidebar.updateBookmarks(getAllBookmarks(state));
-    sidebar.updateOutline(extractOutline(currentTab.content, currentTab.language));
+    const bookmarks = getAllBookmarks(state);
+    const outline = extractOutline(currentTab.content, currentTab.language);
+    sidebar.updateBookmarks(bookmarks);
+    sidebar.updateOutline(outline);
+    if (fileTreeSidebar.updateBookmarks) fileTreeSidebar.updateBookmarks(bookmarks);
+    if (fileTreeSidebar.updateOutline) fileTreeSidebar.updateOutline(outline);
   } else {
     sidebar.updateBookmarks([]);
     sidebar.updateOutline([]);
+    if (fileTreeSidebar.updateBookmarks) fileTreeSidebar.updateBookmarks([]);
+    if (fileTreeSidebar.updateOutline) fileTreeSidebar.updateOutline([]);
   }
 }
 

@@ -19,15 +19,74 @@ export class FileTreeSidebar {
     this.element.className = 'file-tree-sidebar';
     this.element.style.display = 'none'; // Hidden by default
     
-    // Main tree container
-    this.treeContainer = document.createElement('div');
-    this.treeContainer.className = 'file-tree-content';
-    
+    // Wrapper for flex column
+    this.contentWrapper = document.createElement('div');
+    this.contentWrapper.style.flex = '1';
+    this.contentWrapper.style.display = 'flex';
+    this.contentWrapper.style.flexDirection = 'column';
+    this.contentWrapper.style.overflow = 'hidden';
+
+    // Helper to create sections
+    const createSection = (titleText, isCollapsed = false, isFlex = false) => {
+      const section = document.createElement('section');
+      section.className = 'sidebar-section';
+      if (isFlex) {
+        section.style.flex = '1';
+        section.style.display = 'flex';
+        section.style.flexDirection = 'column';
+        section.style.minHeight = '0';
+      }
+      if (isCollapsed) section.classList.add('sidebar-section-collapsed');
+
+      const header = document.createElement('h3');
+      header.className = 'sidebar-section-title';
+      header.innerHTML = `<span class="sidebar-section-icon">${isCollapsed ? '▸' : '▾'}</span> ${titleText}`;
+      
+      const list = document.createElement('div');
+      list.className = 'sidebar-file-list';
+      if (isFlex) {
+        list.style.flex = '1';
+        list.style.overflowY = 'auto';
+        list.style.minHeight = '0';
+      } else {
+        list.style.maxHeight = '300px';
+        list.style.overflowY = 'auto';
+      }
+
+      header.addEventListener('click', () => {
+        const collapsed = section.classList.toggle('sidebar-section-collapsed');
+        const iconSpan = header.querySelector('.sidebar-section-icon');
+        if (iconSpan) iconSpan.textContent = collapsed ? '▸' : '▾';
+      });
+
+      section.appendChild(header);
+      section.appendChild(list);
+      return { section, list };
+    };
+
+    // Main tree container (Workspace)
+    const workspaceSection = createSection(t('Workspace / 工作区'), false, true);
+    this.treeContainer = workspaceSection.list;
+    this.treeContainer.className += ' file-tree-content';
+    this.treeContainer.style.padding = 'var(--space-2) 0';
+
+    // Bookmarks container
+    const bookmarksSection = createSection(t('Bookmarks / 书签'), true, false);
+    this.bookmarksContainer = bookmarksSection.list;
+
+    // Outline container
+    const outlineSection = createSection(t('Outline / 函数列表'), true, false);
+    this.outlineContainer = outlineSection.list;
+
+    this.contentWrapper.appendChild(workspaceSection.section);
+    this.contentWrapper.appendChild(bookmarksSection.section);
+    this.contentWrapper.appendChild(outlineSection.section);
+
     // Resizer handle
     this.resizer = document.createElement('div');
     this.resizer.className = 'file-tree-resizer';
     
-    this.element.appendChild(this.treeContainer);
+    this.element.appendChild(this.contentWrapper);
     this.element.appendChild(this.resizer);
     
     // State
@@ -320,5 +379,74 @@ export class FileTreeSidebar {
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  }
+
+  updateBookmarks(bookmarks) {
+    this.bookmarksContainer.innerHTML = '';
+    if (!bookmarks || bookmarks.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'sidebar-empty';
+      empty.textContent = t('No bookmarks');
+      this.bookmarksContainer.appendChild(empty);
+      return;
+    }
+    bookmarks.forEach(bm => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'sidebar-file-item';
+      
+      const lineSpan = document.createElement('span');
+      lineSpan.className = 'sidebar-bookmark-line';
+      lineSpan.textContent = `Ln ${bm.line}`;
+      
+      const textSpan = document.createElement('span');
+      textSpan.className = 'sidebar-file-item-name';
+      textSpan.textContent = bm.text;
+
+      item.appendChild(lineSpan);
+      item.appendChild(textSpan);
+
+      item.addEventListener('click', () => {
+        if (typeof this.options.onBookmarkSelect === 'function') this.options.onBookmarkSelect(bm);
+      });
+      this.bookmarksContainer.appendChild(item);
+    });
+  }
+
+  updateOutline(outline) {
+    this.outlineContainer.innerHTML = '';
+    if (!outline || outline.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'sidebar-empty';
+      empty.textContent = t('No symbols found');
+      this.outlineContainer.appendChild(empty);
+      return;
+    }
+    outline.forEach(itemInfo => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'sidebar-file-item';
+      
+      const typeSpan = document.createElement('span');
+      typeSpan.className = `sidebar-outline-type sidebar-outline-${itemInfo.type}`;
+      typeSpan.textContent = itemInfo.type === 'class' ? 'C' : 'f()';
+      
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'sidebar-file-item-name';
+      nameSpan.textContent = itemInfo.name;
+
+      const lineSpan = document.createElement('span');
+      lineSpan.className = 'sidebar-file-item-path';
+      lineSpan.textContent = `Ln ${itemInfo.line}`;
+
+      item.appendChild(typeSpan);
+      item.appendChild(nameSpan);
+      item.appendChild(lineSpan);
+
+      item.addEventListener('click', () => {
+        if (typeof this.options.onOutlineSelect === 'function') this.options.onOutlineSelect(itemInfo);
+      });
+      this.outlineContainer.appendChild(item);
+    });
   }
 }
