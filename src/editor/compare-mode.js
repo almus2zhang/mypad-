@@ -1,6 +1,8 @@
 import { MergeView } from '@codemirror/merge';
 import { EditorView } from '@codemirror/view';
+import { EditorState } from '@codemirror/state';
 import { createExtensions } from './extensions.js';
+import { getTheme } from './themes.js';
 
 /**
  * Manages the side-by-side Code Comparison (Diff) view using @codemirror/merge.
@@ -71,13 +73,14 @@ export class CompareManager {
     // Base extensions for both editors
     // Note: Line wrapping is generally not recommended in side-by-side diffs
     // because it misaligns the lines, so we enforce false.
-    const extensions = createExtensions({
-      language: languageSupport,
-      theme,
-      fontSize,
-      wordWrap: false, 
-      tabSize: 4,
-    });
+    const baseExtensions = createExtensions();
+    const extensions = [
+      ...baseExtensions,
+      getTheme(theme),
+      languageSupport ? languageSupport : [],
+      EditorState.tabSize.of(4),
+      EditorView.theme({ "&": { fontSize: fontSize + "px" } })
+    ];
 
     const normOriginal = originalContent.replace(/\r\n?/g, '\n');
     const normModified = modifiedContent.replace(/\r\n?/g, '\n');
