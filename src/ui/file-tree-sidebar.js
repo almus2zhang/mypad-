@@ -109,7 +109,7 @@ export class FileTreeSidebar {
       if (path === '/') {
         this.treeContainer.innerHTML = `<div style="padding:10px;color:var(--danger);font-size:13px;">${t('Error loading workspace:')} ${e.message}</div>`;
       } else {
-        containerEl.innerHTML = `<div class="file-tree-item" style="padding-left:${paddingLeft}px;color:var(--danger);">${t('Error')}</div>`;
+        containerEl.innerHTML = `<div class="file-tree-item" style="padding-left:${paddingLeft}px;color:var(--danger);">${t('Error')}: ${e.message}</div>`;
       }
     }
   }
@@ -310,5 +310,14 @@ export class FileTreeSidebar {
         document.addEventListener('touchend', onMouseUp);
       }
     });
+  }
+
+  formatBytes(bytes, decimals = 1) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
 }
