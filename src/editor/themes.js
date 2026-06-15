@@ -150,7 +150,8 @@ function buildEditorTheme(pal, isDark) {
         borderRadius: '2px',
       },
       '.cm-searchMatch.cm-searchMatch-selected': {
-        backgroundColor: isDark ? 'rgba(249, 226, 175, 0.45)' : 'rgba(223, 142, 29, 0.4)',
+        backgroundColor: isDark ? 'rgba(250, 179, 135, 0.6)' : 'rgba(254, 100, 11, 0.4)',
+        outline: `2px solid ${isDark ? '#fab387' : '#fe640b'}`,
       },
 
       /* Selection match highlighting */
