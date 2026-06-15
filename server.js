@@ -3,6 +3,7 @@ import cors from 'cors';
 import fs from 'fs/promises';
 import fsSync from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -377,6 +378,148 @@ class WorkspaceIndexer {
   }
 }
 
+class HistoryManager {
+  constructor() {
+    this.historyDir = path.join(__dirname, '.mypad_history');
+    this.init();
+  }
+
+  async init() {
+    try {
+      await fs.mkdir(this.historyDir, { recursive: true });
+    } catch (e) {}
+  }
+
+  getHash(filePath) {
+    return crypto.createHash('md5').update(filePath).digest('hex');
+  }
+
+  async getFileHistoryDir(filePath) {
+    const hash = this.getHash(filePath);
+    const dir = path.join(this.historyDir, hash);
+    await fs.mkdir(dir, { recursive: true });
+    return dir;
+  }
+
+  async getIndex(dir) {
+    const indexPath = path.join(dir, 'index.json');
+    try {
+      const data = await fs.readFile(indexPath, 'utf8');
+      return JSON.parse(data);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  async saveIndex(dir, index) {
+    const indexPath = path.join(dir, 'index.json');
+    await fs.writeFile(indexPath, JSON.stringify(index, null, 2));
+  }
+
+  async saveRevision(filePath, buffer) {
+    const dir = await this.getFileHistoryDir(filePath);
+    const index = await this.getIndex(dir);
+    const timestamp = Date.now();
+    const revFilename = `${timestamp}.bak`;
+    const revPath = path.join(dir, revFilename);
+
+    await fs.writeFile(revPath, buffer);
+    
+    index.push({
+      timestamp,
+      size: buffer.length,
+      filename: revFilename
+    });
+
+    const prunedIndex = this.pruneRevisions(index);
+    
+    const keptFilenames = new Set(prunedIndex.map(r => r.filename));
+    for (const r of index) {
+      if (!keptFilenames.has(r.filename)) {
+        try {
+          await fs.rm(path.join(dir, r.filename), { force: true });
+        } catch (e) {}
+      }
+    }
+
+    await this.saveIndex(dir, prunedIndex);
+  }
+
+  pruneRevisions(index) {
+    index.sort((a, b) => b.timestamp - a.timestamp);
+    
+    const now = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
+    
+    const today = [];
+    const twoWeeks = [];
+    const twoMonths = [];
+    const older = [];
+
+    const getLocalDay = (ts) => new Date(ts).toLocaleDateString();
+    const getLocalWeek = (ts) => {
+      const d = new Date(ts);
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - d.getDay());
+      return d.toLocaleDateString();
+    };
+    const getLocalMonth = (ts) => {
+      const d = new Date(ts);
+      return `${d.getFullYear()}-${d.getMonth() + 1}`;
+    };
+
+    index.forEach(r => {
+      const age = now - r.timestamp;
+      if (age < DAY) {
+        today.push(r);
+      } else if (age < 14 * DAY) {
+        twoWeeks.push(r);
+      } else if (age < 60 * DAY) {
+        twoMonths.push(r);
+      } else {
+        older.push(r);
+      }
+    });
+
+    const finalRevs = [];
+    finalRevs.push(...today.slice(0, 50));
+
+    const keepNewestPerGroup = (list, groupFn) => {
+      const groups = {};
+      list.forEach(r => {
+        const g = groupFn(r.timestamp);
+        if (!groups[g]) {
+          groups[g] = r;
+        }
+      });
+      return Object.values(groups);
+    };
+
+    finalRevs.push(...keepNewestPerGroup(twoWeeks, getLocalDay));
+    finalRevs.push(...keepNewestPerGroup(twoMonths, getLocalWeek));
+    finalRevs.push(...keepNewestPerGroup(older, getLocalMonth));
+
+    finalRevs.sort((a, b) => a.timestamp - b.timestamp);
+    return finalRevs;
+  }
+
+  async getList(filePath) {
+    const dir = await this.getFileHistoryDir(filePath);
+    return await this.getIndex(dir);
+  }
+
+  async getRevision(filePath, timestamp) {
+    const dir = await this.getFileHistoryDir(filePath);
+    const index = await this.getIndex(dir);
+    const rev = index.find(r => r.timestamp === parseInt(timestamp, 10));
+    if (!rev) throw new Error('Revision not found');
+    const revPath = path.join(dir, rev.filename);
+    return await fs.readFile(revPath);
+  }
+}
+
+const historyManager = new HistoryManager();
+
 const indexer = new WorkspaceIndexer();
 // Start initial indexing in the background
 indexer.buildIndex();
@@ -539,6 +682,9 @@ apiRouter.post('/write', async (req, res) => {
       const buffer = Buffer.from(base64Content, 'base64');
       await fs.writeFile(targetPath, buffer);
       
+      // Save history revision
+      await historyManager.saveRevision(targetPath, buffer).catch(e => console.error('History save error:', e));
+      
       // Update index
       indexer.addFile('/' + reqPath.replace(/\\/g, '/').replace(/^\/+/, ''));
       opLogger.log(req.headers['x-client-id'] || req.ip, 'SAVE', targetPath);
@@ -549,6 +695,30 @@ apiRouter.post('/write', async (req, res) => {
     }
   } catch (error) {
     console.error('Write error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+apiRouter.get('/history/list', async (req, res) => {
+  try {
+    const targetPath = resolveAndCheckPath(req.query.path);
+    const list = await historyManager.getList(targetPath);
+    res.json(list);
+  } catch (error) {
+    console.error('History list error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+apiRouter.get('/history/read', async (req, res) => {
+  try {
+    const targetPath = resolveAndCheckPath(req.query.path);
+    const { timestamp } = req.query;
+    if (!timestamp) return res.status(400).json({ error: 'Missing timestamp' });
+    const content = await historyManager.getRevision(targetPath, timestamp);
+    res.send(content);
+  } catch (error) {
+    console.error('History read error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });

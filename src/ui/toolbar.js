@@ -160,6 +160,11 @@ export const ICONS = {
     <path d="M2 12h20"/>
     <text id="lang-icon-text" x="12" y="15" text-anchor="middle" font-size="7" font-weight="bold" fill="currentColor" stroke="none">EN</text>
   </svg>`,
+
+  history: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <polyline points="12 6 12 12 16 14"/>
+  </svg>`,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -237,6 +242,7 @@ function createDivider() {
  * @param {Function} [callbacks.onReplace]     - Open replace panel
  * @param {Function} [callbacks.onNextError]   - Jump to next error
  * @param {Function} [callbacks.onCompare]     - Compare tabs
+ * @param {Function} [callbacks.onHistory]     - Local File History
  * @param {Function} [callbacks.onWebDAV]      - Open WebDAV dialog
  * @param {Function} [callbacks.onHelp]        - Open Help dialog
  * @returns {HTMLElement} The toolbar DOM element.
@@ -294,6 +300,7 @@ export function createToolbar(callbacks = {}) {
     createButton({ id: 'btn-find', icon: ICONS.find, tooltip: t('Find'), onClick: callbacks.onFind }),
     createButton({ id: 'btn-replace', icon: ICONS.replace, tooltip: t('Replace'), onClick: callbacks.onReplace }),
     createButton({ id: 'btn-next-error', icon: ICONS.nextError, tooltip: t('Next Error / Warning'), onClick: callbacks.onNextError }),
+    createButton({ id: 'btn-history', icon: ICONS.history, tooltip: t('Local File History'), onClick: callbacks.onHistory }),
     createButton({ id: 'btn-compare', icon: ICONS.compare, tooltip: t('Compare with...'), onClick: callbacks.onCompare }),
     createButton({ id: 'btn-webdav', icon: ICONS.webdav, tooltip: t('WebDAV'), onClick: callbacks.onWebDAV }),
     createButton({ id: 'btn-workspace', icon: ICONS.workspace, tooltip: t('Server Workspace'), onClick: callbacks.onWorkspace }),

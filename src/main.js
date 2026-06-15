@@ -43,6 +43,7 @@ import { createToolbar } from './ui/toolbar.js';
 import { createStatusBar } from './ui/statusbar.js';
 import { createSymbolBar } from './ui/symbol-bar.js';
 import { createSidebar } from './ui/sidebar.js';
+import { showHistoryDialog } from './ui/history-dialog.js';
 import { createContextMenu, getDefaultMenuItems } from './ui/context-menu.js';
 import { FileTreeSidebar } from './ui/file-tree-sidebar.js';
 import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog } from './ui/dialogs.js';
@@ -124,6 +125,25 @@ const toolbar = createToolbar({
   onFind: () => searchPanel.toggle('find'),
   onReplace: () => searchPanel.toggle('replace'),
   onNextError: () => { if (editorManager.view) nextDiagnostic(editorManager.view); },
+  onHistory: () => {
+    const tab = tabManager.getActiveTab();
+    if (tab && tab.fileHandle && tab.fileHandle.type === 'workspace') {
+      showHistoryDialog(
+        tab.fileHandle.path, 
+        editorManager.getContent(),
+        localStorage.getItem('mypad_theme') || 'light',
+        (restoredContent) => {
+          editorManager.setContent(restoredContent);
+          tab.content = restoredContent;
+          tab.isDirty = true;
+          tabManager.updateTab(tab.id, { isDirty: true });
+          updateTitle();
+        }
+      );
+    } else {
+      alert(t('Local history is only available for workspace files.'));
+    }
+  },
   onCompare: () => toggleCompareMode(),
   onWebDAV: () => showWebDAV(),
   onWorkspace: () => {
