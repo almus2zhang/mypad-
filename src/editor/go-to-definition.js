@@ -28,8 +28,12 @@ export function goToDefinition(onGoToDefinition) {
 
       event.preventDefault();
 
+      const lineObj = state.doc.lineAt(pos);
+      const line = lineObj.number;
+      const col = pos - lineObj.from + 1;
+
       // Trigger search and jump
-      onGoToDefinition(wordText);
+      onGoToDefinition(wordText, line, col);
 
       return true;
     }

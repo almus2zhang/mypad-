@@ -112,7 +112,7 @@ document.getElementById('workspace').appendChild(highlightManager.element);
 // ============================================================
 
 
-async function handleGoToDefinition(word) {
+async function handleGoToDefinition(word, clickLine, clickCol) {
   const currentTab = tabManager.getActiveTab();
   if (!currentTab) return;
 
@@ -122,10 +122,14 @@ async function handleGoToDefinition(word) {
   for (const tab of sortedTabs) {
     const loc = findDefinitionInContent(word, tab.content);
     if (loc) {
-      // Save current position to history before jumping
-      const currentPos = editorManager.getCursorPosition();
-      if (currentPos) {
-        navigationManager.pushState(currentTab.id, currentPos.line, currentPos.col);
+      // Save click position to history before jumping
+      if (clickLine && clickCol) {
+        navigationManager.pushState(currentTab.id, clickLine, clickCol);
+      } else {
+        const currentPos = editorManager.getCursorPosition();
+        if (currentPos) {
+          navigationManager.pushState(currentTab.id, currentPos.line, currentPos.col);
+        }
       }
 
       if (tab.id !== currentTab.id) {
@@ -1482,6 +1486,6 @@ init();
 
 window.addEventListener('mypad-goto-definition', (e) => {
   if (typeof handleGoToDefinition === 'function') {
-    handleGoToDefinition(e.detail.word);
+    handleGoToDefinition(e.detail.word, e.detail.line, e.detail.col);
   }
 });

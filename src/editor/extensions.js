@@ -90,8 +90,8 @@ export function createExtensions(options = {}) {
       highlightWordAroundCursor: true,
       minSelectionLength: 2,
     }),
-    goToDefinition((word) => {
-      const evt = new CustomEvent('mypad-goto-definition', { detail: { word } });
+    goToDefinition((word, line, col) => {
+      const evt = new CustomEvent('mypad-goto-definition', { detail: { word, line, col } });
       window.dispatchEvent(evt);
     }),
     lintGutter(),
