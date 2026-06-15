@@ -792,6 +792,86 @@ body {
   color: var(--text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  transition: color var(--transition-fast);
+}
+
+.sidebar-section-title:hover {
+  color: var(--text-primary);
+}
+
+.sidebar-section-icon {
+  margin-right: var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  width: 12px;
+  display: inline-block;
+  text-align: center;
+}
+
+.sidebar-section-collapsed .sidebar-file-list {
+  display: none;
+}
+
+.sidebar-subheader {
+  padding: var(--space-1) var(--space-4);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  margin-top: var(--space-2);
+  font-weight: 500;
+}
+
+.sidebar-bookmark-line {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+  margin-right: var(--space-2);
+  white-space: nowrap;
+}
+
+.sidebar-outline-type {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+  margin-right: var(--space-2);
+  font-weight: 600;
+}
+
+.sidebar-outline-function {
+  color: #b07219;
+  background: rgba(176, 114, 25, 0.15);
+}
+
+.sidebar-outline-class {
+  color: #3178c6;
+  background: rgba(49, 120, 198, 0.15);
+}
+
+.cm-bookmarked-line {
+  background-color: rgba(49, 120, 198, 0.1) !important;
+}
+
+/* Add a visual indicator in the gutter for bookmarks */
+.cm-bookmarked-line .cm-gutterElement {
+  position: relative;
+}
+.cm-bookmarked-line .cm-gutterElement::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: var(--accent);
 }
 
 .sidebar-item {

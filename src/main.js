@@ -20,6 +20,8 @@ import { TabBar } from './tabs/tab-bar.js';
 // Encoding
 import { detectEncoding } from './encoding/encoding-detector.js';
 import { decode, encode } from './encoding/encoding-converter.js';
+import { extractOutline } from './editor/outline.js';
+import { getAllBookmarks, getNextBookmark, getPrevBookmark } from './editor/bookmarks.js';
 import { getEncodingDisplayName } from './encoding/encoding-list.js';
 
 // File handling
@@ -452,6 +454,23 @@ function handleEditorUpdate(update, tabId) {
         navigationManager.pushState(tabId, pos.line, pos.col);
       }
     }
+  }
+
+  // Update outline and bookmarks
+  if (update.docChanged || update.selectionSet) { // selectionSet might be needed if bookmarks changed
+    updateSidebarPanels();
+  }
+}
+
+function updateSidebarPanels() {
+  const currentTab = tabManager.getActiveTab();
+  if (currentTab && editorManager.hasView) {
+    const state = editorManager.getState();
+    sidebar.updateBookmarks(getAllBookmarks(state));
+    sidebar.updateOutline(extractOutline(currentTab.content, currentTab.language));
+  } else {
+    sidebar.updateBookmarks([]);
+    sidebar.updateOutline([]);
   }
 }
 
@@ -1357,6 +1376,25 @@ window.addEventListener('keydown', (e) => {
 }, true); // CAPTURE PHASE!
 
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'F2') {
+    e.preventDefault();
+    if (!editorManager.hasView) return;
+    const currentLine = editorManager.getCursorPosition()?.line || 1;
+    let target = null;
+    if (e.shiftKey) {
+      target = getPrevBookmark(editorManager.getState(), currentLine);
+    } else {
+      target = getNextBookmark(editorManager.getState(), currentLine);
+    }
+    if (target) {
+      editorManager.goToLine(target, 1);
+      showToast(`${t('Jumped to bookmark')} Ln ${target}`);
+    } else {
+      showToast(t('No bookmarks found'));
+    }
+    return;
+  }
+
   const ctrl = e.ctrlKey || e.metaKey;
   if (!ctrl) return;
   
@@ -1422,16 +1460,19 @@ tabManager.addEventListener('tabSwitched', () => {
   sidebar.updateOpenFiles(mapTabsForSidebar());
   updateStatusBar();
   updateNavButtons(tabManager.activeTabId);
+  updateSidebarPanels();
 });
 
 tabManager.addEventListener('tabClosed', () => {
   sidebar.updateOpenFiles(mapTabsForSidebar());
+  updateSidebarPanels();
 });
 
 tabManager.addEventListener('tabUpdated', () => {
   sidebar.updateOpenFiles(mapTabsForSidebar());
   updateStatusBar();
   updateNavButtons(tabManager.activeTabId);
+  updateSidebarPanels();
 });
 
 tabManager.addEventListener('tabModified', () => {
@@ -1444,9 +1485,31 @@ tabManager.addEventListener('tabModified', () => {
 // ============================================================
 
 // The sidebar provides callbacks via its update methods.
-// We need to wire up clicks on sidebar items.
-// Override sidebar item clicks - the sidebar createSidebar returns updateOpenFiles/updateRecentFiles
-// which accept tabs and recent files arrays.
+sidebar.onOpenFileSelect((file) => {
+  const tab = tabManager.getAllTabs().find(t => t.path === file.path || t.filename === file.name);
+  if (tab) switchToTab(tab.id);
+});
+
+sidebar.onRecentFileSelect((file) => {
+  const tab = tabManager.getAllTabs().find(t => t.path === file.path);
+  if (tab) {
+    switchToTab(tab.id);
+  } else {
+    // Ideally we would open it from disk here. Since we only have recent file records,
+    // we might need WebDAV or FileHandler to load it. For now, it's just a UI hook.
+    showToast(t('Cannot reopen local file automatically due to browser security. Please use Open button.'), 'info');
+  }
+});
+
+sidebar.onBookmarkSelect((bm) => {
+  editorManager.goToLine(bm.line, 1);
+  editorManager.focus();
+});
+
+sidebar.onOutlineSelect((item) => {
+  editorManager.goToLine(item.line, 1);
+  editorManager.focus();
+});
 
 // ============================================================
 // PWA Service Worker
@@ -1488,6 +1551,7 @@ function init() {
   // Update sidebar
   sidebar.updateRecentFiles(recentFiles.getAll());
   sidebar.updateOpenFiles(mapTabsForSidebar());
+  updateSidebarPanels();
   
   // Set initial font scales
   applyFontSize();

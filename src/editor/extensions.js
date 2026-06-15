@@ -44,6 +44,7 @@ import { lintGutter } from '@codemirror/lint';
 import { syntaxErrorLinter } from './linter.js';
 import { activeMatchField } from '../search/active-match.js';
 import { goToDefinition } from './go-to-definition.js';
+import { bookmarkedLineNumbers } from './bookmarks.js';
 
 /**
  * @typedef {Object} ExtensionOptions
@@ -68,7 +69,7 @@ export function createExtensions(options = {}) {
 
   /* ----- Core editing features ----- */
   extensions.push(
-    lineNumbers(),
+    bookmarkedLineNumbers(),
     highlightActiveLineGutter(),
     highlightSpecialChars(),
     history(),

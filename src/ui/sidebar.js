@@ -166,50 +166,50 @@ export function createSidebar() {
   header.appendChild(title);
   header.appendChild(closeBtn);
 
-  // ── Open Files section ──────────────────────────────────────────────────
-  const openSection = document.createElement('section');
-  openSection.className = 'sidebar-section';
+  // ── Helper to create a collapsible section ──────────────────────────────
+  function createSection(titleText, listId) {
+    const section = document.createElement('section');
+    section.className = 'sidebar-section';
 
-  const openHeader = document.createElement('h3');
-  openHeader.className = 'sidebar-section-title';
-  openHeader.textContent = t('Open Files');
+    const header = document.createElement('h3');
+    header.className = 'sidebar-section-title';
+    header.innerHTML = `<span class="sidebar-section-icon">▾</span> ${titleText}`;
+    
+    const list = document.createElement('div');
+    list.className = 'sidebar-file-list';
+    list.id = listId;
 
-  const openList = document.createElement('div');
-  openList.className = 'sidebar-file-list';
-  openList.id = 'sidebar-open-files';
+    // Toggle collapse on header click
+    header.addEventListener('click', () => {
+      const isCollapsed = section.classList.toggle('sidebar-section-collapsed');
+      const iconSpan = header.querySelector('.sidebar-section-icon');
+      if (iconSpan) iconSpan.textContent = isCollapsed ? '▸' : '▾';
+    });
 
-  const openEmpty = document.createElement('p');
-  openEmpty.className = 'sidebar-empty';
-  openEmpty.textContent = t('No files open');
+    section.appendChild(header);
+    section.appendChild(list);
 
-  openList.appendChild(openEmpty);
-  openSection.appendChild(openHeader);
-  openSection.appendChild(openList);
+    return { section, list };
+  }
 
-  // ── Recent Files section ────────────────────────────────────────────────
-  const recentSection = document.createElement('section');
-  recentSection.className = 'sidebar-section';
+  // ── Files section ───────────────────────────────────────────────────────
+  const { section: filesSection, list: filesList } = createSection(t('Files / 资源管理器'), 'sidebar-files-list');
 
-  const recentHeader = document.createElement('h3');
-  recentHeader.className = 'sidebar-section-title';
-  recentHeader.textContent = t('Recent Files');
+  // ── Bookmarks section ───────────────────────────────────────────────────
+  const { section: bookmarksSection, list: bookmarksList } = createSection(t('Bookmarks / 书签'), 'sidebar-bookmarks-list');
+  bookmarksSection.classList.add('sidebar-section-collapsed'); // Collapsed by default
+  bookmarksSection.querySelector('.sidebar-section-icon').textContent = '▸';
 
-  const recentList = document.createElement('div');
-  recentList.className = 'sidebar-file-list';
-  recentList.id = 'sidebar-recent-files';
-
-  const recentEmpty = document.createElement('p');
-  recentEmpty.className = 'sidebar-empty';
-  recentEmpty.textContent = t('No recent files');
-
-  recentList.appendChild(recentEmpty);
-  recentSection.appendChild(recentHeader);
-  recentSection.appendChild(recentList);
+  // ── Outline section ─────────────────────────────────────────────────────
+  const { section: outlineSection, list: outlineList } = createSection(t('Outline / 函数列表'), 'sidebar-outline-list');
+  outlineSection.classList.add('sidebar-section-collapsed'); // Collapsed by default
+  outlineSection.querySelector('.sidebar-section-icon').textContent = '▸';
 
   // ── Assemble ────────────────────────────────────────────────────────────
   panel.appendChild(header);
-  panel.appendChild(openSection);
-  panel.appendChild(recentSection);
+  panel.appendChild(filesSection);
+  panel.appendChild(bookmarksSection);
+  panel.appendChild(outlineSection);
 
   root.appendChild(backdrop);
   root.appendChild(panel);
@@ -220,6 +220,14 @@ export function createSidebar() {
   let onOpenFileClick = null;
   /** @type {Function|null} */
   let onRecentFileClick = null;
+  /** @type {Function|null} */
+  let onBookmarkClick = null;
+  /** @type {Function|null} */
+  let onOutlineClick = null;
+  
+  // Cache the lists to merge Open and Recent into "Files"
+  let cachedOpenTabs = [];
+  let cachedRecentFiles = [];
 
   function show() {
     isOpen = true;
@@ -324,32 +332,90 @@ export function createSidebar() {
     },
 
     /**
+     * Register a callback for when a bookmark is clicked.
+     * @param {Function} cb
+     */
+    onBookmarkSelect(cb) {
+      onBookmarkClick = cb;
+    },
+
+    /**
+     * Register a callback for when an outline item is clicked.
+     * @param {Function} cb
+     */
+    onOutlineSelect(cb) {
+      onOutlineClick = cb;
+    },
+
+    /**
+     * Internal: Re-render the unified Files list
+     */
+    _renderFilesList() {
+      filesList.innerHTML = '';
+      
+      const openSubheader = document.createElement('div');
+      openSubheader.className = 'sidebar-subheader';
+      openSubheader.textContent = t('Open Files');
+      filesList.appendChild(openSubheader);
+
+      if (cachedOpenTabs.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'sidebar-empty';
+        empty.textContent = t('No files open');
+        filesList.appendChild(empty);
+      } else {
+        cachedOpenTabs.forEach((tab) => {
+          const file = {
+            name: tab.name || basename(tab.path),
+            path: tab.path || '',
+            language: tab.language || '',
+            modified: !!tab.modified,
+            active: !!tab.active,
+          };
+          const item = createFileItem(file, () => {
+            if (typeof onOpenFileClick === 'function') onOpenFileClick(file);
+            hide();
+          });
+          filesList.appendChild(item);
+        });
+      }
+
+      const recentSubheader = document.createElement('div');
+      recentSubheader.className = 'sidebar-subheader';
+      recentSubheader.textContent = t('Recent Files');
+      filesList.appendChild(recentSubheader);
+
+      if (cachedRecentFiles.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'sidebar-empty';
+        empty.textContent = t('No recent files');
+        filesList.appendChild(empty);
+      } else {
+        cachedRecentFiles.forEach((f) => {
+          const file = {
+            ...f,
+            name: f.name || basename(f.path),
+            path: f.path || '',
+            language: f.language || '',
+            modified: false,
+            active: false,
+          };
+          const item = createFileItem(file, () => {
+            if (typeof onRecentFileClick === 'function') onRecentFileClick(file);
+            hide();
+          });
+          filesList.appendChild(item);
+        });
+      }
+    },
+
+    /**
      * Update the open-files list.
      * @param {Array<{name?: string, path?: string, language?: string, modified?: boolean, active?: boolean}>} tabs
      */
     updateOpenFiles(tabs) {
-      openList.innerHTML = '';
-      if (!tabs || tabs.length === 0) {
-        const empty = document.createElement('p');
-        empty.className = 'sidebar-empty';
-        empty.textContent = 'No open files';
-        openList.appendChild(empty);
-        return;
-      }
-      tabs.forEach((tab) => {
-        const file = {
-          name: tab.name || basename(tab.path),
-          path: tab.path || '',
-          language: tab.language || '',
-          modified: !!tab.modified,
-          active: !!tab.active,
-        };
-        const item = createFileItem(file, () => {
-          if (typeof onOpenFileClick === 'function') onOpenFileClick(file);
-          hide();
-        });
-        openList.appendChild(item);
-      });
+      cachedOpenTabs = tabs || [];
+      this._renderFilesList();
     },
 
     /**
@@ -357,29 +423,87 @@ export function createSidebar() {
      * @param {Array<{name?: string, path?: string, language?: string}>} files
      */
     updateRecentFiles(files) {
-      recentList.innerHTML = '';
-      if (!files || files.length === 0) {
+      cachedRecentFiles = files || [];
+      this._renderFilesList();
+    },
+
+    /**
+     * Update the bookmarks list.
+     * @param {Array<{line: number, text: string}>} bookmarks
+     */
+    updateBookmarks(bookmarks) {
+      bookmarksList.innerHTML = '';
+      if (!bookmarks || bookmarks.length === 0) {
         const empty = document.createElement('p');
         empty.className = 'sidebar-empty';
-        empty.textContent = 'No recent files';
-        recentList.appendChild(empty);
+        empty.textContent = t('No bookmarks');
+        bookmarksList.appendChild(empty);
         return;
       }
-      files.forEach((f) => {
-        const file = {
-          ...f,
-          name: f.name || basename(f.path),
-          path: f.path || '',
-          language: f.language || '',
-          modified: false,
-          active: false,
-        };
-        const item = createFileItem(file, () => {
-          if (typeof onRecentFileClick === 'function') onRecentFileClick(file);
+      bookmarks.forEach(bm => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'sidebar-file-item';
+        
+        const lineSpan = document.createElement('span');
+        lineSpan.className = 'sidebar-bookmark-line';
+        lineSpan.textContent = `Ln ${bm.line}`;
+        
+        const textSpan = document.createElement('span');
+        textSpan.className = 'sidebar-file-item-name';
+        textSpan.textContent = bm.text;
+
+        item.appendChild(lineSpan);
+        item.appendChild(textSpan);
+
+        item.addEventListener('click', () => {
+          if (typeof onBookmarkClick === 'function') onBookmarkClick(bm);
           hide();
         });
-        recentList.appendChild(item);
+        bookmarksList.appendChild(item);
       });
     },
+
+    /**
+     * Update the outline list.
+     * @param {Array<{name: string, type: string, line: number}>} outline
+     */
+    updateOutline(outline) {
+      outlineList.innerHTML = '';
+      if (!outline || outline.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'sidebar-empty';
+        empty.textContent = t('No symbols found');
+        outlineList.appendChild(empty);
+        return;
+      }
+      outline.forEach(itemInfo => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'sidebar-file-item';
+        
+        const typeSpan = document.createElement('span');
+        typeSpan.className = `sidebar-outline-type sidebar-outline-${itemInfo.type}`;
+        typeSpan.textContent = itemInfo.type === 'class' ? 'C' : 'f()';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'sidebar-file-item-name';
+        nameSpan.textContent = itemInfo.name;
+
+        const lineSpan = document.createElement('span');
+        lineSpan.className = 'sidebar-file-item-path';
+        lineSpan.textContent = `Ln ${itemInfo.line}`;
+
+        item.appendChild(typeSpan);
+        item.appendChild(nameSpan);
+        item.appendChild(lineSpan);
+
+        item.addEventListener('click', () => {
+          if (typeof onOutlineClick === 'function') onOutlineClick(itemInfo);
+          hide();
+        });
+        outlineList.appendChild(item);
+      });
+    }
   };
 }
