@@ -67,6 +67,7 @@ class ClientManager {
     try {
       if (fsSync.existsSync(this.clientsFile)) {
         this.data = JSON.parse(fsSync.readFileSync(this.clientsFile, 'utf8'));
+        if (!this.data.notes) this.data.notes = {};
       }
     } catch (e) {
       console.error('Failed to load clients.json', e.message);
@@ -109,11 +110,20 @@ class ClientManager {
 
   revoke(clientId) {
     this.data.approved = this.data.approved.filter(id => id !== clientId);
+    if (this.data.notes && this.data.notes[clientId]) {
+      delete this.data.notes[clientId];
+    }
     this.save();
   }
 
   clearPending() {
     this.data.pending = [];
+    this.save();
+  }
+
+  setNote(clientId, note) {
+    if (!this.data.notes) this.data.notes = {};
+    this.data.notes[clientId] = note;
     this.save();
   }
 }
@@ -626,6 +636,12 @@ adminApp.post('/api/clients/revoke', (req, res) => {
   res.json({ success: true });
 });
 
+adminApp.post('/api/clients/note', (req, res) => {
+  const { id, note } = req.body;
+  if (id) clientManager.setNote(id, note);
+  res.json({ success: true });
+});
+
 adminApp.delete('/api/clients/pending', (req, res) => {
   clientManager.clearPending();
   res.json({ success: true });
@@ -745,14 +761,21 @@ adminApp.get('/', (req, res) => {
           if (data.approved.length === 0) {
             approvedList.innerHTML = '<div class="empty">No approved clients</div>';
           } else {
-            approvedList.innerHTML = data.approved.map(id => \`
-              <li>
-                <div class="client-info">
-                  <span class="client-id">\${id}</span>
-                </div>
-                <button class="revoke" onclick="revoke('\${id}')">Revoke</button>
-              </li>
-            \`).join('');
+            approvedList.innerHTML = data.approved.map(id => {
+              const note = (data.notes && data.notes[id]) ? data.notes[id] : '';
+              const displayNote = note ? \` <span style="color:#8b5cf6; font-size:13px;">(\${note})</span>\` : '';
+              return \`
+                <li>
+                  <div class="client-info">
+                    <span class="client-id">\${id}\${displayNote}</span>
+                  </div>
+                  <div>
+                    <button class="approve" style="background:#8b5cf6;" onclick="editNote('\${id}', '\${note}')">Note</button>
+                    <button class="revoke" onclick="revoke('\${id}')">Revoke</button>
+                  </div>
+                </li>
+              \`;
+            }).join('');
           }
         }
 
@@ -771,6 +794,17 @@ adminApp.get('/', (req, res) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id })
+          });
+          fetchClients();
+        }
+
+        async function editNote(id, currentNote) {
+          const note = prompt('Enter a remark/note for this client:', currentNote);
+          if (note === null) return; // Cancelled
+          await fetch('/api/clients/note', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, note })
           });
           fetchClients();
         }
