@@ -168,4 +168,25 @@ export class WorkspaceClient {
       this._handleError(res, err);
     }
   }
+
+  async historyList(path) {
+    const url = `/api/workspace/history/list?path=${encodeURIComponent(path)}`;
+    const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      this._handleError(res, err);
+    }
+    return await res.json();
+  }
+
+  async historyRead(path, timestamp) {
+    const url = `/api/workspace/history/read?path=${encodeURIComponent(path)}&timestamp=${timestamp}`;
+    const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      this._handleError(res, err);
+    }
+    const buffer = await res.arrayBuffer();
+    return new Uint8Array(buffer);
+  }
 }

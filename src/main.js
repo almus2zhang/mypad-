@@ -127,9 +127,10 @@ const toolbar = createToolbar({
   onNextError: () => { if (editorManager.view) nextDiagnostic(editorManager.view); },
   onHistory: () => {
     const tab = tabManager.getActiveTab();
-    if (tab && tab.fileHandle && tab.fileHandle.type === 'workspace') {
+    if (tab && tab.workspacePath) {
       showHistoryDialog(
-        tab.fileHandle.path, 
+        workspaceBrowser.client,
+        tab.workspacePath, 
         editorManager.getContent(),
         localStorage.getItem('mypad_theme') || 'light',
         (restoredContent) => {

@@ -4,14 +4,13 @@ import { EditorView } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { keymap, drawSelection, highlightActiveLine, highlightActiveLineGutter, lineNumbers } from '@codemirror/view';
 import { syntaxHighlighting, defaultHighlightStyle, bracketMatching } from '@codemirror/language';
-import { workspaceClient } from '../server-workspace/workspace-client.js';
 import { decode } from '../encoding/encoding-converter.js';
 import { detectEncoding } from '../encoding/encoding-detector.js';
 import { t } from '../i18n.js';
 import { lightTheme, darkTheme } from '../editor/themes.js';
 import { getLanguageByFilename } from '../editor/languages.js';
 
-export async function showHistoryDialog(currentFilePath, currentContent, themeName, onRestore) {
+export async function showHistoryDialog(workspaceClient, currentFilePath, currentContent, themeName, onRestore) {
   // Build DOM
   const overlay = document.createElement('div');
   overlay.className = 'dialog-overlay';
