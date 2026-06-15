@@ -36,8 +36,7 @@
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@lezer/highlight": "^1.2.1",
     "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "pdfjs-dist": "^6.0.227"
+    "express": "^5.2.1"
   },
   "devDependencies": {
     "vite": "^6.3.0"

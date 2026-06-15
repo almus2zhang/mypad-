@@ -45,7 +45,6 @@ import { createSymbolBar } from './ui/symbol-bar.js';
 import { createSidebar } from './ui/sidebar.js';
 import { createContextMenu, getDefaultMenuItems } from './ui/context-menu.js';
 import { FileTreeSidebar } from './ui/file-tree-sidebar.js';
-import { renderPDF } from './ui/pdf-viewer.js';
 import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog } from './ui/dialogs.js';
 import { t } from './i18n.js';
 
@@ -300,25 +299,6 @@ const keymapCallbacks = {
  * @param {import('./tabs/tab-manager.js').Tab} tab
  */
 async function openEditorForTab(tab) {
-  const editorContainer = document.getElementById('editor-container');
-  const pdfContainer = document.getElementById('pdf-container');
-
-  if (tab.type === 'pdf') {
-    editorManager.destroyView();
-    editorContainer.style.display = 'none';
-    pdfContainer.style.display = 'block';
-
-    renderPDF(tab.content, pdfContainer);
-
-    updateStatusBar();
-    return;
-  }
-
-  // Text mode
-  editorContainer.style.display = 'block';
-  pdfContainer.style.display = 'none';
-  pdfContainer.innerHTML = '';
-
   // Load language support
   let langSupport = null;
   try {
@@ -327,8 +307,7 @@ async function openEditorForTab(tab) {
     console.warn('Failed to load language for', tab.filename, e);
   }
 
-  // Build base extensions (theme/language/tabSize/wordWrap/fontSize
-  // are handled by EditorManager's Compartments — NOT included here)
+  // Build base extensions
   const customKeymap = createCustomKeymap(keymapCallbacks);
   const baseExtensions = createExtensions({
     onUpdate: (update) => handleEditorUpdate(update, tab.id),
@@ -403,7 +382,7 @@ async function switchToTab(id) {
 
   // Save current tab state
   const prevTab = tabManager.getActiveTab();
-  if (prevTab && prevTab.type !== 'pdf' && editorManager.hasView) {
+  if (prevTab && editorManager.hasView) {
     prevTab.content = editorManager.getContent();
     prevTab.selection = editorManager.getState().selection;
     prevTab.scrollPos = editorManager.getScrollPosition();
@@ -594,25 +573,30 @@ function showWebDAV() {
 async function handleWebDAVFileOpen(path, arrayBuffer, filename) {
   try {
     const isPDF = filename.toLowerCase().endsWith('.pdf');
-    let content, encoding, langName;
 
     if (isPDF) {
-      content = arrayBuffer;
-      encoding = 'binary';
-      langName = 'PDF';
-    } else {
-      const fileInfo = await fileHandler.openFileFromBuffer(arrayBuffer, filename);
-      content = fileInfo.content;
-      encoding = fileInfo.encoding;
-      langName = getLanguageNameByFilename(filename);
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      showToast(`${t('File downloaded:')} ${filename}`, 'success');
+      return;
     }
+
+    const fileInfo = await fileHandler.openFileFromBuffer(arrayBuffer, filename);
+    const langName = getLanguageNameByFilename(filename);
 
     const tab = tabManager.createTab({
       filename,
-      content,
-      encoding,
+      content: fileInfo.content,
+      encoding: fileInfo.encoding,
       language: langName,
-      type: isPDF ? 'pdf' : 'text',
       webdavPath: path,
     });
     openEditorForTab(tab);
@@ -659,29 +643,36 @@ async function saveFileToWebDAV(tab) {
 async function handleWorkspaceFileOpen(filename, arrayBuffer, path) {
   try {
     const isPDF = filename.toLowerCase().endsWith('.pdf');
-    let content, encoding, langName;
 
     if (isPDF) {
-      content = arrayBuffer;
-      encoding = 'binary';
-      langName = 'PDF';
-    } else {
-      const fileInfo = await fileHandler.openFileFromBuffer(arrayBuffer, filename);
-      content = fileInfo.content;
-      encoding = fileInfo.encoding;
-      langName = getLanguageNameByFilename(filename);
+      // Direct opening/downloading logic for PDF instead of a new tab
+      // Some browsers block Blob URL viewing and force download anyway, which is perfectly fine for Android.
+      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.download = filename; // Suggest downloading to avoid white screen on strict WebViews
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+      showToast(`${t('File downloaded:')} ${filename}`, 'success');
+      return;
     }
+
+    const fileInfo = await fileHandler.openFileFromBuffer(arrayBuffer, filename);
+    const langName = getLanguageNameByFilename(filename);
 
     const tab = tabManager.createTab({
       filename,
-      content,
-      encoding,
+      content: fileInfo.content,
+      encoding: fileInfo.encoding,
       language: langName,
-      type: isPDF ? 'pdf' : 'text',
       workspacePath: path,
     });
     openEditorForTab(tab);
-    recentFiles.add({ name: filename, workspacePath: path, encoding });
+    recentFiles.add({ name: filename, workspacePath: path, encoding: fileInfo.encoding });
     sidebar.updateRecentFiles(recentFiles.getAll());
   } catch (e) {
     showToast(`${t('Failed to open workspace file:')} ${e.message}`, 'error');
