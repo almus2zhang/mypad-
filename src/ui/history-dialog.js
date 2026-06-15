@@ -11,6 +11,7 @@ import { lightTheme, darkTheme } from '../editor/themes.js';
 import { getLanguageByFilename } from '../editor/languages.js';
 
 export async function showHistoryDialog(workspaceClient, currentFilePath, currentContent, themeName, onRestore) {
+  console.log('showHistoryDialog called with path:', currentFilePath);
   // Build DOM
   const overlay = document.createElement('div');
   overlay.className = 'dialog-overlay';
@@ -66,6 +67,13 @@ export async function showHistoryDialog(workspaceClient, currentFilePath, curren
   dialog.appendChild(footer);
   overlay.appendChild(dialog);
   document.body.appendChild(overlay);
+  console.log('Dialog DOM appended to body');
+
+  // Trigger animation
+  requestAnimationFrame(() => {
+    overlay.classList.add('visible');
+    dialog.classList.add('visible'); // If dialog itself needs a visible class
+  });
 
   // Basic styling extensions
   const langSupport = await getLanguageByFilename(currentFilePath);
@@ -87,7 +95,9 @@ export async function showHistoryDialog(workspaceClient, currentFilePath, curren
 
   // Load history list
   try {
+    console.log('Fetching history list...');
     const list = await workspaceClient.historyList(currentFilePath);
+    console.log('History list fetched:', list);
     
     if (list.length === 0) {
       const emptyItem = document.createElement('div');

@@ -127,7 +127,11 @@ const toolbar = createToolbar({
   onNextError: () => { if (editorManager.view) nextDiagnostic(editorManager.view); },
   onHistory: () => {
     const tab = tabManager.getActiveTab();
-    if (tab && tab.workspacePath) {
+    if (!tab) {
+      showToast(t('No active file'), 'warning');
+      return;
+    }
+    if (tab.workspacePath) {
       showHistoryDialog(
         workspaceBrowser.client,
         tab.workspacePath, 
@@ -140,9 +144,12 @@ const toolbar = createToolbar({
           tabManager.updateTab(tab.id, { isDirty: true });
           updateTitle();
         }
-      );
+      ).catch(e => {
+        console.error(e);
+        showToast('History Dialog Error: ' + e.message, 'error');
+      });
     } else {
-      alert(t('Local history is only available for workspace files.'));
+      showToast(t('Local history is only available for workspace files.'), 'warning');
     }
   },
   onCompare: () => toggleCompareMode(),
