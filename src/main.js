@@ -45,6 +45,7 @@ import { createSymbolBar } from './ui/symbol-bar.js';
 import { createSidebar } from './ui/sidebar.js';
 import { createContextMenu, getDefaultMenuItems } from './ui/context-menu.js';
 import { FileTreeSidebar } from './ui/file-tree-sidebar.js';
+import { renderPDF } from './ui/pdf-viewer.js';
 import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog } from './ui/dialogs.js';
 import { t } from './i18n.js';
 
@@ -307,12 +308,8 @@ async function openEditorForTab(tab) {
     editorContainer.style.display = 'none';
     pdfContainer.style.display = 'block';
 
-    if (!tab.pdfUrl) {
-      const blob = new Blob([tab.content], { type: 'application/pdf' });
-      tab.pdfUrl = URL.createObjectURL(blob);
-    }
+    renderPDF(tab.content, pdfContainer);
 
-    pdfContainer.innerHTML = `<iframe src="${tab.pdfUrl}" style="width: 100%; height: 100%; border: none;"></iframe>`;
     updateStatusBar();
     return;
   }
@@ -422,9 +419,6 @@ async function switchToTab(id) {
 async function closeTab(id) {
   const tab = tabManager.getTab(id);
   if (!tab) return;
-  if (tab.pdfUrl) {
-    URL.revokeObjectURL(tab.pdfUrl);
-  }
 
   if (tab.modified) {
     showSaveConfirmDialog(
