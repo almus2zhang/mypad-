@@ -65,7 +65,7 @@ export function findDefinitionInContent(word, content) {
       // Calculate line and col
       const index = match.index;
       const beforeMatch = content.substring(0, index);
-      const lines = beforeMatch.split('\\n');
+      const lines = beforeMatch.split('\n');
       return {
         line: lines.length, // 1-indexed
         col: lines[lines.length - 1].length + 1 // 1-indexed

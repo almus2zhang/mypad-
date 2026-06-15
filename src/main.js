@@ -122,12 +122,22 @@ async function handleGoToDefinition(word) {
   for (const tab of sortedTabs) {
     const loc = findDefinitionInContent(word, tab.content);
     if (loc) {
+      // Save current position to history before jumping
+      const currentPos = editorManager.getCursorPosition();
+      if (currentPos) {
+        navigationManager.pushState(currentTab.id, currentPos.line, currentPos.col);
+      }
+
       if (tab.id !== currentTab.id) {
         await switchToTab(tab.id);
         // Wait for CodeMirror to initialize
         await new Promise(r => setTimeout(r, 50));
       }
       editorManager.goToLine(loc.line, loc.col);
+      
+      // Update nav buttons explicitly just in case
+      updateNavButtons(tab.id);
+
       showToast(t('Found definition in') + ' ' + tab.filename, 'success');
       return;
     }
