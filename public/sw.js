@@ -1,5 +1,5 @@
 // MyPad++ Service Worker — Offline Support
-const CACHE_NAME = 'mypad-v2';
+const CACHE_NAME = 'mypad-v3';
 
 // App shell files to cache for offline use
 const APP_SHELL = [
