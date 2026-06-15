@@ -79,16 +79,19 @@ export class CompareManager {
       tabSize: 4,
     });
 
+    const normOriginal = originalContent.replace(/\r\n?/g, '\n');
+    const normModified = modifiedContent.replace(/\r\n?/g, '\n');
+
     this.mergeView = new MergeView({
       a: {
-        doc: originalContent,
+        doc: normOriginal,
         extensions: [
           ...extensions,
           EditorView.editable.of(false), // make 'original' read-only to force merging from left to right
         ]
       },
       b: {
-        doc: modifiedContent,
+        doc: normModified,
         extensions: [
           ...extensions,
         ]
