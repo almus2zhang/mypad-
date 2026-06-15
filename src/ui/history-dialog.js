@@ -1,4 +1,4 @@
-import { MergeView } from '@codemirror/merge';
+import { MergeView, goToNextChunk, goToPreviousChunk } from '@codemirror/merge';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
@@ -40,11 +40,40 @@ export async function showHistoryDialog(workspaceClient, currentFilePath, curren
   sidebar.className = 'history-sidebar';
   
   // Merge View Container
+  const mergeWrapper = document.createElement('div');
+  mergeWrapper.className = 'history-merge-wrapper';
+  mergeWrapper.style.display = 'flex';
+  mergeWrapper.style.flexDirection = 'column';
+  mergeWrapper.style.flex = '1';
+  mergeWrapper.style.overflow = 'hidden';
+
+  const mergeToolbar = document.createElement('div');
+  mergeToolbar.className = 'history-merge-toolbar';
+
+  const btnPrev = document.createElement('button');
+  btnPrev.innerHTML = '↑ ' + t('Prev Diff');
+  btnPrev.title = t('Previous Difference');
+  
+  const btnNext = document.createElement('button');
+  btnNext.innerHTML = '↓ ' + t('Next Diff');
+  btnNext.title = t('Next Difference');
+
+  const btnToggle = document.createElement('button');
+  let isCollapsed = false;
+  btnToggle.innerHTML = t('Show Only Diffs');
+
+  mergeToolbar.appendChild(btnPrev);
+  mergeToolbar.appendChild(btnNext);
+  mergeToolbar.appendChild(btnToggle);
+
   const mergeContainer = document.createElement('div');
   mergeContainer.className = 'history-merge-container';
 
+  mergeWrapper.appendChild(mergeToolbar);
+  mergeWrapper.appendChild(mergeContainer);
+
   content.appendChild(sidebar);
-  content.appendChild(mergeContainer);
+  content.appendChild(mergeWrapper);
 
   // Footer
   const footer = document.createElement('div');
@@ -92,6 +121,24 @@ export async function showHistoryDialog(workspaceClient, currentFilePath, curren
 
   let mergeView = null;
   let selectedContent = '';
+
+  btnPrev.onclick = () => {
+    if (mergeView) goToPreviousChunk(mergeView.b);
+  };
+  
+  btnNext.onclick = () => {
+    if (mergeView) goToNextChunk(mergeView.b);
+  };
+
+  btnToggle.onclick = () => {
+    isCollapsed = !isCollapsed;
+    btnToggle.innerHTML = isCollapsed ? t('Show Full Text') : t('Show Only Diffs');
+    if (mergeView) {
+      mergeView.reconfigure({
+        collapseUnchanged: isCollapsed ? { margin: 3 } : undefined
+      });
+    }
+  };
 
   // Load history list
   try {
@@ -150,7 +197,8 @@ export async function showHistoryDialog(workspaceClient, currentFilePath, curren
             extensions: [...extensions, EditorState.readOnly.of(true)]
           },
           parent: mergeContainer,
-          orientation: 'a-b'
+          orientation: 'a-b',
+          collapseUnchanged: isCollapsed ? { margin: 3 } : undefined
         });
       };
       

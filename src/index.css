@@ -2749,11 +2749,40 @@ body {
   flex-direction: column;
 }
 
+.history-merge-toolbar {
+  display: flex;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  gap: 8px;
+  align-items: center;
+}
+
+.history-merge-toolbar button {
+  padding: 4px 10px;
+  font-size: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.history-merge-toolbar button:hover {
+  background: var(--bg-hover);
+}
+
 .cm-mergeView {
   flex: 1;
-  overflow: auto;
+  display: flex;
+  overflow: hidden;
 }
 
 .cm-mergeView .cm-editor {
+  flex: 1;
   height: 100%;
+}
+
+.cm-mergeView .cm-scroller {
+  overflow: auto;
 }
