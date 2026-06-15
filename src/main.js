@@ -122,16 +122,6 @@ async function handleGoToDefinition(word, clickLine, clickCol) {
   for (const tab of sortedTabs) {
     const loc = findDefinitionInContent(word, tab.content);
     if (loc) {
-      // Save click position to history before jumping
-      if (clickLine && clickCol) {
-        navigationManager.pushState(currentTab.id, clickLine, clickCol);
-      } else {
-        const currentPos = editorManager.getCursorPosition();
-        if (currentPos) {
-          navigationManager.pushState(currentTab.id, currentPos.line, currentPos.col);
-        }
-      }
-
       if (tab.id !== currentTab.id) {
         await switchToTab(tab.id);
         // Wait for CodeMirror to initialize
