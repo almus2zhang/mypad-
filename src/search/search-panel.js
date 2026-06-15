@@ -636,9 +636,6 @@ export function createSearchPanel(editorManager) {
 
     _setLayout(isLayoutVertical ? 'vertical' : 'horizontal');
 
-    findInput.focus();
-    findInput.select();
-
     // If there's selected text, use it as search query
     const textToSearch = initialQuery || editorManager.getSelectionText?.() || window.getSelection().toString();
     if (textToSearch && textToSearch.length > 0 && textToSearch.length < 200) {
@@ -649,6 +646,9 @@ export function createSearchPanel(editorManager) {
     // Auto-run search if there's text
     if (findInput.value) {
       _runFindAll();
+      nextBtn.focus();
+    } else {
+      findInput.focus();
     }
   }
 
@@ -672,9 +672,12 @@ export function createSearchPanel(editorManager) {
   }
 
   function toggle(m = 'find', initialQuery = '') {
+    const textToSearch = initialQuery || editorManager.getSelectionText?.() || window.getSelection().toString();
+    const hasNewText = textToSearch && textToSearch.length > 0 && textToSearch.length < 200 && textToSearch !== findInput.value;
+
     if (isVisible && mode === m) {
-      const isFocused = document.activeElement === findInput || document.activeElement === replaceInput;
-      if (isFocused) {
+      const isFocused = panel.contains(document.activeElement);
+      if (isFocused && !hasNewText) {
         hide();
         return;
       }
