@@ -329,5 +329,7 @@ export const i18n = new I18n();
 export const t = i18n.t.bind(i18n);
 
 // Attach to window for global access if needed
-window.i18n = i18n;
-window.t = t;
+if (typeof window !== 'undefined') {
+  window.i18n = i18n;
+  window.t = t;
+}
