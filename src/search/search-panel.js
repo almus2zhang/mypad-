@@ -5,7 +5,7 @@
  * @module search/search-panel
  */
 
-import { SearchCursor, RegExpCursor } from '@codemirror/search';
+import { SearchCursor, RegExpCursor, SearchQuery, setSearchQuery } from '@codemirror/search';
 import { EditorSelection } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { t } from '../i18n.js';
@@ -349,8 +349,18 @@ export function createSearchPanel(editorManager) {
       matchCount = 0;
       currentMatch = 0;
       countSpan.textContent = t('No results');
+      view.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search: '' })) });
       return;
     }
+
+    // Apply native search highlights for visibility
+    const sq = new SearchQuery({
+      search: query,
+      caseSensitive,
+      regexp: useRegex,
+      wholeWord
+    });
+    view.dispatch({ effects: setSearchQuery.of(sq) });
 
     matches = [];
     const doc = view.state.doc;
@@ -418,8 +428,18 @@ export function createSearchPanel(editorManager) {
     
     if (!query) {
       countSpan.textContent = t('No results');
+      view.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search: '' })) });
       return;
     }
+
+    // Apply native search highlights for visibility
+    const sq = new SearchQuery({
+      search: query,
+      caseSensitive,
+      regexp: useRegex,
+      wholeWord
+    });
+    view.dispatch({ effects: setSearchQuery.of(sq) });
 
     countSpan.textContent = t('Searching...');
     
@@ -566,7 +586,7 @@ export function createSearchPanel(editorManager) {
     const { from, to } = matches[index];
     view.dispatch({
       selection: EditorSelection.single(from, to),
-      scrollIntoView: true,
+      effects: EditorView.scrollIntoView(from, { y: 'center' }),
     });
     if (focusEditor) {
       view.focus();
@@ -668,6 +688,12 @@ export function createSearchPanel(editorManager) {
     
     const container = document.getElementById('workspace');
     if (container) container.classList.remove('annotepad-horizontal', 'annotepad-vertical');
+    
+    // Clear native highlights
+    if (editorManager.view) {
+      editorManager.view.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search: '' })) });
+    }
+    
     editorManager.focus?.();
   }
 
