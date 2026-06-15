@@ -108,9 +108,10 @@ To run the server continuously and start automatically on boot under a Debian/Ub
 2. **Start the server with PM2:**
    Replace the workspace path and password with your desired values.
    ```bash
-   # From your project root directory:
-   pm2 start server.js --name "mypad" -- --workspace "/path/to/your/workspace" --password "your_password"
+   # Run from the project root:
+   pm2 start server.js --name "mypad" -- --workspace "/path/to/your/workspace" --password "your_password" --admin-port 3001
    ```
+   > **Note:** The Admin Portal runs on port `3001` by default. You can change it using `--admin-port <port>`.
 
 3. **Set PM2 to start on boot:**
    ```bash
@@ -130,7 +131,7 @@ Description=MyPad++ Server
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/node /absolute/path/to/mypad-/server.js --workspace "/path/to/workspace" --password "your_password"
+ExecStart=/usr/bin/node /absolute/path/to/mypad-/server.js --workspace "/path/to/workspace" --password "your_password" --admin-port 3001
 Restart=always
 User=your_username
 Environment=PORT=3000

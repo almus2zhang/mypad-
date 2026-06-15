@@ -110,8 +110,9 @@ npm run preview
    （请将下方的工作区路径和密码替换为你自己的）
    ```bash
    # 请在项目根目录下执行：
-   pm2 start server.js --name "mypad" -- --workspace "/path/to/your/workspace" --password "your_password"
+   pm2 start server.js --name "mypad" -- --workspace "/path/to/your/workspace" --password "your_password" --admin-port 3001
    ```
+   > **注意:** 管理后台 (Admin Portal) 默认运行在 `3001` 端口。如果需要修改，请使用 `--admin-port <端口号>` 参数。
 
 3. **设置 PM2 开机自启：**
    ```bash
@@ -132,7 +133,7 @@ Description=MyPad++ Server
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/node /absolute/path/to/mypad-/server.js --workspace "/path/to/workspace" --password "your_password"
+ExecStart=/usr/bin/node /absolute/path/to/mypad-/server.js --workspace "/path/to/workspace" --password "your_password" --admin-port 3001
 Restart=always
 User=your_username
 Environment=PORT=3000
