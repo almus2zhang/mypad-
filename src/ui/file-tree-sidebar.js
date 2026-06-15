@@ -136,7 +136,8 @@ export class FileTreeSidebar {
     if (item.isDirectory) {
       icon.textContent = item.isPinned ? '⭐' : '📁';
     } else {
-      icon.textContent = '📄';
+      const isPDF = item.name.toLowerCase().endsWith('.pdf');
+      icon.textContent = isPDF ? '📕' : '📄';
     }
     
     const name = document.createElement('span');

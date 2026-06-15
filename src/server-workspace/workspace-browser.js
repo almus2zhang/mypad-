@@ -426,7 +426,12 @@ export class WorkspaceBrowser {
       
       const icon = document.createElement('span');
       icon.className = 'webdav-file-icon';
-      icon.textContent = item.isDirectory ? '📁' : '📄';
+      if (item.isDirectory) {
+        icon.textContent = '📁';
+      } else {
+        const isPDF = item.name.toLowerCase().endsWith('.pdf');
+        icon.textContent = isPDF ? '📕' : '📄';
+      }
 
       const textContainer = document.createElement('div');
       textContainer.style.overflow = 'hidden';
