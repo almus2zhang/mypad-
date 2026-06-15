@@ -4,6 +4,7 @@
  */
 
 import { WorkspaceClient } from './workspace-client.js';
+import { t } from '../i18n.js';
 
 export class WorkspaceBrowser {
   /**
@@ -145,10 +146,11 @@ export class WorkspaceBrowser {
     this._loading = true;
     
     this._breadcrumbEl.innerHTML = '';
-    const titleSpan = document.createElement('span');
-    titleSpan.textContent = `Search: "${q}"`;
-    titleSpan.style.fontWeight = 'bold';
-    titleSpan.style.color = 'var(--text-primary)';
+    const title = document.createElement('h2');
+    title.textContent = t('Server Workspace');
+    title.style.margin = '0 0 15px 0';
+    title.style.fontWeight = 'bold';
+    title.style.color = 'var(--text-primary)';
     
     const backBtn = document.createElement('button');
     backBtn.textContent = '← Back to root';
@@ -161,7 +163,7 @@ export class WorkspaceBrowser {
       this.navigateTo('/');
     });
 
-    this._breadcrumbEl.append(titleSpan, backBtn);
+    this._breadcrumbEl.append(title, backBtn);
     this._breadcrumbEl.style.display = 'flex';
     this._breadcrumbEl.style.alignItems = 'center';
 
@@ -275,15 +277,16 @@ export class WorkspaceBrowser {
     });
 
     const refreshBtn = document.createElement('button');
-    refreshBtn.textContent = '🔄 Rebuild Index';
-    refreshBtn.className = 'annotepad-btn';
+    refreshBtn.className = 'btn';
+    refreshBtn.textContent = t('🔄 Rebuild Index');
+    refreshBtn.title = 'Force rebuild server index';
     refreshBtn.style.padding = '2px 8px';
     refreshBtn.style.fontSize = '12px';
     refreshBtn.style.borderRadius = '4px';
     refreshBtn.style.marginLeft = 'auto';
     refreshBtn.addEventListener('click', async () => {
       refreshBtn.disabled = true;
-      refreshBtn.textContent = 'Rebuilding...';
+      refreshBtn.textContent = t('Rebuilding...');
       try {
         await this.client.reindex();
         // If we are currently searching, re-run the search
@@ -301,7 +304,7 @@ export class WorkspaceBrowser {
         alert('Failed to rebuild index: ' + e.message);
       } finally {
         refreshBtn.disabled = false;
-        refreshBtn.textContent = '🔄 Rebuild Index';
+        refreshBtn.textContent = t('🔄 Rebuild Index');
       }
     });
 
@@ -411,8 +414,8 @@ export class WorkspaceBrowser {
       const empty = document.createElement('div');
       empty.style.padding = '1rem';
       empty.style.textAlign = 'center';
-      empty.style.color = 'var(--text-tertiary)';
-      empty.textContent = 'Empty directory';
+      empty.style.padding = '10px';
+      empty.textContent = t('Empty directory');
       this._fileListEl.appendChild(empty);
       return;
     }
@@ -499,8 +502,8 @@ export class WorkspaceBrowser {
       btnGroup.style.gap = '8px';
       
       const newFolderBtn = document.createElement('button');
-      newFolderBtn.className = 'btn';
-      newFolderBtn.textContent = 'New Folder';
+      newFolderBtn.textContent = t('New Folder');
+      newFolderBtn.style.padding = '5px 10px';
       newFolderBtn.onclick = async () => {
         const name = prompt('Folder name:');
         if (!name) return;
@@ -528,8 +531,8 @@ export class WorkspaceBrowser {
       input.style.flex = '1';
 
       const saveBtn = document.createElement('button');
-      saveBtn.className = 'btn btn-primary';
-      saveBtn.textContent = 'Save Here';
+      saveBtn.textContent = t('Save Here');
+      saveBtn.style.padding = '5px 10px';
       saveBtn.onclick = async () => {
         const name = input.value.trim();
         if (!name) return;

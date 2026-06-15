@@ -5,6 +5,9 @@
 
 // ─── SVG Icon Definitions ────────────────────────────────────────────────────
 
+import { t, i18n } from '../i18n.js';
+import { showConfirmDialog } from './dialogs.js';
+
 export const ICONS = {
   newFile: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -150,6 +153,13 @@ export const ICONS = {
     <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
     <line x1="12" y1="17" x2="12.01" y2="17"></line>
   </svg>`,
+
+  language: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    <path d="M2 12h20"/>
+    <text id="lang-icon-text" x="12" y="15" text-anchor="middle" font-size="7" font-weight="bold" fill="currentColor" stroke="none">EN</text>
+  </svg>`,
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -243,11 +253,11 @@ export function createToolbar(callbacks = {}) {
   const themeBtn = createButton({
     id: 'btn-theme-toggle',
     icon: ICONS.themeDark,
-    tooltip: 'Toggle Dark Theme',
+    tooltip: t('Toggle Dark Theme'),
     onClick: () => {
       isDark = !isDark;
       themeBtn.innerHTML = isDark ? ICONS.themeLight : ICONS.themeDark;
-      themeBtn.title = isDark ? 'Toggle Light Theme' : 'Toggle Dark Theme';
+      themeBtn.title = isDark ? t('Toggle Light Theme') : t('Toggle Dark Theme');
       themeBtn.setAttribute('aria-label', themeBtn.title);
       if (typeof callbacks.onThemeToggle === 'function') callbacks.onThemeToggle(isDark);
     },
@@ -255,40 +265,58 @@ export function createToolbar(callbacks = {}) {
 
   // ── File group ──────────────────────────────────────────────────────────
   const fileGroup = [
-    createButton({ id: 'btn-new', icon: ICONS.newFile, tooltip: 'New File', onClick: callbacks.onNew }),
-    createButton({ id: 'btn-open', icon: ICONS.open, tooltip: 'Open File', onClick: callbacks.onOpen }),
-    createButton({ id: 'btn-save', icon: ICONS.save, tooltip: 'Save', onClick: callbacks.onSave }),
-    createButton({ id: 'btn-save-as', icon: ICONS.saveAs, tooltip: 'Save As', onClick: callbacks.onSaveAs }),
+    createButton({ id: 'btn-new', icon: ICONS.newFile, tooltip: t('New File'), onClick: callbacks.onNew }),
+    createButton({ id: 'btn-open', icon: ICONS.open, tooltip: t('Open'), onClick: callbacks.onOpen }),
+    createButton({ id: 'btn-save', icon: ICONS.save, tooltip: t('Save'), onClick: callbacks.onSave }),
+    createButton({ id: 'btn-save-as', icon: ICONS.saveAs, tooltip: t('Save As'), onClick: callbacks.onSaveAs }),
   ];
 
   // ── Edit group ──────────────────────────────────────────────────────────
   const editGroup = [
-    createButton({ id: 'btn-undo', icon: ICONS.undo, tooltip: 'Undo', onClick: callbacks.onUndo }),
-    createButton({ id: 'btn-redo', icon: ICONS.redo, tooltip: 'Redo', onClick: callbacks.onRedo }),
+    createButton({ id: 'btn-undo', icon: ICONS.undo, tooltip: t('Undo'), onClick: callbacks.onUndo }),
+    createButton({ id: 'btn-redo', icon: ICONS.redo, tooltip: t('Redo'), onClick: callbacks.onRedo }),
   ];
 
   // ── View group ──────────────────────────────────────────────────────────
   const viewGroup = [
-    createButton({ id: 'btn-word-wrap', icon: ICONS.wordWrap, tooltip: 'Toggle Word Wrap', onClick: callbacks.onWordWrap, toggle: true }),
-    createButton({ id: 'btn-status-bar', icon: ICONS.statusBar, tooltip: 'Toggle Status Bar', onClick: callbacks.onToggleStatusBar, toggle: true }),
-    createButton({ id: 'btn-keyboard', icon: ICONS.keyboardOff, tooltip: 'Toggle Touch Keyboard', onClick: callbacks.onToggleKeyboard, toggle: true }),
-    createButton({ id: 'btn-fullscreen', icon: ICONS.fullscreen, tooltip: 'Toggle Fullscreen', onClick: callbacks.onFullscreen, toggle: true }),
-    createButton({ id: 'btn-zoom-in', icon: ICONS.zoomIn, tooltip: 'Zoom In', onClick: callbacks.onZoomIn }),
-    createButton({ id: 'btn-zoom-out', icon: ICONS.zoomOut, tooltip: 'Zoom Out', onClick: callbacks.onZoomOut }),
+    createButton({ id: 'btn-word-wrap', icon: ICONS.wordWrap, tooltip: t('Toggle Word Wrap'), onClick: callbacks.onWordWrap, toggle: true }),
+    createButton({ id: 'btn-status-bar', icon: ICONS.statusBar, tooltip: t('Toggle Status Bar'), onClick: callbacks.onToggleStatusBar, toggle: true }),
+    createButton({ id: 'btn-keyboard', icon: ICONS.keyboardOff, tooltip: t('Toggle Virtual Keyboard Block'), onClick: callbacks.onToggleKeyboard, toggle: true }),
+    createButton({ id: 'btn-fullscreen', icon: ICONS.fullscreen, tooltip: t('Toggle Fullscreen'), onClick: callbacks.onFullscreen, toggle: true }),
+    createButton({ id: 'btn-zoom-in', icon: ICONS.zoomIn, tooltip: t('Toggle Zoom In'), onClick: callbacks.onZoomIn }),
+    createButton({ id: 'btn-zoom-out', icon: ICONS.zoomOut, tooltip: t('Toggle Zoom Out'), onClick: callbacks.onZoomOut }),
     themeBtn,
   ];
 
   // ── Tools group ─────────────────────────────────────────────────────────
   const toolsGroup = [
-    createButton({ id: 'btn-explorer', icon: ICONS.explorer, tooltip: 'File Explorer', onClick: callbacks.onExplorer, toggle: true }),
-    createButton({ id: 'btn-find', icon: ICONS.find, tooltip: 'Find', onClick: callbacks.onFind }),
-    createButton({ id: 'btn-replace', icon: ICONS.replace, tooltip: 'Replace', onClick: callbacks.onReplace }),
-    createButton({ id: 'btn-next-error', icon: ICONS.nextError, tooltip: 'Next Error', onClick: callbacks.onNextError }),
-    createButton({ id: 'btn-compare', icon: ICONS.compare, tooltip: 'Compare', onClick: callbacks.onCompare }),
-    createButton({ id: 'btn-webdav', icon: ICONS.webdav, tooltip: 'WebDAV', onClick: callbacks.onWebDAV }),
-    createButton({ id: 'btn-workspace', icon: ICONS.workspace, tooltip: 'Server Workspace', onClick: callbacks.onWorkspace }),
-    createButton({ id: 'btn-highlights', icon: ICONS.highlights, tooltip: 'Custom Highlights', onClick: callbacks.onCustomHighlights }),
+    createButton({ id: 'btn-explorer', icon: ICONS.explorer, tooltip: t('File Explorer'), onClick: callbacks.onExplorer, toggle: true }),
+    createButton({ id: 'btn-find', icon: ICONS.find, tooltip: t('Find'), onClick: callbacks.onFind }),
+    createButton({ id: 'btn-replace', icon: ICONS.replace, tooltip: t('Replace'), onClick: callbacks.onReplace }),
+    createButton({ id: 'btn-next-error', icon: ICONS.nextError, tooltip: t('Next Error / Warning'), onClick: callbacks.onNextError }),
+    createButton({ id: 'btn-compare', icon: ICONS.compare, tooltip: t('Compare with...'), onClick: callbacks.onCompare }),
+    createButton({ id: 'btn-webdav', icon: ICONS.webdav, tooltip: t('WebDAV'), onClick: callbacks.onWebDAV }),
+    createButton({ id: 'btn-workspace', icon: ICONS.workspace, tooltip: t('Server Workspace'), onClick: callbacks.onWorkspace }),
+    createButton({ id: 'btn-highlights', icon: ICONS.highlights, tooltip: t('Toggle Highlight Mode'), onClick: callbacks.onCustomHighlights }),
     createButton({ id: 'btn-help', icon: ICONS.help, tooltip: 'Help', onClick: callbacks.onHelp }),
+    createButton({
+      id: 'btn-language',
+      icon: ICONS.language,
+      tooltip: t('Switch Language'),
+      onClick: () => {
+        const targetLang = i18n.lang === 'en' ? '中文' : 'English';
+        showConfirmDialog(
+          t('Switch Language'),
+          t('Are you sure you want to switch language to {lang}? This will reload the page.', { lang: targetLang }),
+          () => {
+            const newLang = i18n.toggle();
+            const langName = newLang === 'zh' ? '中文' : 'English';
+            sessionStorage.setItem('mypad_lang_toast', langName);
+            location.reload();
+          }
+        );
+      }
+    }),
   ];
 
   // ── Assemble ────────────────────────────────────────────────────────────
@@ -327,6 +355,10 @@ export function createToolbar(callbacks = {}) {
       buttons[next].focus();
     }
   });
+
+  const langText = i18n.lang === 'en' ? 'CN' : 'EN';
+  const textEl = toolbar.querySelector('#lang-icon-text');
+  if (textEl) textEl.textContent = langText;
 
   return toolbar;
 }

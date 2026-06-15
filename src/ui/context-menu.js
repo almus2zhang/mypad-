@@ -3,6 +3,8 @@
  * Custom context menu for MyPad++.
  */
 
+import { t } from '../i18n.js';
+
 // ─── Default menu item definitions ───────────────────────────────────────────
 
 /**
@@ -22,21 +24,20 @@
  */
 export function getDefaultMenuItems(callbacks = {}) {
   return [
-    { id: 'ctx-cut', label: 'Cut', shortcut: 'Ctrl+X', action: callbacks.onCut },
-    { id: 'ctx-copy', label: 'Copy', shortcut: 'Ctrl+C', action: callbacks.onCopy },
-    { id: 'ctx-paste', label: 'Paste', shortcut: 'Ctrl+V', action: callbacks.onPaste },
-    { id: 'ctx-select-all', label: 'Select All', shortcut: 'Ctrl+A', action: callbacks.onSelectAll },
+    { id: 'ctx-cut', label: t('Cut'), shortcut: 'Ctrl+X', action: callbacks.onCut },
+    { id: 'ctx-copy', label: t('Copy'), shortcut: 'Ctrl+C', action: callbacks.onCopy },
+    { id: 'ctx-paste', label: t('Paste'), shortcut: 'Ctrl+V', action: callbacks.onPaste },
+    { id: 'ctx-select-all', label: t('Select All'), shortcut: 'Ctrl+A', action: callbacks.onSelectAll },
     { type: 'separator' },
-    { id: 'ctx-find', label: 'Find', shortcut: 'Ctrl+F', action: callbacks.onFind },
-    { id: 'ctx-replace', label: 'Replace', shortcut: 'Ctrl+H', action: callbacks.onReplace },
+    { id: 'ctx-find', label: t('Find'), shortcut: 'Ctrl+F', action: callbacks.onFind },
+    { id: 'ctx-replace', label: t('Replace'), shortcut: 'Ctrl+H', action: callbacks.onReplace },
     { type: 'separator' },
-    { id: 'ctx-highlight', label: 'Highlight', shortcut: '', action: callbacks.onHighlight },
-    { id: 'ctx-reference', label: 'Reference (引用)', shortcut: '', action: callbacks.onReference },
+    { id: 'ctx-highlight', label: t('Highlight Selection'), shortcut: '', action: callbacks.onHighlight },
     { type: 'separator' },
-    { id: 'ctx-indent', label: 'Indent', shortcut: 'Tab', action: callbacks.onIndent },
-    { id: 'ctx-outdent', label: 'Outdent', shortcut: 'Shift+Tab', action: callbacks.onOutdent },
+    { id: 'ctx-indent', label: t('Indent'), shortcut: 'Tab', action: callbacks.onIndent },
+    { id: 'ctx-outdent', label: t('Outdent'), shortcut: 'Shift+Tab', action: callbacks.onOutdent },
     { type: 'separator' },
-    { id: 'ctx-toggle-comment', label: 'Toggle Comment', shortcut: 'Ctrl+/', action: callbacks.onToggleComment },
+    { id: 'ctx-toggle-comment', label: t('Toggle Comment'), shortcut: 'Ctrl+/', action: callbacks.onToggleComment },
   ];
 }
 
@@ -128,12 +129,11 @@ export function createContextMenu() {
     }
     actionItems = [];
     focusedIndex = -1;
+    document.removeEventListener('pointerdown', onOutsideClick, true);
     document.removeEventListener('mousedown', onOutsideClick, true);
     document.removeEventListener('touchstart', onOutsideClick, true);
     document.removeEventListener('contextmenu', onOutsideClick, true);
     document.removeEventListener('keydown', onKeyDown, true);
-    window.removeEventListener('resize', hide);
-    window.removeEventListener('scroll', hide, true);
   }
 
   function onOutsideClick(e) {
@@ -203,6 +203,12 @@ export function createContextMenu() {
     menuEl.className = 'context-menu';
     menuEl.setAttribute('role', 'menu');
     menuEl.setAttribute('aria-label', 'Context menu');
+
+    // Prevent native context menu from appearing on top of our custom menu on mobile long-press
+    menuEl.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
 
     actionItems = [];
     focusedIndex = -1;
@@ -279,12 +285,20 @@ export function createContextMenu() {
           subEl.type = 'button';
           subEl.className = 'context-menu-item';
           subEl.innerHTML = `<span class="context-menu-item-icon"></span><span class="context-menu-item-label">${subItem.label}</span>`;
-          subEl.addEventListener('click', (e) => {
+          
+          let fired = false;
+          const fireSubAction = (e) => {
             e.preventDefault();
             e.stopPropagation();
+            if (fired) return;
+            fired = true;
             if (subItem.action) subItem.action();
             hide();
-          });
+            setTimeout(() => fired = false, 300);
+          };
+          subEl.addEventListener('touchend', fireSubAction);
+          subEl.addEventListener('pointerup', fireSubAction);
+          subEl.addEventListener('click', fireSubAction);
           submenuEl.appendChild(subEl);
         });
 
@@ -319,12 +333,19 @@ export function createContextMenu() {
         });
 
       } else {
-        el.addEventListener('click', (e) => {
+        let fired = false;
+        const fireAction = (e) => {
           e.preventDefault();
           e.stopPropagation();
+          if (fired) return;
+          fired = true;
           if (typeof item.action === 'function') item.action();
           hide();
-        });
+          setTimeout(() => fired = false, 300);
+        };
+        el.addEventListener('touchend', fireAction);
+        el.addEventListener('pointerup', fireAction);
+        el.addEventListener('click', fireAction);
 
         el.addEventListener('mouseenter', () => {
           const idx = actionItems.indexOf(el);
@@ -364,12 +385,11 @@ export function createContextMenu() {
     // ── Register global listeners ────────────────────────────────────────
     // Defer attaching listeners
     setTimeout(() => {
+      document.addEventListener('pointerdown', onOutsideClick, true);
       document.addEventListener('mousedown', onOutsideClick, true);
       document.addEventListener('touchstart', onOutsideClick, true);
       document.addEventListener('contextmenu', onOutsideClick, true);
       document.addEventListener('keydown', onKeyDown, true);
-      window.addEventListener('resize', hide);
-      window.addEventListener('scroll', hide, true);
     }, 50);
 
     // Trigger animation

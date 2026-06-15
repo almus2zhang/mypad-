@@ -3,6 +3,8 @@
  * A VSCode-style resizable file tree explorer for the main workspace.
  */
 
+import { t } from '../i18n.js';
+
 export class FileTreeSidebar {
   /**
    * @param {Object} workspaceClient The client to fetch directories
@@ -60,12 +62,12 @@ export class FileTreeSidebar {
 
   async loadDirectory(path, containerEl = this.treeContainer, paddingLeft = 10) {
     if (path === '/') {
-      this.treeContainer.innerHTML = '<div style="padding:10px;color:var(--text-tertiary);font-size:13px;">Loading workspaces...</div>';
+      this.treeContainer.innerHTML = `<div style="padding:10px;color:var(--text-tertiary);font-size:13px;">${t('Loading workspaces...')}</div>`;
     } else {
       const loader = document.createElement('div');
       loader.className = 'file-tree-item';
       loader.style.paddingLeft = `${paddingLeft}px`;
-      loader.textContent = 'Loading...';
+      loader.textContent = t('Loading...');
       containerEl.appendChild(loader);
     }
 
@@ -100,14 +102,14 @@ export class FileTreeSidebar {
         empty.style.paddingLeft = `${paddingLeft}px`;
         empty.style.color = 'var(--text-tertiary)';
         empty.style.fontStyle = 'italic';
-        empty.textContent = '(empty)';
+        empty.textContent = `(${t('empty')})`;
         containerEl.appendChild(empty);
       }
     } catch (e) {
       if (path === '/') {
-        this.treeContainer.innerHTML = `<div style="padding:10px;color:var(--danger);font-size:13px;">Error loading workspace: ${e.message}</div>`;
+        this.treeContainer.innerHTML = `<div style="padding:10px;color:var(--danger);font-size:13px;">${t('Error loading workspace:')} ${e.message}</div>`;
       } else {
-        containerEl.innerHTML = `<div class="file-tree-item" style="padding-left:${paddingLeft}px;color:var(--danger);">Error</div>`;
+        containerEl.innerHTML = `<div class="file-tree-item" style="padding-left:${paddingLeft}px;color:var(--danger);">${t('Error')}</div>`;
       }
     }
   }
@@ -147,7 +149,7 @@ export class FileTreeSidebar {
     if (item.isDirectory && (parentPath !== '/' || item.isPinned)) {
       const pinBtn = document.createElement('span');
       pinBtn.textContent = '📌';
-      pinBtn.title = item.isPinned ? 'Unpin from top' : 'Pin to top';
+      pinBtn.title = item.isPinned ? t('Unpin from top') : t('Pin to top');
       pinBtn.style.cursor = 'pointer';
       pinBtn.style.fontSize = '12px';
       pinBtn.addEventListener('click', (e) => {

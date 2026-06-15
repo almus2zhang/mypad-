@@ -3,6 +3,8 @@
  * Slide-in sidebar for MyPad++ showing open and recent files.
  */
 
+import { t } from '../i18n.js';
+
 // ─── Language icon mapping ───────────────────────────────────────────────────
 
 /**
@@ -60,8 +62,8 @@ const CLOSE_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" 
  * @returns {string}
  */
 function basename(path) {
-  if (!path) return 'Untitled';
-  return path.replace(/\\/g, '/').split('/').pop() || 'Untitled';
+  if (!path) return t('Untitled');
+  return path.replace(/\\/g, '/').split('/').pop() || t('Untitled');
 }
 
 /**
@@ -95,7 +97,7 @@ function createFileItem(file, onClick) {
     const dot = document.createElement('span');
     dot.className = 'sidebar-file-modified-dot';
     dot.textContent = '●';
-    dot.title = 'Unsaved changes';
+    dot.title = t('Unsaved changes');
     nameSpan.appendChild(dot);
   }
 
@@ -158,8 +160,8 @@ export function createSidebar() {
   closeBtn.type = 'button';
   closeBtn.className = 'sidebar-close-btn';
   closeBtn.innerHTML = CLOSE_ICON;
-  closeBtn.title = 'Close Sidebar';
-  closeBtn.setAttribute('aria-label', 'Close Sidebar');
+  closeBtn.title = t('Close Sidebar');
+  closeBtn.setAttribute('aria-label', t('Close Sidebar'));
 
   header.appendChild(title);
   header.appendChild(closeBtn);
@@ -170,7 +172,7 @@ export function createSidebar() {
 
   const openHeader = document.createElement('h3');
   openHeader.className = 'sidebar-section-title';
-  openHeader.textContent = 'Open Files';
+  openHeader.textContent = t('Open Files');
 
   const openList = document.createElement('div');
   openList.className = 'sidebar-file-list';
@@ -178,7 +180,7 @@ export function createSidebar() {
 
   const openEmpty = document.createElement('p');
   openEmpty.className = 'sidebar-empty';
-  openEmpty.textContent = 'No open files';
+  openEmpty.textContent = t('No files open');
 
   openList.appendChild(openEmpty);
   openSection.appendChild(openHeader);
@@ -190,7 +192,7 @@ export function createSidebar() {
 
   const recentHeader = document.createElement('h3');
   recentHeader.className = 'sidebar-section-title';
-  recentHeader.textContent = 'Recent Files';
+  recentHeader.textContent = t('Recent Files');
 
   const recentList = document.createElement('div');
   recentList.className = 'sidebar-file-list';
@@ -198,7 +200,7 @@ export function createSidebar() {
 
   const recentEmpty = document.createElement('p');
   recentEmpty.className = 'sidebar-empty';
-  recentEmpty.textContent = 'No recent files';
+  recentEmpty.textContent = t('No recent files');
 
   recentList.appendChild(recentEmpty);
   recentSection.appendChild(recentHeader);

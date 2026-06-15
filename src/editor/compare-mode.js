@@ -31,8 +31,8 @@ export class CompareManager {
     this.isActive = true;
 
     // Normalize line endings to \n to prevent the diff algorithm from marking unchanged lines as different
-    originalContent = (originalContent || '').replace(/\r\n/g, '\n');
-    modifiedContent = (modifiedContent || '').replace(/\r\n/g, '\n');
+    originalContent = (originalContent || '').replace(/\r/g, '');
+    modifiedContent = (modifiedContent || '').replace(/\r/g, '');
 
     this.container.innerHTML = '';
     this.container.style.display = 'flex'; 

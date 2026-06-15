@@ -3,6 +3,8 @@
  * Bottom status bar for MyPad++.
  */
 
+import { t } from '../i18n.js';
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -79,16 +81,16 @@ export function createStatusBar() {
   leftSection.className = 'statusbar-section statusbar-section--left';
 
   const pathLabel = createStatusLabel('status-file-path', '');
-  pathLabel.title = 'File Path';
+  pathLabel.title = t('File Path');
   pathLabel.style.color = 'var(--text-tertiary)';
   pathLabel.style.marginRight = 'var(--space-3)';
   pathLabel.style.maxWidth = '40vw'; // Don't take up too much space
 
-  const cursorLabel = createStatusLabel('status-cursor', 'Ln 1, Col 1');
-  cursorLabel.title = 'Cursor Position';
+  const cursorLabel = createStatusLabel('status-cursor', `${t('Line')} 1, ${t('Col')} 1`);
+  cursorLabel.title = t('Cursor Position');
 
   const selectionLabel = createStatusLabel('status-selection', '');
-  selectionLabel.title = 'Selection';
+  selectionLabel.title = t('Selection');
 
   leftSection.appendChild(pathLabel);
   leftSection.appendChild(cursorLabel);
@@ -101,9 +103,9 @@ export function createStatusBar() {
   const encodingItem = createStatusItem('status-encoding', 'UTF-8', 'File Encoding');
   const languageItem = createStatusItem('status-language', 'Plain Text', 'Language Mode');
   const lineEndingItem = createStatusItem('status-line-ending', 'LF', 'Line Ending');
-  const indentItem = createStatusItem('status-indentation', 'Spaces: 4', 'Indentation');
+  const indentItem = createStatusItem('status-indentation', `${t('Spaces')}: 4`, 'Indentation');
   const fileSizeLabel = createStatusLabel('status-file-size', '');
-  fileSizeLabel.title = 'File Size';
+  fileSizeLabel.title = t('File Size');
 
   rightSection.appendChild(encodingItem);
   rightSection.appendChild(languageItem);
@@ -161,7 +163,7 @@ export function createStatusBar() {
      * @param {number} col - 1-based column number.
      */
     setCursorPosition(line, col) {
-      cursorLabel.textContent = `Ln ${line}, Col ${col}`;
+      cursorLabel.textContent = `${t('Line')} ${line}, ${t('Col')} ${col}`;
     },
 
     /**
@@ -177,8 +179,8 @@ export function createStatusBar() {
       }
       const chars = text.length;
       const parts = [];
-      if (lines > 1) parts.push(`${lines} lines`);
-      parts.push(`${chars} char${chars !== 1 ? 's' : ''} selected`);
+      if (lines > 1) parts.push(`${lines} ${t('lines')}`);
+      parts.push(`${chars} ${t('Selected')}`);
       selectionLabel.textContent = `(${parts.join(', ')})`;
       selectionLabel.style.display = '';
     },
@@ -226,7 +228,7 @@ export function createStatusBar() {
      * @param {Function} [onClick]
      */
     setIndentation(type, size, onClick) {
-      const label = type === 'tabs' ? `Tabs: ${size}` : `Spaces: ${size}`;
+      const label = type === 'tabs' ? `${t('Tabs')}: ${size}` : `${t('Spaces')}: ${size}`;
       indentItem.textContent = label;
       indentItem.setAttribute('aria-label', `Indentation: ${label}`);
       if (indentClickCleanup) indentClickCleanup();

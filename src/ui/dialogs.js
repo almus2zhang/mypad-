@@ -5,6 +5,7 @@
 
 import { LANGUAGE_LIST } from '../editor/languages.js';
 import { ICONS } from './toolbar.js';
+import { t } from '../i18n.js';
 
 // ─── Encoding data ───────────────────────────────────────────────────────────
 
@@ -137,8 +138,8 @@ function createDialogHeader(titleText, onClose) {
   closeBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
   </svg>`;
-  closeBtn.title = 'Close';
-  closeBtn.setAttribute('aria-label', 'Close dialog');
+  closeBtn.title = t('Close');
+  closeBtn.setAttribute('aria-label', t('Close dialog'));
   closeBtn.addEventListener('click', onClose);
 
   header.appendChild(title);
@@ -178,11 +179,11 @@ function createDialogFooter(buttons) {
 export function showCompareSelectorDialog(tabs, onSelect) {
   const { dialog, close } = createDialogBase({
     className: 'dialog-encoding-picker', // Reuse grid styling
-    ariaLabel: 'Select Tab to Compare',
+    ariaLabel: t('Compare with...'),
     onClose: () => {},
   });
 
-  dialog.appendChild(createDialogHeader('Compare with...', close));
+  dialog.appendChild(createDialogHeader(t('Compare with...'), close));
 
   const body = document.createElement('div');
   body.className = 'dialog-body dialog-encoding-body';
@@ -195,7 +196,7 @@ export function showCompareSelectorDialog(tabs, onSelect) {
 
   if (tabs.length === 0) {
     const emptyMsg = document.createElement('div');
-    emptyMsg.textContent = 'No other tabs open to compare with.';
+    emptyMsg.textContent = t('No other tabs open to compare with.');
     emptyMsg.style.padding = 'var(--space-4)';
     emptyMsg.style.color = 'var(--text-secondary)';
     section.appendChild(emptyMsg);
@@ -204,7 +205,7 @@ export function showCompareSelectorDialog(tabs, onSelect) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'dialog-encoding-item';
-      btn.textContent = tab.webdavPath || tab.filePath || tab.filename || 'Untitled';
+      btn.textContent = tab.webdavPath || tab.filePath || tab.filename || t('Untitled');
       btn.title = btn.textContent;
       btn.style.whiteSpace = 'nowrap';
       btn.style.overflow = 'hidden';
@@ -233,11 +234,11 @@ export function showCompareSelectorDialog(tabs, onSelect) {
 export function showLanguagePicker(currentLanguage, onSelect) {
   const { dialog, close } = createDialogBase({
     className: 'dialog-encoding-picker', // Reuse encoding picker styles
-    ariaLabel: 'Select Language Mode',
+    ariaLabel: t('Select Language Mode'),
     onClose: () => {},
   });
 
-  dialog.appendChild(createDialogHeader('Language Mode', close));
+  dialog.appendChild(createDialogHeader(t('Language Mode'), close));
 
   // Search box
   const searchWrap = document.createElement('div');
@@ -246,8 +247,8 @@ export function showLanguagePicker(currentLanguage, onSelect) {
   const searchInput = document.createElement('input');
   searchInput.type = 'text';
   searchInput.className = 'dialog-search-input';
-  searchInput.placeholder = 'Search languages…';
-  searchInput.setAttribute('aria-label', 'Search languages');
+  searchInput.placeholder = t('Search languages…');
+  searchInput.setAttribute('aria-label', t('Search languages'));
   searchWrap.appendChild(searchInput);
   dialog.appendChild(searchWrap);
 
@@ -306,11 +307,11 @@ export function showLanguagePicker(currentLanguage, onSelect) {
 export function showEncodingPicker(currentEncoding, onSelect) {
   const { dialog, close } = createDialogBase({
     className: 'dialog-encoding-picker',
-    ariaLabel: 'Select File Encoding',
+    ariaLabel: t('Select File Encoding'),
     onClose: () => {},
   });
 
-  dialog.appendChild(createDialogHeader('File Encoding', close));
+  dialog.appendChild(createDialogHeader(t('File Encoding'), close));
 
   // Search box
   const searchWrap = document.createElement('div');
@@ -319,8 +320,8 @@ export function showEncodingPicker(currentEncoding, onSelect) {
   const searchInput = document.createElement('input');
   searchInput.type = 'text';
   searchInput.className = 'dialog-search-input';
-  searchInput.placeholder = 'Search encodings…';
-  searchInput.setAttribute('aria-label', 'Search encodings');
+  searchInput.placeholder = t('Search encodings...');
+  searchInput.setAttribute('aria-label', t('Search encodings...'));
   searchWrap.appendChild(searchInput);
   dialog.appendChild(searchWrap);
 
@@ -392,18 +393,18 @@ export function showEncodingPicker(currentEncoding, onSelect) {
 export function showGoToLineDialog(maxLine, onGo) {
   const { dialog, close } = createDialogBase({
     className: 'dialog-goto-line',
-    ariaLabel: 'Go to Line',
+    ariaLabel: t('Go to Line'),
     onClose: () => {},
   });
 
-  dialog.appendChild(createDialogHeader('Go to Line', close));
+  dialog.appendChild(createDialogHeader(t('Go to Line'), close));
 
   const body = document.createElement('div');
   body.className = 'dialog-body';
 
   const label = document.createElement('label');
   label.className = 'dialog-label';
-  label.textContent = `Enter line number (1–${maxLine}):`;
+  label.textContent = t('Line number (1 - {max}):', { max: maxLine });
 
   const input = document.createElement('input');
   input.type = 'number';
@@ -442,9 +443,65 @@ export function showGoToLineDialog(maxLine, onGo) {
   });
 
   dialog.appendChild(createDialogFooter([
-    { label: 'Cancel', className: 'dialog-btn--secondary', onClick: close },
-    { label: 'Go', className: 'dialog-btn--primary', onClick: handleGo },
+    { label: t('Cancel'), className: 'dialog-btn--secondary', onClick: close },
+    { label: t('Go'), className: 'dialog-btn--primary', onClick: handleGo },
   ]));
+}
+
+/**
+ * Show a general Confirmation dialog.
+ * @param {string} title - The title of the dialog
+ * @param {string} message - The message to display
+ * @param {Function} onConfirm - Callback on Confirm
+ * @param {Function} onCancel - Callback on Cancel
+ */
+export function showConfirmDialog(title, message, onConfirm, onCancel) {
+  const { dialog, close } = createDialogBase({
+    className: 'dialog-confirm',
+    ariaLabel: title,
+    onClose: onCancel || (() => {})
+  });
+
+  dialog.appendChild(createDialogHeader(title, close));
+
+  const body = document.createElement('div');
+  body.className = 'dialog-body';
+
+  const section = document.createElement('div');
+  section.className = 'dialog-section';
+  section.style.padding = '10px 0';
+  section.style.textAlign = 'center';
+
+  const msgP = document.createElement('p');
+  msgP.style.margin = '0';
+  msgP.style.color = 'var(--text-primary)';
+  msgP.style.fontSize = '14px';
+  msgP.textContent = message;
+
+  section.appendChild(msgP);
+  body.appendChild(section);
+  dialog.appendChild(body);
+
+  const footer = createDialogFooter([
+    {
+      label: t('Cancel'),
+      className: 'dialog-btn--secondary',
+      onClick: () => {
+        if (onCancel) onCancel();
+        close();
+      }
+    },
+    {
+      label: t('Confirm'),
+      className: 'dialog-btn--primary',
+      onClick: () => {
+        if (onConfirm) onConfirm();
+        close();
+      }
+    }
+  ]);
+
+  dialog.appendChild(footer);
 }
 
 /**
@@ -458,11 +515,11 @@ export function showGoToLineDialog(maxLine, onGo) {
 export function showSaveConfirmDialog(filename, onSave, onDiscard, onCancel) {
   const { dialog, close } = createDialogBase({
     className: 'dialog-save-confirm',
-    ariaLabel: 'Save Changes',
+    ariaLabel: t('Save Changes'),
     onClose: () => { if (typeof onCancel === 'function') onCancel(); },
   });
 
-  dialog.appendChild(createDialogHeader('Save Changes', close));
+  dialog.appendChild(createDialogHeader(t('Save Changes'), close));
 
   const body = document.createElement('div');
   body.className = 'dialog-body';
@@ -476,11 +533,11 @@ export function showSaveConfirmDialog(filename, onSave, onDiscard, onCancel) {
 
   const msg = document.createElement('p');
   msg.className = 'dialog-message';
-  msg.textContent = `Do you want to save changes to "${filename}"?`;
+  msg.textContent = `${t('Do you want to save changes to')} "${filename}"?`;
 
   const hint = document.createElement('p');
   hint.className = 'dialog-message-hint';
-  hint.textContent = 'Your changes will be lost if you don\'t save them.';
+  hint.textContent = t('Your changes will be lost if you don\'t save them.');
 
   body.appendChild(icon);
   body.appendChild(msg);
@@ -489,17 +546,17 @@ export function showSaveConfirmDialog(filename, onSave, onDiscard, onCancel) {
 
   const footer = createDialogFooter([
     {
-      label: 'Yes',
+      label: t('Save'),
       className: 'dialog-btn--primary',
       onClick: () => { close(); if (typeof onSave === 'function') onSave(); },
     },
     {
-      label: 'No',
+      label: t('Don\'t Save'),
       className: 'dialog-btn--danger',
       onClick: () => { close(); if (typeof onDiscard === 'function') onDiscard(); },
     },
     {
-      label: 'Cancel',
+      label: t('Cancel'),
       className: 'dialog-btn--secondary',
       onClick: () => { close(); if (typeof onCancel === 'function') onCancel(); },
     },
@@ -519,11 +576,11 @@ export function showSaveConfirmDialog(filename, onSave, onDiscard, onCancel) {
 export function showWebDAVConnectDialog(onConnect) {
   const { dialog, close } = createDialogBase({
     className: 'dialog-webdav',
-    ariaLabel: 'Connect to WebDAV',
+    ariaLabel: t('Connect to WebDAV'),
     onClose: () => {},
   });
 
-  dialog.appendChild(createDialogHeader('Connect to WebDAV', close));
+  dialog.appendChild(createDialogHeader(t('Connect to WebDAV'), close));
 
   const body = document.createElement('div');
   body.className = 'dialog-body';
@@ -531,7 +588,7 @@ export function showWebDAVConnectDialog(onConnect) {
   // URL
   const urlLabel = document.createElement('label');
   urlLabel.className = 'dialog-label';
-  urlLabel.textContent = 'Server URL';
+  urlLabel.textContent = t('Server URL');
   urlLabel.htmlFor = 'webdav-url';
 
   const urlInput = document.createElement('input');
@@ -539,34 +596,34 @@ export function showWebDAVConnectDialog(onConnect) {
   urlInput.id = 'webdav-url';
   urlInput.className = 'dialog-input';
   urlInput.placeholder = 'https://example.com/dav/';
-  urlInput.setAttribute('aria-label', 'WebDAV server URL');
+  urlInput.setAttribute('aria-label', t('Server URL'));
 
   // Username
   const userLabel = document.createElement('label');
   userLabel.className = 'dialog-label';
-  userLabel.textContent = 'Username';
+  userLabel.textContent = t('Username');
   userLabel.htmlFor = 'webdav-user';
 
   const userInput = document.createElement('input');
   userInput.type = 'text';
   userInput.id = 'webdav-user';
   userInput.className = 'dialog-input';
-  userInput.placeholder = 'Username';
-  userInput.setAttribute('aria-label', 'Username');
+  userInput.placeholder = t('Username');
+  userInput.setAttribute('aria-label', t('Username'));
   userInput.autocomplete = 'username';
 
   // Password
   const passLabel = document.createElement('label');
   passLabel.className = 'dialog-label';
-  passLabel.textContent = 'Password';
+  passLabel.textContent = t('Password');
   passLabel.htmlFor = 'webdav-pass';
 
   const passInput = document.createElement('input');
   passInput.type = 'password';
   passInput.id = 'webdav-pass';
   passInput.className = 'dialog-input';
-  passInput.placeholder = 'Password';
-  passInput.setAttribute('aria-label', 'Password');
+  passInput.placeholder = t('Password');
+  passInput.setAttribute('aria-label', t('Password'));
   passInput.autocomplete = 'current-password';
 
   // Remember checkbox
@@ -579,7 +636,7 @@ export function showWebDAVConnectDialog(onConnect) {
   rememberCheck.className = 'dialog-checkbox';
 
   const rememberText = document.createElement('span');
-  rememberText.textContent = 'Remember credentials';
+  rememberText.textContent = t('Remember me');
 
   rememberWrap.appendChild(rememberCheck);
   rememberWrap.appendChild(rememberText);
@@ -625,8 +682,8 @@ export function showWebDAVConnectDialog(onConnect) {
   });
 
   dialog.appendChild(createDialogFooter([
-    { label: 'Cancel', className: 'dialog-btn--secondary', onClick: close },
-    { label: 'Connect', className: 'dialog-btn--primary', onClick: handleConnect },
+    { label: t('Cancel'), className: 'dialog-btn--secondary', onClick: close },
+    { label: t('Connect'), className: 'dialog-btn--primary', onClick: handleConnect },
   ]));
 }
 
@@ -652,17 +709,17 @@ export function showSettingsDialog(settings = {}, onSave) {
 
   const { dialog, close } = createDialogBase({
     className: 'dialog-settings',
-    ariaLabel: 'Settings',
+    ariaLabel: t('Settings'),
     onClose: () => {},
   });
 
-  dialog.appendChild(createDialogHeader('Settings', close));
+  dialog.appendChild(createDialogHeader(t('Settings'), close));
 
   const body = document.createElement('div');
   body.className = 'dialog-body dialog-settings-body';
 
   // ── Tab Size ────────────────────────────────────────────────────────────
-  const tabSizeRow = createSettingRow('Tab Size');
+  const tabSizeRow = createSettingRow(t('Tab Size'));
   const tabSizeGroup = document.createElement('div');
   tabSizeGroup.className = 'dialog-btn-group';
 
@@ -686,7 +743,7 @@ export function showSettingsDialog(settings = {}, onSave) {
   body.appendChild(tabSizeRow);
 
   // ── Font Size ───────────────────────────────────────────────────────────
-  const fontSizeRow = createSettingRow('Font Size');
+  const fontSizeRow = createSettingRow(t('Font Size'));
   const fontSizeWrap = document.createElement('div');
   fontSizeWrap.className = 'dialog-slider-wrap';
 
@@ -714,16 +771,16 @@ export function showSettingsDialog(settings = {}, onSave) {
   body.appendChild(fontSizeRow);
 
   // ── Toggle settings ─────────────────────────────────────────────────────
-  body.appendChild(createToggleRow('Word Wrap', current.wordWrap, (val) => { current.wordWrap = val; }));
-  body.appendChild(createToggleRow('Show Invisibles', current.showInvisibles, (val) => { current.showInvisibles = val; }));
-  body.appendChild(createToggleRow('Auto Save', current.autoSave, (val) => { current.autoSave = val; }));
+  body.appendChild(createToggleRow(t('Word Wrap'), current.wordWrap, (val) => { current.wordWrap = val; }));
+  body.appendChild(createToggleRow(t('Show Invisibles'), current.showInvisibles, (val) => { current.showInvisibles = val; }));
+  body.appendChild(createToggleRow(t('Auto Save'), current.autoSave, (val) => { current.autoSave = val; }));
 
   dialog.appendChild(body);
 
   dialog.appendChild(createDialogFooter([
-    { label: 'Cancel', className: 'dialog-btn--secondary', onClick: close },
+    { label: t('Cancel'), className: 'dialog-btn--secondary', onClick: close },
     {
-      label: 'Save',
+      label: t('Save'),
       className: 'dialog-btn--primary',
       onClick: () => {
         if (typeof onSave === 'function') onSave({ ...current });
@@ -795,14 +852,14 @@ function createToggleRow(labelText, initialValue, onChange) {
 export function showHelpDialog() {
   const { overlay, dialog, close } = createDialogBase({
     className: 'settings-dialog',
-    ariaLabel: '使用说明',
+    ariaLabel: t('Help'),
   });
 
   const header = document.createElement('div');
   header.className = 'dialog-header';
   const title = document.createElement('h2');
   title.className = 'dialog-title';
-  title.textContent = 'MyPad++ 使用说明';
+  title.textContent = t('MyPad++ Help');
   header.appendChild(title);
 
   const body = document.createElement('div');
@@ -811,47 +868,37 @@ export function showHelpDialog() {
   body.style.overflowY = 'auto';
   body.style.lineHeight = '1.6';
 
-  body.innerHTML = `
-    <style>
-      .help-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; vertical-align: middle; color: var(--text-primary); background: var(--bg-secondary); border-radius: 4px; margin: 0 4px; }
-      .help-icon svg { width: 16px; height: 16px; }
-      .help-ul li { margin-bottom: 8px; display: flex; align-items: center; }
-    </style>
-    <h3 style="margin-top: 0;">工具栏图标说明</h3>
-    <ul class="help-ul" style="padding-left: 20px; color: var(--text-secondary);">
-      <li><span class="help-icon">${ICONS.newFile}</span><span class="help-icon">${ICONS.open}</span><span class="help-icon">${ICONS.save}</span><span class="help-icon">${ICONS.saveAs}</span> : 新建 / 打开 / 保存 / 另存为</li>
-      <li><span class="help-icon">${ICONS.undo}</span><span class="help-icon">${ICONS.redo}</span> : 撤销 / 重做</li>
-      <li><span class="help-icon">${ICONS.wordWrap}</span> : 切换长文本自动换行</li>
-      <li><span class="help-icon">${ICONS.statusBar}</span> : 显示 / 隐藏底部的编码和光标信息状态栏</li>
-      <li><span class="help-icon">${ICONS.keyboardOff}</span> : 禁止软键盘自动弹出 (适合外接键盘时使用)</li>
-      <li><span class="help-icon">${ICONS.fullscreen}</span> : 沉浸式全屏模式，隐藏系统状态栏</li>
-      <li><span class="help-icon">${ICONS.zoomIn}</span><span class="help-icon">${ICONS.zoomOut}</span> : 放大 / 缩小字体</li>
-      <li><span class="help-icon">${ICONS.themeDark}</span> / <span class="help-icon">${ICONS.themeLight}</span> : 切换深色 / 浅色主题</li>
-    </ul>
-
-    <h3 style="margin-top: 20px;">高级功能说明</h3>
-    <ul class="help-ul" style="padding-left: 20px; color: var(--text-secondary);">
-      <li><span class="help-icon">${ICONS.explorer}</span> <b>树状目录</b> : 左侧滑出的文件浏览器，可查看当前工作区的所有文件。右键点击目录可将其<b>“钉在顶部”</b>，方便快速访问深层文件夹。</li>
-      <li><span class="help-icon">${ICONS.find}</span> <b>查找</b> : 强大的本地搜索（快捷键 Ctrl+F），支持正则表达式。</li>
-      <li><span class="help-icon">${ICONS.replace}</span> <b>替换</b> : 在当前文件内进行文本替换。</li>
-      <li><span class="help-icon">${ICONS.nextError}</span> <b>查找错误</b> : 跳转到代码中的语法错误或警告位置。</li>
-      <li><span class="help-icon">${ICONS.compare}</span> <b>对比模式</b> : 双排对比模式，智能对齐不同版本文件的差异。</li>
-      <li><span class="help-icon">${ICONS.webdav}</span> <b>WebDAV</b> : 连接到远程 WebDAV 服务器读写文件。</li>
-      <li><span class="help-icon">${ICONS.workspace}</span> <b>服务器工作区</b> : 将远程目录作为本地工作区使用，支持跨端同步。</li>
-      <li><span class="help-icon">${ICONS.highlights}</span> <b>高亮设置</b> : 支持自定义关键词的颜色高亮，划选词语后打开此菜单即可自动创建高亮。</li>
-    </ul>
-
-    <p style="margin-top: 20px; color: var(--text-tertiary); font-size: 0.9em;">
-      提示: 很多操作都支持标准快捷键（如 Ctrl+S 保存，Ctrl+F 查找），建议搭配外接键盘使用获得最佳体验。
-    </p>
-  `;
+  body.innerHTML = t('HELP_CONTENT_HTML', {
+    newFile: ICONS.newFile,
+    open: ICONS.open,
+    save: ICONS.save,
+    saveAs: ICONS.saveAs,
+    undo: ICONS.undo,
+    redo: ICONS.redo,
+    wordWrap: ICONS.wordWrap,
+    statusBar: ICONS.statusBar,
+    keyboardOff: ICONS.keyboardOff,
+    fullscreen: ICONS.fullscreen,
+    zoomIn: ICONS.zoomIn,
+    zoomOut: ICONS.zoomOut,
+    themeDark: ICONS.themeDark,
+    themeLight: ICONS.themeLight,
+    explorer: ICONS.explorer,
+    find: ICONS.find,
+    replace: ICONS.replace,
+    nextError: ICONS.nextError,
+    compare: ICONS.compare,
+    webdav: ICONS.webdav,
+    workspace: ICONS.workspace,
+    highlights: ICONS.highlights,
+  });
 
   const footer = document.createElement('div');
   footer.className = 'dialog-footer';
   
   const closeBtn = document.createElement('button');
   closeBtn.className = 'btn btn-ghost';
-  closeBtn.textContent = '关闭';
+  closeBtn.textContent = t('Close');
   closeBtn.addEventListener('click', close);
   
   footer.appendChild(closeBtn);

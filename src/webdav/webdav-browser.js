@@ -1,3 +1,5 @@
+import { t } from '../i18n.js';
+
 /**
  * WebDAVBrowser — File browser UI for WebDAV
  * @module webdav/webdav-browser
@@ -106,9 +108,10 @@ export class WebDAVBrowser {
     const header = document.createElement('div');
     header.className = 'dialog-header';
 
-    const title = document.createElement('span');
+    const title = document.createElement('h2');
     title.className = 'dialog-title';
-    title.textContent = 'WebDAV Browser';
+    title.textContent = t('WebDAV Browser');
+    title.style.margin = '0';
 
     const closeBtn = document.createElement('button');
     closeBtn.className = 'dialog-close';
@@ -187,7 +190,7 @@ export class WebDAVBrowser {
       select.style.flex = '1';
       const defaultOpt = document.createElement('option');
       defaultOpt.value = '';
-      defaultOpt.textContent = '— Select saved connection —';
+      defaultOpt.textContent = t('— Select saved connection —');
       select.appendChild(defaultOpt);
 
       profiles.forEach((p) => {
@@ -199,21 +202,21 @@ export class WebDAVBrowser {
 
       const connectProfileBtn = document.createElement('button');
       connectProfileBtn.className = 'btn btn-primary';
-      connectProfileBtn.textContent = 'Connect';
+      connectProfileBtn.textContent = t('Connect');
       connectProfileBtn.addEventListener('click', async () => {
         const profile = profiles.find((p) => p.name === select.value);
         if (!profile) return;
         try {
-          connectProfileBtn.textContent = 'Connecting...';
           connectProfileBtn.disabled = true;
+          connectProfileBtn.textContent = t('Connecting...');
           await this.client.connect(profile.url, profile.username, profile.password);
           this._connectBar.style.display = 'none';
           await this.navigateTo('/');
         } catch (e) {
           alert('Connection failed: ' + e.message);
         } finally {
-          connectProfileBtn.textContent = 'Connect';
           connectProfileBtn.disabled = false;
+          connectProfileBtn.textContent = t('Connect');
         }
       });
 
@@ -241,8 +244,8 @@ export class WebDAVBrowser {
 
     const connectBtn = document.createElement('button');
     connectBtn.className = 'btn btn-primary';
-    connectBtn.textContent = 'Connect';
-    connectBtn.style.alignSelf = 'flex-end';
+    connectBtn.textContent = t('Connect');
+    connectBtn.style.marginTop = '10px';
 
     connectBtn.addEventListener('click', async () => {
       const url = urlInput.querySelector('input').value.trim();
@@ -252,8 +255,8 @@ export class WebDAVBrowser {
       if (!url) { alert('Please enter a WebDAV URL'); return; }
 
       try {
-        connectBtn.textContent = 'Connecting...';
         connectBtn.disabled = true;
+        connectBtn.textContent = t('Connecting...');
         await this.client.connect(url, user, pass);
 
         // Save profile if checked
@@ -267,8 +270,8 @@ export class WebDAVBrowser {
       } catch (e) {
         alert('Connection failed: ' + e.message);
       } finally {
-        connectBtn.textContent = 'Connect';
         connectBtn.disabled = false;
+        connectBtn.textContent = t('Connect');
       }
     });
 
@@ -442,7 +445,8 @@ export class WebDAVBrowser {
     // Disconnect button
     const disconnectBtn = document.createElement('button');
     disconnectBtn.className = 'btn';
-    disconnectBtn.textContent = 'Disconnect';
+    disconnectBtn.textContent = t('Disconnect');
+    disconnectBtn.style.marginRight = '10px';
     disconnectBtn.addEventListener('click', () => {
       this.client.disconnect();
       this._connectBar.style.display = '';

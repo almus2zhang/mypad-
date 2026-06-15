@@ -8,6 +8,7 @@
 import { SearchCursor, RegExpCursor } from '@codemirror/search';
 import { EditorSelection } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+import { t } from '../i18n.js';
 
 const SEARCH_HISTORY_KEY = 'mypad_search_history';
 
@@ -54,9 +55,9 @@ export function createSearchPanel(editorManager) {
 
   const findInput = document.createElement('input');
   findInput.className = 'search-input';
-  findInput.placeholder = '搜索... (支持正则表达式)';
+  findInput.placeholder = t('Search... (Regex supported)');
   findInput.id = 'search-find-input';
-  findInput.setAttribute('aria-label', 'Find');
+  findInput.setAttribute('aria-label', t('Find'));
   // findInput.setAttribute('list', 'search-history-list'); // Remove native datalist
   findInput.style.width = '100%';
 
@@ -99,7 +100,7 @@ export function createSearchPanel(editorManager) {
   }
   updateHistoryDropdown();
 
-  findInput.addEventListener('focus', () => {
+  findInput.addEventListener('click', () => {
     if (searchHistory.length > 0) {
       updateHistoryDropdown();
       historyDropdown.style.display = 'block';
@@ -113,38 +114,38 @@ export function createSearchPanel(editorManager) {
   inputWrapper.appendChild(findInput);
   inputWrapper.appendChild(historyDropdown);
 
-  const caseBtn = _createToggle('Aa', 'Case Sensitive', 'search-case-btn');
-  const wordBtn = _createToggle('W', 'Whole Word', 'search-word-btn');
-  const regexBtn = _createToggle('.*', 'Regular Expression', 'search-regex-btn');
+  const caseBtn = _createToggle('Aa', t('Case Sensitive'), 'search-case-btn');
+  const wordBtn = _createToggle('W', t('Whole Word'), 'search-word-btn');
+  const regexBtn = _createToggle('.*', t('Regular Expression'), 'search-regex-btn');
 
   const findAllBtn = document.createElement('button');
   findAllBtn.className = 'btn';
-  findAllBtn.textContent = 'Find All';
+  findAllBtn.textContent = t('Find All');
   const LAYOUT_SIDE_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="15" y1="3" x2="15" y2="21"></line></svg>`;
   const LAYOUT_BOTTOM_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="15" x2="21" y2="15"></line></svg>`;
 
-  const layoutBtn = _createToggle('', 'Toggle Results Layout (Bottom/Side)', 'search-layout-btn');
+  const layoutBtn = _createToggle('', t('Toggle Results Layout'), 'search-layout-btn');
   layoutBtn.innerHTML = LAYOUT_SIDE_SVG;
   layoutBtn.style.display = 'none';
 
   const countSpan = document.createElement('span');
   countSpan.className = 'search-count';
-  countSpan.textContent = 'No results';
+  countSpan.textContent = t('No results');
 
   const prevBtn = document.createElement('button');
   prevBtn.className = 'search-nav-btn';
   prevBtn.innerHTML = '&#x2191;';
-  prevBtn.title = 'Previous (Shift+Enter)';
+  prevBtn.title = t('Previous');
 
   const nextBtn = document.createElement('button');
   nextBtn.className = 'search-nav-btn';
   nextBtn.innerHTML = '&#x2193;';
-  nextBtn.title = 'Next (Enter)';
+  nextBtn.title = t('Next');
 
   const closeBtn = document.createElement('button');
   closeBtn.className = 'search-close';
   closeBtn.innerHTML = '&times;';
-  closeBtn.title = 'Close (Escape)';
+  closeBtn.title = t('Close');
 
   findRow.append(inputWrapper, caseBtn, wordBtn, regexBtn, findAllBtn, layoutBtn, countSpan, prevBtn, nextBtn, closeBtn);
 
@@ -154,19 +155,19 @@ export function createSearchPanel(editorManager) {
 
   const replaceInput = document.createElement('input');
   replaceInput.className = 'search-input';
-  replaceInput.placeholder = 'Replace with...';
+  replaceInput.placeholder = t('Replace with...');
   replaceInput.id = 'search-replace-input';
-  replaceInput.setAttribute('aria-label', 'Replace');
+  replaceInput.setAttribute('aria-label', t('Replace'));
 
   const replaceBtn = document.createElement('button');
   replaceBtn.className = 'btn';
-  replaceBtn.textContent = 'Replace';
-  replaceBtn.title = 'Replace current match';
+  replaceBtn.textContent = t('Replace');
+  replaceBtn.title = t('Replace current match');
 
   const replaceAllBtn = document.createElement('button');
   replaceAllBtn.className = 'btn';
-  replaceAllBtn.textContent = 'All';
-  replaceAllBtn.title = 'Replace all matches';
+  replaceAllBtn.textContent = t('All');
+  replaceAllBtn.title = t('Replace all matches');
 
   replaceRow.append(replaceInput, replaceBtn, replaceAllBtn);
 
@@ -347,7 +348,7 @@ export function createSearchPanel(editorManager) {
       matches = [];
       matchCount = 0;
       currentMatch = 0;
-      countSpan.textContent = 'No results';
+      countSpan.textContent = t('No results');
       return;
     }
 
@@ -388,7 +389,7 @@ export function createSearchPanel(editorManager) {
 
     if (matchCount === 0) {
       currentMatch = 0;
-      countSpan.textContent = 'No results';
+      countSpan.textContent = t('No results');
       return;
     }
 
@@ -416,11 +417,11 @@ export function createSearchPanel(editorManager) {
     resultsContainer.innerHTML = '';
     
     if (!query) {
-      countSpan.textContent = 'No results';
+      countSpan.textContent = t('No results');
       return;
     }
 
-    countSpan.textContent = 'Searching...';
+    countSpan.textContent = t('Searching...');
     
     setTimeout(() => {
       matches = [];
@@ -475,7 +476,7 @@ export function createSearchPanel(editorManager) {
       backItem.style.position = 'sticky';
       backItem.style.top = '0';
       backItem.style.zIndex = '1';
-      backItem.innerHTML = '<span>⬅️ 返回跳转前位置 (Go Back)</span>';
+      backItem.innerHTML = `<span>⬅️ ${t('Go Back')}</span>`;
       backItem.addEventListener('click', () => {
         const view = editorManager.view;
         if (view) {
@@ -493,7 +494,7 @@ export function createSearchPanel(editorManager) {
       const empty = document.createElement('div');
       empty.style.padding = '10px';
       empty.style.color = 'var(--text-tertiary)';
-      empty.textContent = 'No results found.';
+      empty.textContent = t('No results found.');
       resultsContainer.appendChild(empty);
       return;
     }
@@ -619,7 +620,7 @@ export function createSearchPanel(editorManager) {
 
   // ---- Public API ----
 
-  function show(m = 'find') {
+  function show(m = 'find', initialQuery = '') {
     mode = m;
     isVisible = true;
     panel.style.display = '';
@@ -631,9 +632,6 @@ export function createSearchPanel(editorManager) {
       findAllBtn.classList.add('active');
       resultsContainer.style.display = 'block';
       layoutBtn.style.display = '';
-      if (!returnPosition && editorManager.view) {
-        returnPosition = editorManager.view.state.selection.main.head;
-      }
     }
 
     _setLayout(isLayoutVertical ? 'vertical' : 'horizontal');
@@ -642,10 +640,10 @@ export function createSearchPanel(editorManager) {
     findInput.select();
 
     // If there's selected text, use it as search query
-    const selectedText = editorManager.getSelectionText?.();
-    if (selectedText && selectedText.length < 200) {
-      findInput.value = selectedText;
-      saveSearchHistory(selectedText);
+    const textToSearch = initialQuery || editorManager.getSelectionText?.() || window.getSelection().toString();
+    if (textToSearch && textToSearch.length > 0 && textToSearch.length < 200) {
+      findInput.value = textToSearch;
+      saveSearchHistory(textToSearch);
     }
     
     // Auto-run search if there's text
@@ -673,11 +671,11 @@ export function createSearchPanel(editorManager) {
     editorManager.focus?.();
   }
 
-  function toggle(m = 'find') {
+  function toggle(m = 'find', initialQuery = '') {
     if (isVisible && mode === m) {
       hide();
     } else {
-      show(m);
+      show(m, initialQuery);
     }
   }
 
@@ -691,20 +689,26 @@ export function createSearchPanel(editorManager) {
     
     isFindAllMode = true;
     findAllBtn.classList.add('active');
-    
-    isLayoutVertical = false;
-    layoutBtn.textContent = 'Layout: Side';
-    
     resultsContainer.style.display = 'block';
-    layoutBtn.style.display = 'inline-block';
+    layoutBtn.style.display = '';
     
-    _setLayout('horizontal');
+    _setLayout(isLayoutVertical ? 'vertical' : 'horizontal');
     
     findInput.value = query;
     _runFindAll();
   }
 
-  return { show, hide, toggle, showReference, element: panel };
+  function setKeyboardEnabled(enabled) {
+    if (enabled) {
+      findInput.removeAttribute('inputmode');
+      replaceInput.removeAttribute('inputmode');
+    } else {
+      findInput.setAttribute('inputmode', 'none');
+      replaceInput.setAttribute('inputmode', 'none');
+    }
+  }
+
+  return { show, hide, toggle, showReference, setKeyboardEnabled, element: panel };
 }
 
 /**

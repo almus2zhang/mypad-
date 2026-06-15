@@ -43,6 +43,7 @@ import { createSidebar } from './ui/sidebar.js';
 import { createContextMenu, getDefaultMenuItems } from './ui/context-menu.js';
 import { FileTreeSidebar } from './ui/file-tree-sidebar.js';
 import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog } from './ui/dialogs.js';
+import { t } from './i18n.js';
 
 // Utils
 import { loadJSON, saveJSON, loadString, saveString } from './utils/storage.js';
@@ -193,7 +194,7 @@ sidebar.onRecentFileSelect(async (file) => {
           ok = await workspaceBrowser.client.checkConnection();
         } catch (err2) {
           if (err2.status === 401) {
-            showToast('Incorrect password!', 'error');
+            showToast(t('Incorrect password!'), 'error');
             return;
           }
         }
@@ -201,19 +202,19 @@ sidebar.onRecentFileSelect(async (file) => {
     }
 
     if (!ok) {
-      showToast("Cannot connect to Server Workspace.", "error");
+      showToast(t('Cannot connect to Server Workspace.'), 'error');
       return;
     }
     try {
       const buffer = await workspaceBrowser.client.readFile(file.workspacePath);
       await handleWorkspaceFileOpen(file.name, buffer, file.workspacePath);
     } catch (e) {
-      showToast("Failed to open recent workspace file: " + e.message, "error");
+      showToast(`${t('Failed to open recent workspace file:')} ${e.message}`, "error");
     }
   } else if (file.webdavPath) {
-    showToast("Opening WebDAV file directly is not supported yet.", "error");
+    showToast(t('Opening WebDAV file directly is not supported yet.'), "error");
   } else {
-    showToast("Local files cannot be reopened automatically due to browser security.", "error");
+    showToast(t('Local files cannot be reopened automatically due to browser security.'), "error");
   }
 });
 
@@ -241,7 +242,7 @@ const fileTreeSidebar = new FileTreeSidebar(workspaceBrowser.client, {
     if (item.isDirectory) return;
     workspaceBrowser.client.readFile(item.path)
       .then(buffer => handleWorkspaceFileOpen(item.name, buffer, item.path))
-      .catch(e => showToast("Failed to open file: " + e.message, "error"));
+      .catch(e => showToast(`${t('Failed to open file:')} ${e.message}`, "error"));
   },
   onContextMenu: (e, item, tree) => {
     if (item.isDirectory && (item.path !== '/' || item.isPinned)) {
@@ -477,7 +478,7 @@ async function openFile() {
     saveSession();
   } catch (e) {
     console.error('Failed to open file:', e);
-    showToast('Failed to open file: ' + e.message, 'error');
+    showToast(`${t('Failed to open file:')} ${e.message}`, 'error');
   }
 }
 
@@ -508,10 +509,10 @@ async function saveFile() {
 
     tabManager.markModified(tab.id, false);
     saveSession();
-    showToast(`Saved: ${tab.filename}`, 'success');
+    showToast(`${t('File saved:')} ${tab.filename}`, 'success');
   } catch (e) {
     console.error('Failed to save:', e);
-    showToast('Failed to save: ' + e.message, 'error');
+    showToast(`${t('Error saving file:')} ${e.message}`, 'error');
   }
 }
 
@@ -532,11 +533,11 @@ async function saveFileAs() {
     }
     tabManager.markModified(tab.id, false);
     saveSession();
-    showToast(`Saved: ${tab.filename}`, 'success');
+    showToast(`${t('File saved:')} ${tab.filename}`, 'success');
   } catch (e) {
     if (e.name !== 'AbortError') {
       console.error('Failed to save:', e);
-      showToast('Failed to save: ' + e.message, 'error');
+      showToast(`${t('Error saving file:')} ${e.message}`, 'error');
     }
   }
 }
@@ -573,10 +574,10 @@ async function handleWebDAVFileOpen(path, arrayBuffer, filename) {
     });
     openEditorForTab(tab);
 
-    showToast(`Opened from WebDAV: ${filename}`, 'success');
+    showToast(`${t('File opened:')} ${filename}`, 'success');
   } catch (e) {
     console.error('Failed to open WebDAV file:', e);
-    showToast('Failed to open file: ' + e.message, 'error');
+    showToast(`${t('Failed to open file:')} ${e.message}`, 'error');
   }
 }
 
@@ -601,10 +602,10 @@ async function saveFileToWebDAV(tab) {
       webdavPath: tab.webdavPath,
     });
     tabManager.markModified(tab.id, false);
-    showToast(`Saved to WebDAV: ${tab.filename}`, 'success');
+    showToast(`${t('File saved:')} ${tab.filename}`, 'success');
   } catch (e) {
     console.error('Failed to save to WebDAV:', e);
-    showToast('Failed to save: ' + e.message, 'error');
+    showToast(`${t('Error saving file:')} ${e.message}`, 'error');
   }
 }
 
@@ -628,7 +629,7 @@ async function handleWorkspaceFileOpen(filename, arrayBuffer, path) {
     recentFiles.add({ name: filename, workspacePath: path, encoding: fileInfo.encoding });
     sidebar.updateRecentFiles(recentFiles.getAll());
   } catch (e) {
-    showToast('Failed to open workspace file: ' + e.message, 'error');
+    showToast(`${t('Failed to open workspace file:')} ${e.message}`, 'error');
   }
 }
 
@@ -654,9 +655,9 @@ async function saveFileToWorkspace(tab) {
     });
     tabManager.markModified(tab.id, false);
     saveSession();
-    showToast(`Saved to Server Workspace: ${tab.filename}`, 'success');
+    showToast(`${t('File saved:')} ${tab.filename}`, 'success');
   } catch (e) {
-    showToast('Workspace Save Error: ' + e.message, 'error');
+    showToast(`${t('Workspace error:')} ${e.message}`, 'error');
   }
 }
 
@@ -761,7 +762,7 @@ async function toggleCompareMode() {
   // Enter compare mode
   const activeTab = tabManager.getActiveTab();
   if (!activeTab) {
-    showToast('Open a file first to compare', 'error');
+    showToast(t('Open a file first to compare'), 'error');
     return;
   }
 
@@ -813,7 +814,7 @@ function zoomOut() {
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(err => {
-      showToast('Error enabling fullscreen: ' + err.message, 'error');
+      showToast(`${t('Error enabling fullscreen:')} ${err.message}`, 'error');
     });
   } else {
     document.exitFullscreen();
@@ -841,6 +842,10 @@ function applyKeyboardVisibility() {
   if (editorManager.hasView) {
     editorManager.setKeyboardEnabled(keyboardEnabled);
   }
+  if (searchPanel && searchPanel.setKeyboardEnabled) {
+    searchPanel.setKeyboardEnabled(keyboardEnabled);
+  }
+  
   const btn = document.getElementById('btn-keyboard');
   if (btn) {
     btn.setAttribute('aria-pressed', String(!keyboardEnabled));
@@ -908,7 +913,7 @@ function updateStatusBar() {
       showEncodingPicker(tab.encoding, (newEnc) => {
         tabManager.updateTab(tab.id, { encoding: newEnc });
         updateStatusBar();
-        showToast(`Encoding changed to ${newEnc}`, 'info');
+        showToast(`${t('Encoding changed to')} ${newEnc}`, 'info');
       });
     });
 
@@ -921,7 +926,7 @@ function updateStatusBar() {
           }
           tabManager.updateTab(tab.id, { language: newLang });
           updateStatusBar();
-          showToast(`Language mode set to ${newLang}`, 'info');
+          showToast(`${t('Language mode set to')} ${newLang}`, 'info');
         } catch (e) {
           console.warn('Failed to switch language:', e);
         }
@@ -971,26 +976,40 @@ function showEmptyState() {
 // Toast Notifications
 // ============================================================
 
-/** @type {HTMLElement|null} */
-let toastContainer = null;
-
+let toastContainer = document.getElementById('toast-container');
 function showToast(message, type = 'info') {
   if (!toastContainer) {
     toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
     toastContainer.className = 'toast-container';
     document.body.appendChild(toastContainer);
   }
-
+  if (!toastContainer) return;
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
   toast.textContent = message;
   toastContainer.appendChild(toast);
-
+  
+  // Trigger animation
+  setTimeout(() => toast.classList.add('visible'), 10);
+  
+  // Auto-hide
   setTimeout(() => {
-    toast.classList.add('toast-exit');
-    setTimeout(() => toast.remove(), 200);
+    toast.classList.remove('visible');
+    setTimeout(() => toast.remove(), 300);
   }, 3000);
 }
+
+// ── Check for Language Switch Toast ───────────────────────────────────────
+const langSwitched = sessionStorage.getItem('mypad_lang_toast');
+if (langSwitched) {
+  sessionStorage.removeItem('mypad_lang_toast');
+  setTimeout(() => {
+    showToast(t('Switched system language to {lang}', { lang: langSwitched }), 'success');
+  }, 500);
+}
+
+// ── Application State ─────────────────────────────────────────────────────
 
 // ============================================================
 // Context Menu for Editor
@@ -1008,29 +1027,67 @@ window.addEventListener('contextmenu', (e) => {
   try {
     e.preventDefault();
     e.stopPropagation();
-  
-  const selectedText = editorManager.getSelectionText?.() || '';
+    
+    const x = e.clientX ?? (e.touches?.[0]?.clientX) ?? 0;
+    const y = e.clientY ?? (e.touches?.[0]?.clientY) ?? 0;
+    showEditorContextMenu(x, y);
+  } catch (err) {
+    console.error('ContextMenu Error:', err);
+    showToast(`ContextMenu Error: ${err.message}`, 'error');
+  }
+}, true);
+
+function showEditorContextMenu(x, y) {
+  const selectedText = editorManager.getSelectionText?.() || window.getSelection().toString() || '';
   
   let menuItems = getDefaultMenuItems({
     onCut: async () => {
-      if (selectedText) {
-        await navigator.clipboard.writeText(selectedText);
-        if (editorManager.view) editorManager.view.dispatch(editorManager.view.state.replaceSelection(''));
+      const currentText = editorManager.getSelectionText?.() || window.getSelection().toString() || '';
+      if (currentText) {
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(currentText);
+          } else {
+            fallbackCopyTextToClipboard(currentText);
+          }
+          if (editorManager.view) editorManager.view.dispatch(editorManager.view.state.replaceSelection(''));
+          showToast(t('Cut to clipboard'), 'success');
+        } catch (e) {
+          showToast(t('Cannot write to clipboard. Use Ctrl+X'), 'error');
+        }
       }
     },
     onCopy: async () => {
-      if (selectedText) {
-        await navigator.clipboard.writeText(selectedText);
+      const currentText = editorManager.getSelectionText?.() || window.getSelection().toString() || '';
+      if (currentText) {
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(currentText);
+          } else {
+            fallbackCopyTextToClipboard(currentText);
+          }
+          showToast(t('Copied to clipboard'), 'success');
+        } catch (e) {
+          showToast(t('Cannot write to clipboard. Use Ctrl+C'), 'error');
+        }
       }
     },
     onPaste: async () => {
       try {
-        const text = await navigator.clipboard.readText();
+        let text = '';
+        if (navigator.clipboard && window.isSecureContext) {
+          text = await navigator.clipboard.readText();
+        } else {
+          // Fallback paste is generally impossible via JS without permission, 
+          // but we can try execCommand
+          showToast(t('Cannot read clipboard. Please allow permission or use Ctrl+V'), 'error');
+          return;
+        }
         if (text && editorManager.view) {
           editorManager.view.dispatch(editorManager.view.state.replaceSelection(text));
         }
       } catch (e) {
-        showToast('无法读取剪贴板，请允许剪贴板权限或使用 Ctrl+V', 'error');
+        showToast(t('Cannot read clipboard. Please allow permission or use Ctrl+V'), 'error');
       }
     },
     onSelectAll: () => {
@@ -1039,14 +1096,31 @@ window.addEventListener('contextmenu', (e) => {
         editorManager.view.dispatch({ selection: { anchor: 0, head: len } });
       }
     },
-    onFind: () => searchPanel.toggle('find'),
-    onReplace: () => searchPanel.toggle('replace'),
+    onFind: () => searchPanel.show('find', selectedText),
+    onReplace: () => searchPanel.show('replace', selectedText),
     onHighlight: () => {},
     onReference: () => {},
     onIndent: () => { if (editorManager.view) editorManager.view.dispatch({ changes: { from: 0, insert: '' } }) }, // stub for actual indent
     onOutdent: () => {},
     onToggleComment: () => {},
   });
+
+  function fallbackCopyTextToClipboard(text) {
+    var textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.error('Fallback: Oops, unable to copy', err);
+    }
+    document.body.removeChild(textArea);
+  }
 
   if (selectedText && selectedText.length > 0 && selectedText.length < 200) {
     const hlItemIndex = menuItems.findIndex(i => i.id === 'ctx-highlight');
@@ -1074,14 +1148,8 @@ window.addEventListener('contextmenu', (e) => {
     if (refItemIndex !== -1) menuItems[refItemIndex].disabled = true;
   }
 
-    const x = e.clientX ?? (e.touches?.[0]?.clientX) ?? 0;
-    const y = e.clientY ?? (e.touches?.[0]?.clientY) ?? 0;
     contextMenu.show(x, y, menuItems);
-  } catch (err) {
-    console.error('ContextMenu Error:', err);
-    alert('ContextMenu Error: ' + err.message);
-  }
-}, true);
+}
 
 // ============================================================
 // Drag & Drop
@@ -1116,7 +1184,7 @@ document.addEventListener('drop', async (e) => {
       recentFiles.add({ name: file.name, encoding: detected.encoding });
     } catch (err) {
       console.error('Failed to open dropped file:', err);
-      showToast('Failed to open: ' + file.name, 'error');
+      showToast(`${t('Failed to open file:')} ${file.name}`, 'error');
     }
   }
 

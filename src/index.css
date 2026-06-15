@@ -850,6 +850,7 @@ body {
   pointer-events: none;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  touch-action: none;
 }
 
 .context-menu.visible {

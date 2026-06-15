@@ -20,14 +20,17 @@ export class HighlightManager {
     return this.ui.element;
   }
 
-  toggle() {
-    // Inject compartment for custom highlights if not already
+  _ensureCompartmentInjected() {
     if (this.editorManager.view && !this.hlCompartmentInjected) {
       this.hlCompartmentInjected = true;
       this.editorManager.view.dispatch({
         effects: StateEffect.appendConfig.of(this.hlCompartment.of([]))
       });
     }
+  }
+
+  toggle() {
+    this._ensureCompartmentInjected();
 
     const selectedText = this.editorManager.getSelectionText();
     if (selectedText && this.ui.element.style.display === 'none') {
@@ -70,6 +73,8 @@ export class HighlightManager {
 
   _applyHighlights() {
     if (!this.editorManager.view) return;
+    
+    this._ensureCompartmentInjected();
     
     const validRules = this.highlightRules.filter(r => r.pattern);
     
