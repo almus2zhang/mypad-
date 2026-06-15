@@ -97,6 +97,7 @@ export class CompareManager {
         ]
       },
       parent: wrapper,
+      diffConfig: { scanLimit: 50000 }
     });
     
     // Fix layout for proper scrolling
