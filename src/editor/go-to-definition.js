@@ -26,21 +26,22 @@ export function goToDefinition(onGoToDefinition) {
       // Ignore very short words or purely numeric ones
       if (wordText.length < 2 || !isNaN(Number(wordText))) return false;
 
-      // We don't call preventDefault() and we return false
-      // so that CodeMirror can process the click and actually move the cursor
-      // to the clicked word before we jump.
+      event.preventDefault();
+
+      // Manually set the cursor to the clicked position so it gets added to navigation history
+      view.dispatch({
+        selection: { anchor: pos, head: pos },
+        scrollIntoView: false
+      });
 
       const lineObj = state.doc.lineAt(pos);
       const line = lineObj.number;
       const col = pos - lineObj.from + 1;
 
-      // Trigger search and jump asynchronously so the cursor has time to update
-      setTimeout(() => {
-        onGoToDefinition(wordText, line, col);
-      }, 10);
+      // Trigger search and jump
+      onGoToDefinition(wordText, line, col);
 
-      // Return false to let CodeMirror handle the cursor placement
-      return false;
+      return true;
     }
   });
 }
