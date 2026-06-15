@@ -2626,6 +2626,14 @@ body {
   flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-tree-size {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-left: 8px;
+  white-space: nowrap;
 }
 
 .file-tree-actions {

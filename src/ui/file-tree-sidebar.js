@@ -143,6 +143,12 @@ export class FileTreeSidebar {
     name.className = 'file-tree-name';
     name.textContent = item.name;
 
+    const sizeEl = document.createElement('span');
+    sizeEl.className = 'file-tree-size';
+    if (!item.isDirectory && item.size !== undefined) {
+      sizeEl.textContent = this.formatBytes(item.size);
+    }
+
     const actions = document.createElement('div');
     actions.className = 'file-tree-actions';
     
@@ -162,6 +168,7 @@ export class FileTreeSidebar {
     row.appendChild(arrow);
     row.appendChild(icon);
     row.appendChild(name);
+    row.appendChild(sizeEl);
     row.appendChild(actions);
     wrapper.appendChild(row);
     
