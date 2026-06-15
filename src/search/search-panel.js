@@ -8,6 +8,7 @@
 import { SearchCursor, RegExpCursor, SearchQuery, setSearchQuery } from '@codemirror/search';
 import { EditorSelection } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+import { setActiveMatchEffect } from './active-match.js';
 import { t } from '../i18n.js';
 
 const SEARCH_HISTORY_KEY = 'mypad_search_history';
@@ -586,7 +587,10 @@ export function createSearchPanel(editorManager) {
     const { from, to } = matches[index];
     view.dispatch({
       selection: EditorSelection.single(from, to),
-      effects: EditorView.scrollIntoView(from, { y: 'center' }),
+      effects: [
+        EditorView.scrollIntoView(from, { y: 'center' }),
+        setActiveMatchEffect.of({ from, to })
+      ],
     });
     if (focusEditor) {
       view.focus();
@@ -689,9 +693,12 @@ export function createSearchPanel(editorManager) {
     const container = document.getElementById('workspace');
     if (container) container.classList.remove('annotepad-horizontal', 'annotepad-vertical');
     
-    // Clear native highlights
+    // Clear native highlights and active match
     if (editorManager.view) {
-      editorManager.view.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search: '' })) });
+      editorManager.view.dispatch({ effects: [
+        setSearchQuery.of(new SearchQuery({ search: '' })),
+        setActiveMatchEffect.of({ from: null, to: null })
+      ]});
     }
     
     editorManager.focus?.();

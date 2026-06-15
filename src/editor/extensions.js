@@ -42,6 +42,7 @@ import {
 import { defaultKeymap, indentWithTab } from '@codemirror/commands';
 import { lintGutter } from '@codemirror/lint';
 import { syntaxErrorLinter } from './linter.js';
+import { activeMatchField } from '../search/active-match.js';
 
 /**
  * @typedef {Object} ExtensionOptions
@@ -89,7 +90,8 @@ export function createExtensions(options = {}) {
       minSelectionLength: 2,
     }),
     lintGutter(),
-    syntaxErrorLinter
+    syntaxErrorLinter,
+    activeMatchField
   );
 
   /* ----- Keymaps ----- */
