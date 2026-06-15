@@ -283,18 +283,23 @@ const ZH_DICTIONARY = {
 
 class I18n {
   constructor() {
-    this.lang = localStorage.getItem('mypad_lang') || 'en';
+    const savedLang = typeof localStorage !== 'undefined' ? localStorage.getItem('mypad_lang') : null;
+    this.lang = savedLang || 'en';
   }
 
   setLang(lang) {
     this.lang = lang;
-    localStorage.setItem('mypad_lang', lang);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('mypad_lang', lang);
+    }
   }
 
   toggle() {
-    const newLang = this.lang === 'en' ? 'zh' : 'en';
-    this.setLang(newLang);
-    return newLang;
+    this.lang = this.lang === 'en' ? 'zh' : 'en';
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('mypad_lang', this.lang);
+    }
+    return this.lang;
   }
 
   t(str, params = {}) {
