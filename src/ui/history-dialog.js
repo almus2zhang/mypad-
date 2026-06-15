@@ -62,9 +62,21 @@ export async function showHistoryDialog(workspaceClient, currentFilePath, curren
   let isCollapsed = false;
   btnToggle.innerHTML = t('Show Only Diffs');
 
+  const lblSync = document.createElement('label');
+  lblSync.style.fontSize = '12px';
+  lblSync.style.display = 'flex';
+  lblSync.style.alignItems = 'center';
+  lblSync.style.gap = '6px';
+  lblSync.style.color = 'var(--text-secondary)';
+  lblSync.style.cursor = 'pointer';
+  lblSync.style.marginLeft = 'auto'; // push to right
+  lblSync.innerHTML = '<input type="checkbox" checked> Sync Scroll';
+  const cbSync = lblSync.querySelector('input');
+
   mergeToolbar.appendChild(btnPrev);
   mergeToolbar.appendChild(btnNext);
   mergeToolbar.appendChild(btnToggle);
+  mergeToolbar.appendChild(lblSync);
 
   const mergeContainer = document.createElement('div');
   mergeContainer.className = 'history-merge-container';
@@ -200,6 +212,56 @@ export async function showHistoryDialog(workspaceClient, currentFilePath, curren
           orientation: 'a-b',
           collapseUnchanged: isCollapsed ? { margin: 3 } : undefined
         });
+
+        // Fix layout for proper scrolling
+        if (mergeView.dom) {
+          mergeView.dom.style.flex = '1';
+          mergeView.dom.style.minHeight = '0';
+          mergeView.dom.style.display = 'flex';
+          mergeView.dom.style.flexDirection = 'column';
+          
+          const editorsWrap = mergeView.dom.querySelector('.cm-mergeViewEditors');
+          if (editorsWrap) {
+            editorsWrap.style.flex = '1';
+            editorsWrap.style.minHeight = '0';
+          }
+
+          const editors = mergeView.dom.querySelectorAll('.cm-mergeViewEditor');
+          editors.forEach(ed => {
+            ed.style.flex = '1';
+            ed.style.minHeight = '0';
+            ed.style.display = 'flex';
+            ed.style.flexDirection = 'column';
+          });
+
+          // Synchronize scrolling
+          const scrollers = mergeView.dom.querySelectorAll('.cm-scroller');
+          if (scrollers.length === 2) {
+            const [scrollerA, scrollerB] = scrollers;
+            let isSyncingLeft = false;
+            let isSyncingRight = false;
+
+            scrollerA.addEventListener('scroll', () => {
+              if (!cbSync.checked) return;
+              if (!isSyncingLeft) {
+                isSyncingRight = true;
+                scrollerB.scrollTop = scrollerA.scrollTop;
+                scrollerB.scrollLeft = scrollerA.scrollLeft;
+              }
+              isSyncingLeft = false;
+            });
+
+            scrollerB.addEventListener('scroll', () => {
+              if (!cbSync.checked) return;
+              if (!isSyncingRight) {
+                isSyncingLeft = true;
+                scrollerA.scrollTop = scrollerB.scrollTop;
+                scrollerA.scrollLeft = scrollerB.scrollLeft;
+              }
+              isSyncingRight = false;
+            });
+          }
+        }
       };
       
       sidebar.appendChild(el);
