@@ -16,7 +16,13 @@ for (const ObjectEntry of Object.entries(ICONS)) {
   // currentColor inside an <img> tag will default to black, which is invisible on dark mode.
   // We will generate two versions of each icon, one for light mode (dark grey) and one for dark mode (light grey), or just use a neutral color like #888.
   // Let's replace 'currentColor' with '#888' which is a nice neutral grey visible on both themes.
-  const modifiedSvg = svg.replace(/currentColor/g, '#8b949e'); // #8b949e is GitHub's neutral icon color
+  let modifiedSvg = svg.replace(/currentColor/g, '#8b949e'); // #8b949e is GitHub's neutral icon color
+  
+  // GitHub requires the xmlns attribute for SVGs to render in Markdown
+  if (!modifiedSvg.includes('xmlns=')) {
+    modifiedSvg = modifiedSvg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
+  }
+  
   fs.writeFileSync(path.join(dir, key + '.svg'), modifiedSvg);
 }
 console.log('Icons generated successfully.');
