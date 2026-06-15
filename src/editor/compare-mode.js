@@ -1,6 +1,6 @@
 import { MergeView } from '@codemirror/merge';
 import { EditorView } from '@codemirror/view';
-import { EditorState } from '@codemirror/state';
+import { EditorState, Compartment } from '@codemirror/state';
 import { createExtensions } from './extensions.js';
 import { getTheme } from './themes.js';
 
@@ -17,6 +17,7 @@ export class CompareManager {
     this.mergeView = null;
     this.isActive = false;
     this.onClose = onClose;
+    this.keyboardCompartment = new Compartment();
   }
 
   /**
@@ -74,12 +75,15 @@ export class CompareManager {
     // Note: Line wrapping is generally not recommended in side-by-side diffs
     // because it misaligns the lines, so we enforce false.
     const baseExtensions = createExtensions();
+    const isKeyboardBlocked = localStorage.getItem('mypad_keyboard_enabled') === 'false';
+    
     const extensions = [
       ...baseExtensions,
       getTheme(theme),
       languageSupport ? languageSupport : [],
       EditorState.tabSize.of(4),
-      EditorView.theme({ "&": { fontSize: fontSize + "px" } })
+      EditorView.theme({ "&": { fontSize: fontSize + "px" } }),
+      this.keyboardCompartment.of(isKeyboardBlocked ? [EditorView.contentAttributes.of({ inputmode: 'none' })] : [])
     ];
 
     const normOriginal = originalContent.replace(/\r\n?/g, '\n');

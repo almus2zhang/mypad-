@@ -118,6 +118,7 @@ export async function showHistoryDialog(workspaceClient, currentFilePath, curren
 
   // Basic styling extensions
   const langSupport = await getLanguageByFilename(currentFilePath);
+  const isKeyboardBlocked = localStorage.getItem('mypad_keyboard_enabled') === 'false';
   const extensions = [
     lineNumbers(),
     highlightActiveLineGutter(),
@@ -128,7 +129,8 @@ export async function showHistoryDialog(workspaceClient, currentFilePath, curren
     highlightActiveLine(),
     keymap.of([...defaultKeymap, ...historyKeymap]),
     themeName === 'dark' ? darkTheme : lightTheme,
-    ...(langSupport ? [langSupport] : [])
+    ...(langSupport ? [langSupport] : []),
+    ...(isKeyboardBlocked ? [EditorView.contentAttributes.of({ inputmode: 'none' })] : [])
   ];
 
   let mergeView = null;

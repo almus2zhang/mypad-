@@ -919,6 +919,9 @@ function applyKeyboardVisibility() {
   if (searchPanel && searchPanel.setKeyboardEnabled) {
     searchPanel.setKeyboardEnabled(keyboardEnabled);
   }
+  if (compareManager && compareManager.isActive && typeof compareManager.setKeyboardEnabled === 'function') {
+    compareManager.setKeyboardEnabled(keyboardEnabled);
+  }
   
   const btn = document.getElementById('btn-keyboard');
   if (btn) {
