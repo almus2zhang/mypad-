@@ -288,6 +288,7 @@ export function createToolbar(callbacks = {}) {
 
   // ── Nav group ───────────────────────────────────────────────────────────
   const navGroup = [
+    createButton({ id: 'btn-explorer', icon: ICONS.explorer, tooltip: t('File Explorer'), onClick: callbacks.onExplorer, toggle: true }),
     createButton({ id: 'btn-nav-back', icon: ICONS.navBack, tooltip: t('Go Back'), onClick: callbacks.onNavBack }),
     createButton({ id: 'btn-nav-forward', icon: ICONS.navForward, tooltip: t('Go Forward'), onClick: callbacks.onNavForward }),
   ];
@@ -320,7 +321,6 @@ export function createToolbar(callbacks = {}) {
 
   // ── Tools group ─────────────────────────────────────────────────────────
   const toolsGroup = [
-    createButton({ id: 'btn-explorer', icon: ICONS.explorer, tooltip: t('File Explorer'), onClick: callbacks.onExplorer, toggle: true }),
     createButton({ id: 'btn-find', icon: ICONS.find, tooltip: t('Find'), onClick: callbacks.onFind }),
     createButton({ id: 'btn-replace', icon: ICONS.replace, tooltip: t('Replace'), onClick: callbacks.onReplace }),
     createButton({ id: 'btn-next-error', icon: ICONS.nextError, tooltip: t('Next Error / Warning'), onClick: callbacks.onNextError }),
