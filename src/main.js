@@ -71,6 +71,18 @@ let currentTheme = loadString('mypad_theme', 'light');
 let currentFontSize = parseInt(loadString('mypad_font_size', '14'), 10);
 /** @type {boolean} */
 let wordWrapEnabled = loadString('mypad_word_wrap', 'false') === 'true';
+let globalBookmarks = loadJSON('mypad_global_bookmarks', {});
+
+function saveGlobalBookmarks(tab) {
+  const path = tab.workspacePath || tab.webdavPath || tab.filePath;
+  if (!path) return;
+  if (tab.bookmarks && tab.bookmarks.length > 0) {
+    globalBookmarks[path] = tab.bookmarks;
+  } else {
+    delete globalBookmarks[path];
+  }
+  saveJSON('mypad_global_bookmarks', globalBookmarks);
+}
 /** @type {number} */
 let tabSize = parseInt(loadString('mypad_tab_size', '4'), 10);
 /** @type {boolean} */
@@ -471,6 +483,15 @@ async function openEditorForTab(tab) {
   if (tab.scrollPos) {
     editorManager.setScrollPosition(tab.scrollPos);
   }
+  
+  // Load from global bookmarks if not present in tab state
+  if (!tab.bookmarks || tab.bookmarks.length === 0) {
+    const path = tab.workspacePath || tab.webdavPath || tab.filePath;
+    if (path && globalBookmarks[path]) {
+      tab.bookmarks = globalBookmarks[path];
+    }
+  }
+
   if (tab.bookmarks) {
     for (const bm of tab.bookmarks) {
       editorManager.view.dispatch({ effects: toggleBookmark.of(bm.line) });
@@ -571,6 +592,7 @@ async function switchToTab(id) {
     prevTab.selection = editorManager.getState().selection;
     prevTab.scrollPos = editorManager.getScrollPosition();
     prevTab.bookmarks = getAllBookmarks(editorManager.getState());
+    saveGlobalBookmarks(prevTab);
   }
 
   tabManager.switchTab(id);
@@ -582,6 +604,12 @@ async function switchToTab(id) {
 
 async function closeTab(id) {
   const tab = tabManager.getTab(id);
+  if (tab && tab.id === tabManager.activeTabId && editorManager.hasView) {
+    tab.bookmarks = getAllBookmarks(editorManager.getState());
+  }
+  if (tab) saveGlobalBookmarks(tab);
+
+  tabManager.removeTab(id);
   if (!tab) return;
 
   if (tab.modified) {
@@ -1493,6 +1521,11 @@ document.addEventListener('keydown', (e) => {
 // ============================================================
 
 function saveSession() {
+  const activeTab = tabManager.getActiveTab();
+  if (activeTab && editorManager.hasView) {
+    activeTab.bookmarks = getAllBookmarks(editorManager.getState());
+    saveGlobalBookmarks(activeTab);
+  }
   tabManager.saveSession();
 }
 
