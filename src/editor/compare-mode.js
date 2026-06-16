@@ -73,6 +73,9 @@ export class CompareManager {
           <label style="font-size: 13px; display: flex; align-items: center; gap: 6px; color: var(--text-secondary); cursor: pointer; margin-left: 8px;">
             <input type="checkbox" id="sync-scroll-cb" checked> Sync Scroll
           </label>
+          <label style="font-size: 13px; display: flex; align-items: center; gap: 6px; color: var(--text-secondary); cursor: pointer; margin-left: 8px;">
+            <input type="checkbox" id="collapse-diff-cb"> Show Only Diffs
+          </label>
           <button id="btn-close-compare" class="annotepad-btn" style="padding: 2px 6px; display: flex; align-items: center; justify-content: center; margin-left: 8px; color: var(--text-secondary);" title="Close Compare">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
@@ -170,26 +173,36 @@ export class CompareManager {
         const [scrollerA, scrollerB] = scrollers;
         let isSyncingLeft = false;
         let isSyncingRight = false;
-        const cb = this.container.querySelector('#sync-scroll-cb');
-
+        const cbSync = this.container.querySelector('#sync-scroll-cb');
+        
         scrollerA.addEventListener('scroll', () => {
-          if (!cb.checked) return;
-          if (!isSyncingLeft) {
-            isSyncingRight = true;
-            scrollerB.scrollTop = scrollerA.scrollTop;
-            scrollerB.scrollLeft = scrollerA.scrollLeft;
-          }
-          isSyncingLeft = false;
+          if (!cbSync.checked) return;
+          if (isSyncingLeft) return;
+          isSyncingRight = true;
+          scrollerB.scrollTop = scrollerA.scrollTop;
+          scrollerB.scrollLeft = scrollerA.scrollLeft;
+          setTimeout(() => isSyncingRight = false, 10);
         });
-
+        
         scrollerB.addEventListener('scroll', () => {
-          if (!cb.checked) return;
-          if (!isSyncingRight) {
-            isSyncingLeft = true;
-            scrollerA.scrollTop = scrollerB.scrollTop;
-            scrollerA.scrollLeft = scrollerB.scrollLeft;
+          if (!cbSync.checked) return;
+          if (isSyncingRight) return;
+          isSyncingLeft = true;
+          scrollerA.scrollTop = scrollerB.scrollTop;
+          scrollerA.scrollLeft = scrollerB.scrollLeft;
+          setTimeout(() => isSyncingLeft = false, 10);
+        });
+      }
+
+      // Show Only Diffs
+      const cbCollapse = this.container.querySelector('#collapse-diff-cb');
+      if (cbCollapse) {
+        cbCollapse.addEventListener('change', (e) => {
+          if (this.mergeView) {
+            this.mergeView.reconfigure({
+              collapseUnchanged: e.target.checked ? { margin: 3 } : undefined
+            });
           }
-          isSyncingRight = false;
         });
       }
     }
