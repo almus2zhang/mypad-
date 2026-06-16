@@ -1011,19 +1011,25 @@ function showFileChangedPrompt(tab, newLastModified) {
       try {
         const buffer = await workspaceBrowser.client.readFile(tab.workspacePath, () => {});
         const fileInfo = await fileHandler.openFileFromBuffer(buffer, tab.filename);
-        getLanguageByName(tab.language).then(langSupport => {
-          compareManager.startCompare(
-            fileInfo.content, 
-            tab.id === tabManager.activeTabId ? editorManager.getContent() : tab.content, 
-            langSupport,
-            currentTheme,
-            parseInt(loadString('mypad_fontSize', '14'), 10),
-            tab.filename + ' ' + t('(Server)'),
-            tab.filename + ' ' + t('(Local)')
-          );
-          toggleCompareMode();
-        });
+        const langSupport = await getLanguageByName(tab.language);
+        
+        compareManager.startCompare(
+          fileInfo.content, 
+          tab.id === tabManager.activeTabId ? editorManager.getContent() : tab.content, 
+          langSupport,
+          currentTheme,
+          parseInt(loadString('mypad_fontSize', '14'), 10),
+          tab.filename + ' ' + t('(Server)'),
+          tab.filename + ' ' + t('(Local)')
+        );
+        document.getElementById('editor-container').style.display = 'none';
+        const compareBtn = document.getElementById('btn-compare');
+        if (compareBtn) {
+          compareBtn.classList.add('toolbar-btn--active');
+          compareBtn.setAttribute('aria-pressed', 'true');
+        }
       } catch(e) {
+        console.error(e);
         showToast(t('Compare failed: ') + e.message, 'error');
       } finally {
         hideLoading();
