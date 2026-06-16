@@ -395,15 +395,40 @@ export function createSidebar() {
           const file = {
             ...f,
             name: f.name || basename(f.path),
-            path: f.path || '',
+            path: f.workspacePath || f.webdavPath || f.path || '',
             language: f.language || '',
             modified: false,
-            active: false,
           };
           const item = createFileItem(file, () => {
-            if (typeof onRecentFileClick === 'function') onRecentFileClick(file);
+            if (typeof onRecentFileClick === 'function') onRecentFileClick(f);
             hide();
           });
+
+          // Custom styling for recent files
+          if (!f.workspacePath && !f.webdavPath) {
+            item.style.opacity = '0.5';
+            item.title = t('Local file (Cannot reopen automatically)');
+          } else {
+            const pathSpan = document.createElement('div');
+            pathSpan.style.fontSize = '10px';
+            pathSpan.style.color = 'var(--text-secondary)';
+            pathSpan.style.marginTop = '2px';
+            pathSpan.style.overflow = 'hidden';
+            pathSpan.style.textOverflow = 'ellipsis';
+            pathSpan.style.whiteSpace = 'nowrap';
+            pathSpan.textContent = file.path;
+            
+            // Find the nameSpan and append the path
+            const nameSpan = item.querySelector('.sidebar-file-item-name');
+            if (nameSpan) {
+              nameSpan.style.display = 'flex';
+              nameSpan.style.flexDirection = 'column';
+              nameSpan.style.alignItems = 'flex-start';
+              nameSpan.style.lineHeight = '1.2';
+              nameSpan.appendChild(pathSpan);
+            }
+          }
+
           filesList.appendChild(item);
         });
       }

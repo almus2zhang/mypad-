@@ -1610,17 +1610,6 @@ sidebar.onOpenFileSelect((file) => {
   if (tab) switchToTab(tab.id);
 });
 
-sidebar.onRecentFileSelect((file) => {
-  const tab = tabManager.getAllTabs().find(t => t.path === file.path);
-  if (tab) {
-    switchToTab(tab.id);
-  } else {
-    // Ideally we would open it from disk here. Since we only have recent file records,
-    // we might need WebDAV or FileHandler to load it. For now, it's just a UI hook.
-    showToast(t('Cannot reopen local file automatically due to browser security. Please use Open button.'), 'info');
-  }
-});
-
 sidebar.onBookmarkSelect((bm) => {
   editorManager.goToLine(bm.line, 1);
   editorManager.focus();
