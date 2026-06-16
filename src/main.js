@@ -604,13 +604,13 @@ async function switchToTab(id) {
 
 async function closeTab(id) {
   const tab = tabManager.getTab(id);
-  if (tab && tab.id === tabManager.activeTabId && editorManager.hasView) {
+  if (!tab) return;
+
+  // Save bookmarks before closing
+  if (tab.id === tabManager.activeTabId && editorManager.hasView) {
     tab.bookmarks = getAllBookmarks(editorManager.getState());
   }
-  if (tab) saveGlobalBookmarks(tab);
-
-  tabManager.removeTab(id);
-  if (!tab) return;
+  saveGlobalBookmarks(tab);
 
   if (tab.modified) {
     showSaveConfirmDialog(
