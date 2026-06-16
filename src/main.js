@@ -50,7 +50,7 @@ import { findDefinitionInContent } from './editor/go-to-definition.js';
 import { showHistoryDialog } from './ui/history-dialog.js';
 import { createContextMenu, getDefaultMenuItems } from './ui/context-menu.js';
 import { FileTreeSidebar } from './ui/file-tree-sidebar.js';
-import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog, showLoading, hideLoading, updateLoadingMessage, showWorkspaceSaveAsDialog } from './ui/dialogs.js';
+import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog, showLoading, hideLoading, updateLoadingMessage, showWorkspaceSaveAsDialog, showFileChangedDialog } from './ui/dialogs.js';
 import { t } from './i18n.js';
 
 // Utils
@@ -985,54 +985,50 @@ function showFileChangedPrompt(tab, newLastModified) {
   if (tab.suppressedRemoteLastModified === newLastModified) return;
   tab.suppressedRemoteLastModified = newLastModified;
 
-  import('./ui/dialogs.js').then(({ showFileChangedDialog }) => {
-    showFileChangedDialog(tab.filename, 
-      async () => {
-        showLoading(t('Loading...'));
-        try {
-          const buffer = await workspaceBrowser.client.readFile(tab.workspacePath, () => {});
-          const fileInfo = await fileHandler.openFileFromBuffer(buffer, tab.filename);
-          tabManager.updateTab(tab.id, { content: fileInfo.content, remoteLastModified: newLastModified });
-          if (tab.id === tabManager.activeTabId) {
-            editorManager.setContent(fileInfo.content);
-          }
-          tabManager.markModified(tab.id, false);
-          showToast(t('File reloaded'), 'success');
-        } catch(e) {
-          showToast(t('Reload failed: ') + e.message, 'error');
-        } finally {
-          hideLoading();
+  showFileChangedDialog(tab.filename, 
+    async () => {
+      showLoading(t('Loading...'));
+      try {
+        const buffer = await workspaceBrowser.client.readFile(tab.workspacePath, () => {});
+        const fileInfo = await fileHandler.openFileFromBuffer(buffer, tab.filename);
+        tabManager.updateTab(tab.id, { content: fileInfo.content, remoteLastModified: newLastModified });
+        if (tab.id === tabManager.activeTabId) {
+          editorManager.setContent(fileInfo.content);
         }
-      },
-      async () => {
-        showLoading(t('Loading...'));
-        try {
-          const buffer = await workspaceBrowser.client.readFile(tab.workspacePath, () => {});
-          const fileInfo = await fileHandler.openFileFromBuffer(buffer, tab.filename);
-          import('./editor/languages.js').then(({ getLanguageByName }) => {
-            getLanguageByName(tab.language).then(langSupport => {
-              compareManager.showCompare(
-                fileInfo.content, 
-                tab.id === tabManager.activeTabId ? editorManager.getContent() : tab.content, 
-                tab.filename + ' ' + t('(Server)'),
-                tab.filename + ' ' + t('(Local)'),
-                currentTheme,
-                langSupport,
-                parseInt(loadString('mypad_fontSize', '14'), 10)
-              );
-            });
-          });
-        } catch(e) {
-          showToast(t('Compare failed: ') + e.message, 'error');
-        } finally {
-          hideLoading();
-        }
-      },
-      () => {
-        // Ignored
+        tabManager.markModified(tab.id, false);
+        showToast(t('File reloaded'), 'success');
+      } catch(e) {
+        showToast(t('Reload failed: ') + e.message, 'error');
+      } finally {
+        hideLoading();
       }
-    );
-  });
+    },
+    async () => {
+      showLoading(t('Loading...'));
+      try {
+        const buffer = await workspaceBrowser.client.readFile(tab.workspacePath, () => {});
+        const fileInfo = await fileHandler.openFileFromBuffer(buffer, tab.filename);
+        getLanguageByName(tab.language).then(langSupport => {
+          compareManager.showCompare(
+            fileInfo.content, 
+            tab.id === tabManager.activeTabId ? editorManager.getContent() : tab.content, 
+            tab.filename + ' ' + t('(Server)'),
+            tab.filename + ' ' + t('(Local)'),
+            currentTheme,
+            langSupport,
+            parseInt(loadString('mypad_fontSize', '14'), 10)
+          );
+        });
+      } catch(e) {
+        showToast(t('Compare failed: ') + e.message, 'error');
+      } finally {
+        hideLoading();
+      }
+    },
+    () => {
+      // Ignored
+    }
+  );
 }
 
 startFileChangePoller();
