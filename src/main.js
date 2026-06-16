@@ -21,7 +21,7 @@ import { TabBar } from './tabs/tab-bar.js';
 import { detectEncoding } from './encoding/encoding-detector.js';
 import { decode, encode } from './encoding/encoding-converter.js';
 import { extractOutline } from './editor/outline.js';
-import { getAllBookmarks, getNextBookmark, getPrevBookmark } from './editor/bookmarks.js';
+import { toggleBookmark, getAllBookmarks, getNextBookmark, getPrevBookmark } from './editor/bookmarks.js';
 import { getEncodingDisplayName } from './encoding/encoding-list.js';
 
 // File handling
@@ -442,9 +442,21 @@ async function openEditorForTab(tab) {
   if (tab.scrollPos) {
     editorManager.setScrollPosition(tab.scrollPos);
   }
+  if (tab.bookmarks) {
+    for (const bm of tab.bookmarks) {
+      editorManager.view.dispatch({ effects: toggleBookmark.of(bm.line) });
+    }
+  }
 
   editorManager.setKeyboardEnabled(keyboardEnabled);
   editorManager.focus();
+
+  requestAnimationFrame(() => {
+    if (editorManager.hasView) {
+      editorManager.view.requestMeasure();
+    }
+  });
+
   updateStatusBar();
 }
 
@@ -529,6 +541,7 @@ async function switchToTab(id) {
     prevTab.content = editorManager.getContent();
     prevTab.selection = editorManager.getState().selection;
     prevTab.scrollPos = editorManager.getScrollPosition();
+    prevTab.bookmarks = getAllBookmarks(editorManager.getState());
   }
 
   tabManager.switchTab(id);
