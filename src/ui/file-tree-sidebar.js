@@ -19,23 +19,18 @@ export class FileTreeSidebar {
     this.element.className = 'file-tree-sidebar';
     this.element.style.display = 'none'; // Hidden by default
     
-    // Wrapper for flex column
+    // Wrapper for scrollable column
     this.contentWrapper = document.createElement('div');
     this.contentWrapper.style.flex = '1';
     this.contentWrapper.style.display = 'flex';
     this.contentWrapper.style.flexDirection = 'column';
-    this.contentWrapper.style.overflow = 'hidden';
+    this.contentWrapper.style.overflowY = 'auto';
+    this.contentWrapper.style.overflowX = 'hidden';
 
     // Helper to create sections
-    const createSection = (titleText, isCollapsed = false, isFlex = false) => {
+    const createSection = (titleText, isCollapsed = false) => {
       const section = document.createElement('section');
       section.className = 'sidebar-section';
-      if (isFlex) {
-        section.style.flex = '1';
-        section.style.display = 'flex';
-        section.style.flexDirection = 'column';
-        section.style.minHeight = '0';
-      }
       if (isCollapsed) section.classList.add('sidebar-section-collapsed');
 
       const header = document.createElement('h3');
@@ -44,23 +39,11 @@ export class FileTreeSidebar {
       
       const list = document.createElement('div');
       list.className = 'sidebar-file-list';
-      if (isFlex) {
-        list.style.flex = '1';
-        list.style.overflowY = 'auto';
-        list.style.minHeight = '0';
-      } else {
-        list.style.maxHeight = '300px';
-        list.style.overflowY = 'auto';
-      }
 
       header.addEventListener('click', () => {
         const collapsed = section.classList.toggle('sidebar-section-collapsed');
         const iconSpan = header.querySelector('.sidebar-section-icon');
         if (iconSpan) iconSpan.textContent = collapsed ? '▸' : '▾';
-        
-        if (isFlex) {
-          section.style.flex = collapsed ? 'none' : '1';
-        }
       });
 
       section.appendChild(header);
@@ -69,7 +52,7 @@ export class FileTreeSidebar {
     };
 
     // Main tree container (Workspace)
-    const workspaceSection = createSection(t('Workspace / 工作区'), false, true);
+    const workspaceSection = createSection(t('Workspace / 工作区'), false);
     this.treeContainer = workspaceSection.list;
     this.treeContainer.className += ' file-tree-content';
     this.treeContainer.style.padding = 'var(--space-2) 0';
