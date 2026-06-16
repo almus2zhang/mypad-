@@ -29,8 +29,16 @@ const EN_DICTIONARY = {
       <li><span class="help-icon">{highlights}</span> <b>Highlights</b> : Custom regex/keyword highlighting.</li>
     </ul>
 
+    <h3 style="margin-top: 20px;">v0.2.0 New Features</h3>
+    <ul class="help-ul" style="padding-left: 20px; color: var(--text-secondary);">
+      <li><b>Cloud Bookmarks:</b> Bookmarks (Alt+Click margin) are now saved to the server and persist across devices.</li>
+      <li><b>Advanced Compare:</b> Full-screen bidirectional editing, "Show Only Diffs" mode, and fast line merging.</li>
+      <li><b>File Watcher:</b> Automatically detects when files are modified externally and prompts to reload.</li>
+    </ul>
+
     <p style="margin-top: 20px; color: var(--text-tertiary); font-size: 0.9em;">
       Tip: Standard shortcuts are supported (e.g. Ctrl+S, Ctrl+F). An external keyboard is recommended for best experience.
+      <br><b>Version: v0.2.0</b>
     </p>
   `,
 };
@@ -283,8 +291,16 @@ const ZH_DICTIONARY = {
       <li><span class="help-icon">{highlights}</span> <b>高亮设置</b> : 支持自定义关键词的颜色高亮，划选词语后打开此菜单即可自动创建高亮。</li>
     </ul>
 
+    <h3 style="margin-top: 20px;">v0.2.0 新功能</h3>
+    <ul class="help-ul" style="padding-left: 20px; color: var(--text-secondary);">
+      <li><b>云端书签同步：</b>在行号旁按住 Alt 并点击即可添加书签，现在书签将自动同步到服务器并在多端共享。</li>
+      <li><b>高级对比模式：</b>全新的全屏双向对比，支持 "只看不同" 模式以及更快捷的合并操作。</li>
+      <li><b>外部文件监控：</b>自动检测文件在服务器是否被外部修改，并提示重新加载。</li>
+    </ul>
+
     <p style="margin-top: 20px; color: var(--text-tertiary); font-size: 0.9em;">
       提示: 很多操作都支持标准快捷键（如 Ctrl+S 保存，Ctrl+F 查找），建议搭配外接键盘使用获得最佳体验。
+      <br><b>当前版本：v0.2.0</b>
     </p>
   `,
 };

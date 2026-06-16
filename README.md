@@ -9,7 +9,9 @@ MyPad++ is a modern, lightweight, and incredibly fast web-based code editor and 
 
 - **PWA & Touch Optimized:** Designed to run beautifully on Android/iPad tablets as a Progressive Web App (fullscreen immersive mode). Includes a "No Keyboard" toggle mode to comfortably scroll and read code without the virtual keyboard interrupting you.
 - **Advanced Code Editing:** Powered by CodeMirror 6, featuring syntax highlighting for over 15+ languages, line numbers, code folding, auto-closing brackets, and multiple cursor selections.
-- **Side-by-Side Compare (Diff):** Built-in file comparison tool to easily diff your code changes, complete with "Previous/Next Diff" navigation and synced scrolling.
+- **Side-by-Side Compare (Diff):** Built-in full-screen file comparison tool with bidirectional editing, quick line merging, and a "Show Only Diffs" toggle.
+- **File Change Detection:** Automatically detects if a file has been modified externally on the server and prompts you to compare or reload.
+- **Cloud Bookmarks Sync:** Set bookmarks on lines of code and they automatically sync to the server, persisting across devices and sessions.
 - **Custom Highlights:** Select text and instantly highlight it with custom colors (Red, Green, Blue, Yellow, etc.). Great for code reviewing or studying.
 - **Local File System Access:** Securely open, edit, and save files straight to your local hard drive using the modern Native File System Access API.
 - **WebDAV & Remote Workspace:** Connect directly to your remote WebDAV server or a custom Node.js workspace backend to edit code directly on your servers.

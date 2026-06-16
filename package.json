@@ -1,6 +1,6 @@
 {
   "name": "mypad-plus-plus",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MyPad++ — A Notepad++-like code editor for Android tablets",
   "type": "module",
   "scripts": {
