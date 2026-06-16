@@ -974,6 +974,8 @@ export async function showWorkspaceSaveAsDialog(client, initialDir, defaultFilen
     className: 'workspace-save-dialog',
     ariaLabel: t('Save to Server'),
   });
+  dialog.style.width = '480px';
+  dialog.style.maxWidth = '90vw';
 
   const header = document.createElement('div');
   header.className = 'dialog-header';
@@ -986,6 +988,9 @@ export async function showWorkspaceSaveAsDialog(client, initialDir, defaultFilen
   pathLabel.style.padding = '0 24px';
   pathLabel.style.fontSize = '12px';
   pathLabel.style.color = 'var(--text-secondary)';
+  pathLabel.style.whiteSpace = 'nowrap';
+  pathLabel.style.overflow = 'hidden';
+  pathLabel.style.textOverflow = 'ellipsis';
   pathLabel.textContent = t('Current Directory:') + ' ' + currentDir;
 
   const listContainer = document.createElement('div');
@@ -994,41 +999,68 @@ export async function showWorkspaceSaveAsDialog(client, initialDir, defaultFilen
   listContainer.style.border = '1px solid var(--bg-modifier-hover)';
   listContainer.style.margin = '8px 24px';
   listContainer.style.borderRadius = '4px';
+  listContainer.style.display = 'grid';
+  listContainer.style.gridTemplateColumns = 'repeat(auto-fill, minmax(80px, 1fr))';
+  listContainer.style.gridAutoRows = 'min-content';
+  listContainer.style.gap = '8px';
+  listContainer.style.padding = '12px';
+  listContainer.style.alignContent = 'start';
 
   async function renderList() {
-    listContainer.innerHTML = '<div style="padding: 12px; text-align: center;">Loading...</div>';
+    listContainer.innerHTML = '<div style="grid-column: 1 / -1; padding: 12px; text-align: center;">Loading...</div>';
     pathLabel.textContent = t('Current Directory:') + ' ' + currentDir;
     try {
       const items = await client.listDirectory(currentDir);
       listContainer.innerHTML = '';
       
-      if (currentDir !== '/') {
-        const upItem = document.createElement('div');
-        upItem.style.padding = '8px 12px';
-        upItem.style.cursor = 'pointer';
-        upItem.style.borderBottom = '1px solid var(--bg-modifier-hover)';
-        upItem.innerHTML = '📁 ..';
-        upItem.onclick = () => {
-          currentDir = currentDir.replace(/\/[^/]+$/, '') || '/';
+      const createFolderItem = (name, path) => {
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.flexDirection = 'column';
+        div.style.alignItems = 'center';
+        div.style.justifyContent = 'center';
+        div.style.padding = '8px';
+        div.style.cursor = 'pointer';
+        div.style.borderRadius = '4px';
+        div.style.transition = 'background-color 0.15s';
+        
+        div.onmouseenter = () => div.style.backgroundColor = 'var(--bg-modifier-hover)';
+        div.onmouseleave = () => div.style.backgroundColor = 'transparent';
+        
+        div.onclick = () => {
+          currentDir = path;
           renderList();
         };
-        listContainer.appendChild(upItem);
+
+        const icon = document.createElement('div');
+        icon.style.fontSize = '36px';
+        icon.style.marginBottom = '4px';
+        icon.textContent = '📁';
+        
+        const label = document.createElement('div');
+        label.style.fontSize = '12px';
+        label.style.width = '100%';
+        label.style.textAlign = 'center';
+        label.style.overflow = 'hidden';
+        label.style.textOverflow = 'ellipsis';
+        label.style.whiteSpace = 'nowrap';
+        label.textContent = name;
+        label.title = name; // tooltip for full name
+        
+        div.appendChild(icon);
+        div.appendChild(label);
+        return div;
+      };
+
+      if (currentDir !== '/') {
+        listContainer.appendChild(createFolderItem('..', currentDir.replace(/\/[^/]+$/, '') || '/'));
       }
 
       items.filter(i => i.isDirectory).forEach(item => {
-        const div = document.createElement('div');
-        div.style.padding = '8px 12px';
-        div.style.cursor = 'pointer';
-        div.style.borderBottom = '1px solid var(--bg-modifier-hover)';
-        div.textContent = '📁 ' + item.name;
-        div.onclick = () => {
-          currentDir = item.path;
-          renderList();
-        };
-        listContainer.appendChild(div);
+        listContainer.appendChild(createFolderItem(item.name, item.path));
       });
     } catch (e) {
-      listContainer.innerHTML = '<div style="padding: 12px; color: red;">' + e.message + '</div>';
+      listContainer.innerHTML = '<div style="grid-column: 1 / -1; padding: 12px; color: red;">' + e.message + '</div>';
     }
   }
 
