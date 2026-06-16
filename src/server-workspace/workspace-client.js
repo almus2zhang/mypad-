@@ -112,13 +112,42 @@ export class WorkspaceClient {
     return res.json();
   }
 
-  async readFile(path) {
+  async readFile(path, onProgress) {
     const url = `/api/workspace/read?path=${encodeURIComponent(path)}&${this._getCacheBuster()}`;
     const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store' });
     if (!res.ok) {
       this._handleError(res, {});
     }
-    return res.arrayBuffer();
+
+    if (!onProgress || !res.body) {
+      return res.arrayBuffer();
+    }
+
+    const contentLength = res.headers.get('content-length');
+    const total = contentLength ? parseInt(contentLength, 10) : 0;
+    let loaded = 0;
+    
+    const reader = res.body.getReader();
+    const chunks = [];
+    const startTime = Date.now();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        chunks.push(value);
+        loaded += value.length;
+        onProgress(loaded, total, startTime);
+      }
+    }
+
+    const arrayBuffer = new Uint8Array(loaded);
+    let offset = 0;
+    for (const chunk of chunks) {
+      arrayBuffer.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return arrayBuffer.buffer;
   }
 
   async writeFile(path, arrayBuffer) {

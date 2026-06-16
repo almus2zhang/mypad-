@@ -95,7 +95,7 @@ export class WebDAVClient {
    * @param {string} path
    * @returns {Promise<ArrayBuffer>}
    */
-  async readFile(path) {
+  async readFile(path, onProgress) {
     const url = this._resolvePath(path);
 
     const response = await this._fetch(url, {
@@ -107,7 +107,35 @@ export class WebDAVClient {
       throw new Error(`GET failed: ${response.status} ${response.statusText}`);
     }
 
-    return response.arrayBuffer();
+    if (!onProgress || !response.body) {
+      return response.arrayBuffer();
+    }
+
+    const contentLength = response.headers.get('content-length') || response.headers.get('x-original-content-length');
+    const total = contentLength ? parseInt(contentLength, 10) : 0;
+    let loaded = 0;
+    
+    const reader = response.body.getReader();
+    const chunks = [];
+    const startTime = Date.now();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        chunks.push(value);
+        loaded += value.length;
+        onProgress(loaded, total, startTime);
+      }
+    }
+
+    const arrayBuffer = new Uint8Array(loaded);
+    let offset = 0;
+    for (const chunk of chunks) {
+      arrayBuffer.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return arrayBuffer.buffer;
   }
 
   /**

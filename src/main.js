@@ -50,7 +50,7 @@ import { findDefinitionInContent } from './editor/go-to-definition.js';
 import { showHistoryDialog } from './ui/history-dialog.js';
 import { createContextMenu, getDefaultMenuItems } from './ui/context-menu.js';
 import { FileTreeSidebar } from './ui/file-tree-sidebar.js';
-import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog, showLoading, hideLoading } from './ui/dialogs.js';
+import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog, showLoading, hideLoading, updateLoadingMessage } from './ui/dialogs.js';
 import { t } from './i18n.js';
 
 // Utils
@@ -349,7 +349,29 @@ const fileTreeSidebar = new FileTreeSidebar(workspaceBrowser.client, {
     }
 
     showLoading(t('Loading...'));
-    workspaceBrowser.client.readFile(item.path)
+
+    const onProgress = (loaded, total, startTime) => {
+      const elapsed = (Date.now() - startTime) / 1000;
+      let speed = '';
+      if (elapsed > 0) {
+        const bytesPerSec = loaded / elapsed;
+        const kbps = (bytesPerSec / 1024).toFixed(1);
+        const mbps = (bytesPerSec / 1024 / 1024).toFixed(2);
+        speed = bytesPerSec > 1024 * 1024 ? `${mbps} MB/s` : `${kbps} KB/s`;
+      }
+      
+      let msg = t('Loading...');
+      if (total > 0) {
+        const percent = Math.round((loaded / total) * 100);
+        msg = `${t('Loading...')} ${percent}% (${speed})`;
+      } else {
+        const loadedKb = (loaded / 1024).toFixed(1);
+        msg = `${t('Loaded')} ${loadedKb} KB (${speed})`;
+      }
+      updateLoadingMessage(msg);
+    };
+
+    workspaceBrowser.client.readFile(item.path, onProgress)
       .then(buffer => {
         hideLoading();
         handleWorkspaceFileOpen(item.name, buffer, item.path);

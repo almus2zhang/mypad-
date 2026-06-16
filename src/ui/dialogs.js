@@ -964,3 +964,12 @@ export function hideLoading() {
   }
 }
 
+export function updateLoadingMessage(msg) {
+  if (loadingOverlay) {
+    const textEl = loadingOverlay.querySelector('div:last-child');
+    if (textEl) {
+      textEl.textContent = msg;
+    }
+  }
+}
+
