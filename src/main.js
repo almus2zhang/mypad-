@@ -957,7 +957,7 @@ let fileChangePollerInterval = null;
 function startFileChangePoller() {
   if (fileChangePollerInterval) clearInterval(fileChangePollerInterval);
   fileChangePollerInterval = setInterval(async () => {
-    if (!workspaceBrowser || !workspaceBrowser.client || !workspaceBrowser.client.isConnected()) return;
+    if (!workspaceBrowser || !workspaceBrowser.client) return;
 
     const tabs = tabManager.getAllTabs().filter(t => t.workspacePath && t.remoteLastModified);
     if (tabs.length === 0) return;
@@ -976,7 +976,8 @@ function startFileChangePoller() {
         }
       }
     } catch (e) {
-      // ignore
+      // ignore, but log to console for debugging
+      console.error('[FileChangePoller] Error polling file stats:', e.message);
     }
   }, 10000);
 }
