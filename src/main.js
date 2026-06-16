@@ -50,7 +50,7 @@ import { findDefinitionInContent } from './editor/go-to-definition.js';
 import { showHistoryDialog } from './ui/history-dialog.js';
 import { createContextMenu, getDefaultMenuItems } from './ui/context-menu.js';
 import { FileTreeSidebar } from './ui/file-tree-sidebar.js';
-import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog, showLoading, hideLoading, updateLoadingMessage } from './ui/dialogs.js';
+import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog, showLoading, hideLoading, updateLoadingMessage, showWorkspaceSaveAsDialog } from './ui/dialogs.js';
 import { t } from './i18n.js';
 
 // Utils
@@ -745,6 +745,21 @@ async function saveFileAs() {
   if (!tab || !editorManager.hasView) return;
 
   tab.content = editorManager.getContent();
+
+  if (workspaceBrowser && workspaceBrowser.client && workspaceBrowser.client.isConnected()) {
+    const currentPath = tab.workspacePath || tab.webdavPath || '/';
+    const currentDir = currentPath.replace(/\/[^/]+$/, '') || '/';
+    showWorkspaceSaveAsDialog(workspaceBrowser.client, currentDir, tab.filename, async (newPath) => {
+      try {
+        tab.workspacePath = newPath;
+        tab.filename = newPath.split('/').pop();
+        await saveFileToWorkspace(tab);
+      } catch (e) {
+        showToast(`${t('Error saving file:')} ${e.message}`, 'error');
+      }
+    });
+    return;
+  }
 
   try {
     const result = await fileHandler.saveFileAs(tab.content, tab.encoding, tab.filename);

@@ -957,6 +957,122 @@ export function showLoading(msg = 'Loading...') {
   document.body.appendChild(loadingOverlay);
 }
 
+export async function showWorkspaceSaveAsDialog(client, initialDir, defaultFilename, onSave) {
+  let currentDir = initialDir || '/';
+
+  const { overlay, dialog, close } = createDialogBase({
+    className: 'workspace-save-dialog',
+    ariaLabel: t('Save to Server'),
+  });
+
+  const header = document.createElement('div');
+  header.className = 'dialog-header';
+  const title = document.createElement('h2');
+  title.className = 'dialog-title';
+  title.textContent = t('Save to Server');
+  header.appendChild(title);
+
+  const pathLabel = document.createElement('div');
+  pathLabel.style.padding = '0 24px';
+  pathLabel.style.fontSize = '12px';
+  pathLabel.style.color = 'var(--text-secondary)';
+  pathLabel.textContent = t('Current Directory:') + ' ' + currentDir;
+
+  const listContainer = document.createElement('div');
+  listContainer.style.height = '250px';
+  listContainer.style.overflowY = 'auto';
+  listContainer.style.border = '1px solid var(--bg-modifier-hover)';
+  listContainer.style.margin = '8px 24px';
+  listContainer.style.borderRadius = '4px';
+
+  async function renderList() {
+    listContainer.innerHTML = '<div style="padding: 12px; text-align: center;">Loading...</div>';
+    pathLabel.textContent = t('Current Directory:') + ' ' + currentDir;
+    try {
+      const items = await client.listDirectory(currentDir);
+      listContainer.innerHTML = '';
+      
+      if (currentDir !== '/') {
+        const upItem = document.createElement('div');
+        upItem.style.padding = '8px 12px';
+        upItem.style.cursor = 'pointer';
+        upItem.style.borderBottom = '1px solid var(--bg-modifier-hover)';
+        upItem.innerHTML = '📁 ..';
+        upItem.onclick = () => {
+          currentDir = currentDir.replace(/\/[^/]+$/, '') || '/';
+          renderList();
+        };
+        listContainer.appendChild(upItem);
+      }
+
+      items.filter(i => i.isDirectory).forEach(item => {
+        const div = document.createElement('div');
+        div.style.padding = '8px 12px';
+        div.style.cursor = 'pointer';
+        div.style.borderBottom = '1px solid var(--bg-modifier-hover)';
+        div.textContent = '📁 ' + item.name;
+        div.onclick = () => {
+          currentDir = item.path;
+          renderList();
+        };
+        listContainer.appendChild(div);
+      });
+    } catch (e) {
+      listContainer.innerHTML = '<div style="padding: 12px; color: red;">' + e.message + '</div>';
+    }
+  }
+
+  const inputContainer = document.createElement('div');
+  inputContainer.className = 'dialog-body';
+  inputContainer.style.paddingTop = '8px';
+  
+  const label = document.createElement('label');
+  label.textContent = t('File Name:');
+  label.style.display = 'block';
+  label.style.marginBottom = '8px';
+  
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'dialog-input';
+  input.value = defaultFilename || '';
+  
+  inputContainer.appendChild(label);
+  inputContainer.appendChild(input);
+
+  const footer = document.createElement('div');
+  footer.className = 'dialog-footer';
+  
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-ghost';
+  cancelBtn.textContent = t('Cancel');
+  cancelBtn.onclick = close;
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn btn-primary';
+  saveBtn.textContent = t('Save');
+  saveBtn.onclick = () => {
+    if (!input.value.trim()) return;
+    const fullPath = (currentDir.endsWith('/') ? currentDir : currentDir + '/') + input.value.trim();
+    close();
+    onSave(fullPath);
+  };
+
+  footer.appendChild(cancelBtn);
+  footer.appendChild(saveBtn);
+
+  dialog.appendChild(header);
+  dialog.appendChild(pathLabel);
+  dialog.appendChild(listContainer);
+  dialog.appendChild(inputContainer);
+  dialog.appendChild(footer);
+
+  document.body.appendChild(overlay);
+  input.focus();
+  input.select();
+  
+  renderList();
+}
+
 export function hideLoading() {
   if (loadingOverlay && loadingOverlay.parentNode) {
     loadingOverlay.parentNode.removeChild(loadingOverlay);
