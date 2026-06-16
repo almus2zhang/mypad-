@@ -64,13 +64,15 @@ export class RecentFiles {
     const entry = {
       name: fileInfo.name,
       path: fileInfo.path || undefined,
+      workspacePath: fileInfo.workspacePath || undefined,
+      webdavPath: fileInfo.webdavPath || undefined,
       encoding: fileInfo.encoding,
       lastOpened: Date.now(),
     };
 
-    // Remove any existing duplicate (same name + path)
+    // Remove any existing duplicate
     this.entries = this.entries.filter(
-      (e) => !(e.name === entry.name && e.path === entry.path)
+      (e) => !(e.name === entry.name && (e.path === entry.path && e.workspacePath === entry.workspacePath && e.webdavPath === entry.webdavPath))
     );
 
     // Insert at the top
