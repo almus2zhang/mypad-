@@ -237,11 +237,7 @@ const toolbar = createToolbar({
 });
 document.getElementById('toolbar-container').appendChild(toolbar);
 
-// Add app title at start of toolbar
-const titleEl = document.createElement('span');
-titleEl.className = 'toolbar-title';
-titleEl.textContent = 'MyPad++';
-toolbar.insertBefore(titleEl, toolbar.firstChild);
+
 
 // --- Tab Bar ---
 const tabBar = new TabBar(
