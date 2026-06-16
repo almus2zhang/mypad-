@@ -58,6 +58,14 @@ export class CompareManager {
           <button id="btn-next-diff" class="annotepad-btn" style="padding: 2px 6px; display: flex; align-items: center; gap: 4px; font-size: 13px;" title="Next Diff">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg> Next Diff
           </button>
+          <div style="width: 1px; height: 16px; background: var(--toolbar-border); margin: 0 4px;"></div>
+          <button id="btn-merge-right" class="annotepad-btn" style="padding: 2px 6px; display: flex; align-items: center; gap: 4px; font-size: 13px;" title="Merge Selection to Right">
+            Merge &rarr;
+          </button>
+          <button id="btn-merge-left" class="annotepad-btn" style="padding: 2px 6px; display: flex; align-items: center; gap: 4px; font-size: 13px;" title="Merge Selection to Left">
+            &larr; Merge
+          </button>
+          <div style="width: 1px; height: 16px; background: var(--toolbar-border); margin: 0 4px;"></div>
           <label style="font-size: 13px; display: flex; align-items: center; gap: 6px; color: var(--text-secondary); cursor: pointer; margin-left: 8px;">
             <input type="checkbox" id="sync-scroll-cb" checked> Sync Scroll
           </label>
@@ -94,7 +102,6 @@ export class CompareManager {
         doc: normOriginal,
         extensions: [
           ...extensions,
-          EditorView.editable.of(false), // make 'original' read-only to force merging from left to right
         ]
       },
       b: {
@@ -128,13 +135,16 @@ export class CompareManager {
         ed.style.flexDirection = 'column';
       });
 
-      // Diff navigation buttons
       const btnPrev = this.container.querySelector('#btn-prev-diff');
       const btnNext = this.container.querySelector('#btn-next-diff');
+      const btnMergeRight = this.container.querySelector('#btn-merge-right');
+      const btnMergeLeft = this.container.querySelector('#btn-merge-left');
       const btnClose = this.container.querySelector('#btn-close-compare');
 
       btnPrev.addEventListener('click', () => this.goToPrevDiff());
       btnNext.addEventListener('click', () => this.goToNextDiff());
+      btnMergeRight.addEventListener('click', () => this.mergeSelection(this.mergeView.a, this.mergeView.b));
+      btnMergeLeft.addEventListener('click', () => this.mergeSelection(this.mergeView.b, this.mergeView.a));
       btnClose.addEventListener('click', () => {
         if (typeof this.onClose === 'function') {
           this.onClose();
@@ -206,6 +216,31 @@ export class CompareManager {
       scrollIntoView: true
     });
     viewB.focus();
+  }
+
+  /**
+   * Merge selection from source view to target view
+   * @param {EditorView} sourceView 
+   * @param {EditorView} targetView 
+   */
+  mergeSelection(sourceView, targetView) {
+    if (!sourceView || !targetView) return;
+    const { state } = sourceView;
+    let textToInsert = state.sliceDoc(state.selection.main.from, state.selection.main.to);
+    
+    // If no text is selected, grab the entire current line
+    if (!textToInsert) {
+      const line = state.doc.lineAt(state.selection.main.head);
+      textToInsert = line.text + '\\n';
+    }
+
+    const targetPos = targetView.state.selection.main.head;
+    targetView.dispatch({
+      changes: { from: targetPos, insert: textToInsert },
+      selection: { anchor: targetPos + textToInsert.length },
+      scrollIntoView: true
+    });
+    targetView.focus();
   }
 
   /**

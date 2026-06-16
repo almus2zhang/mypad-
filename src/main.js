@@ -1010,14 +1010,14 @@ function showFileChangedPrompt(tab, newLastModified) {
         const buffer = await workspaceBrowser.client.readFile(tab.workspacePath, () => {});
         const fileInfo = await fileHandler.openFileFromBuffer(buffer, tab.filename);
         getLanguageByName(tab.language).then(langSupport => {
-          compareManager.showCompare(
+          compareManager.startCompare(
             fileInfo.content, 
             tab.id === tabManager.activeTabId ? editorManager.getContent() : tab.content, 
-            tab.filename + ' ' + t('(Server)'),
-            tab.filename + ' ' + t('(Local)'),
-            currentTheme,
             langSupport,
-            parseInt(loadString('mypad_fontSize', '14'), 10)
+            currentTheme,
+            parseInt(loadString('mypad_fontSize', '14'), 10),
+            tab.filename + ' ' + t('(Server)'),
+            tab.filename + ' ' + t('(Local)')
           );
         });
       } catch(e) {
