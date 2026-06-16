@@ -673,6 +673,33 @@ apiRouter.get('/read', async (req, res) => {
   }
 });
 
+apiRouter.post('/stat', async (req, res) => {
+  try {
+    const { paths } = req.body;
+    if (!Array.isArray(paths)) {
+      return res.status(400).json({ error: 'paths must be an array' });
+    }
+    
+    const results = {};
+    for (const p of paths) {
+      try {
+        const targetPath = resolveAndCheckPath(p);
+        const st = await fs.stat(targetPath);
+        results[p] = {
+          lastModified: st.mtime.toISOString(),
+          size: st.size
+        };
+      } catch (e) {
+        results[p] = null; // file not found or inaccessible
+      }
+    }
+    res.json({ results });
+  } catch (error) {
+    console.error('Stat error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 apiRouter.post('/write', async (req, res) => {
   try {
     const reqPath = req.query.path || '';

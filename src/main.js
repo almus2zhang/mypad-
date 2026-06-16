@@ -386,7 +386,7 @@ const fileTreeSidebar = new FileTreeSidebar(workspaceBrowser.client, {
     workspaceBrowser.client.readFile(item.path, onProgress)
       .then(buffer => {
         hideLoading();
-        handleWorkspaceFileOpen(item.name, buffer, item.path);
+        handleWorkspaceFileOpen(item.name, buffer, item.path, item.lastModified);
       })
       .catch(e => {
         hideLoading();
@@ -872,7 +872,7 @@ async function saveFileToWebDAV(tab) {
 // Server Workspace
 // ============================================================
 
-async function handleWorkspaceFileOpen(filename, arrayBuffer, path) {
+async function handleWorkspaceFileOpen(filename, arrayBuffer, path, lastModified) {
   try {
     const isPDF = filename.toLowerCase().endsWith('.pdf');
 
@@ -902,6 +902,7 @@ async function handleWorkspaceFileOpen(filename, arrayBuffer, path) {
       encoding: fileInfo.encoding,
       language: langName,
       workspacePath: path,
+      remoteLastModified: lastModified || new Date().toISOString(),
     });
     openEditorForTab(tab);
     recentFiles.add({ name: filename, workspacePath: path, encoding: fileInfo.encoding });
@@ -926,6 +927,14 @@ async function saveFileToWorkspace(tab) {
   try {
     const encoded = encode(tab.content, tab.encoding);
     await workspaceBrowser.client.writeFile(tab.workspacePath, encoded.buffer);
+    
+    // Fetch new stat to update remoteLastModified
+    try {
+      const stats = await workspaceBrowser.client.checkFileStats([tab.workspacePath]);
+      if (stats && stats[tab.workspacePath]) {
+        tabManager.updateTab(tab.id, { remoteLastModified: stats[tab.workspacePath].lastModified });
+      }
+    } catch(err) {}
 
     tabManager.updateTab(tab.id, {
       filename: tab.filename,
@@ -940,7 +949,96 @@ async function saveFileToWorkspace(tab) {
 }
 
 // ============================================================
-// Editor Initialization
+// File Change Poller
+// ============================================================
+
+let fileChangePollerInterval = null;
+
+function startFileChangePoller() {
+  if (fileChangePollerInterval) clearInterval(fileChangePollerInterval);
+  fileChangePollerInterval = setInterval(async () => {
+    if (!workspaceBrowser || !workspaceBrowser.client || !workspaceBrowser.client.isConnected()) return;
+
+    const tabs = tabManager.getAllTabs().filter(t => t.workspacePath && t.remoteLastModified);
+    if (tabs.length === 0) return;
+
+    const paths = tabs.map(t => t.workspacePath);
+    try {
+      const stats = await workspaceBrowser.client.checkFileStats(paths);
+      for (const tab of tabs) {
+        const stat = stats[tab.workspacePath];
+        if (stat && stat.lastModified) {
+          const serverTime = new Date(stat.lastModified).getTime();
+          const localTime = new Date(tab.remoteLastModified).getTime();
+          if (serverTime > localTime && tab.suppressedRemoteLastModified !== stat.lastModified) {
+            showFileChangedPrompt(tab, stat.lastModified);
+          }
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, 10000);
+}
+
+function showFileChangedPrompt(tab, newLastModified) {
+  if (tab.suppressedRemoteLastModified === newLastModified) return;
+  tab.suppressedRemoteLastModified = newLastModified;
+
+  import('./ui/dialogs.js').then(({ showFileChangedDialog }) => {
+    showFileChangedDialog(tab.filename, 
+      async () => {
+        showLoading(t('Loading...'));
+        try {
+          const buffer = await workspaceBrowser.client.readFile(tab.workspacePath, () => {});
+          const fileInfo = await fileHandler.openFileFromBuffer(buffer, tab.filename);
+          tabManager.updateTab(tab.id, { content: fileInfo.content, remoteLastModified: newLastModified });
+          if (tab.id === tabManager.activeTabId) {
+            editorManager.setContent(fileInfo.content);
+          }
+          tabManager.markModified(tab.id, false);
+          showToast(t('File reloaded'), 'success');
+        } catch(e) {
+          showToast(t('Reload failed: ') + e.message, 'error');
+        } finally {
+          hideLoading();
+        }
+      },
+      async () => {
+        showLoading(t('Loading...'));
+        try {
+          const buffer = await workspaceBrowser.client.readFile(tab.workspacePath, () => {});
+          const fileInfo = await fileHandler.openFileFromBuffer(buffer, tab.filename);
+          import('./editor/languages.js').then(({ getLanguageByName }) => {
+            getLanguageByName(tab.language).then(langSupport => {
+              compareManager.showCompare(
+                fileInfo.content, 
+                tab.id === tabManager.activeTabId ? editorManager.getContent() : tab.content, 
+                tab.filename + ' ' + t('(Server)'),
+                tab.filename + ' ' + t('(Local)'),
+                currentTheme,
+                langSupport,
+                parseInt(loadString('mypad_fontSize', '14'), 10)
+              );
+            });
+          });
+        } catch(e) {
+          showToast(t('Compare failed: ') + e.message, 'error');
+        } finally {
+          hideLoading();
+        }
+      },
+      () => {
+        // Ignored
+      }
+    );
+  });
+}
+
+startFileChangePoller();
+
+// ============================================================
+// Initialization
 // ============================================================
 
 // ============================================================

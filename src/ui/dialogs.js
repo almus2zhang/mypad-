@@ -1147,3 +1147,67 @@ export function updateLoadingMessage(msg) {
   }
 }
 
+export function showFileChangedDialog(filename, onReload, onCompare, onIgnore) {
+  const { overlay, dialog, close } = createDialogBase({
+    className: 'file-changed-dialog',
+    ariaLabel: t('File Changed on Server'),
+  });
+
+  const header = document.createElement('div');
+  header.className = 'dialog-header';
+  const title = document.createElement('h2');
+  title.className = 'dialog-title';
+  title.style.color = 'var(--text-error)';
+  title.textContent = t('File Changed on Server');
+  header.appendChild(title);
+
+  const body = document.createElement('div');
+  body.className = 'dialog-body';
+  const p = document.createElement('p');
+  p.textContent = t('The file') + ' "' + filename + '" ' + t('has been modified on the server by another client.');
+  p.style.marginBottom = '12px';
+  const p2 = document.createElement('p');
+  p2.textContent = t('What would you like to do?');
+  
+  body.appendChild(p);
+  body.appendChild(p2);
+
+  const footer = document.createElement('div');
+  footer.className = 'dialog-footer';
+  footer.style.justifyContent = 'flex-end';
+  footer.style.gap = '8px';
+  
+  const ignoreBtn = document.createElement('button');
+  ignoreBtn.className = 'btn btn-ghost';
+  ignoreBtn.textContent = t('Ignore');
+  ignoreBtn.onclick = () => {
+    close();
+    if (onIgnore) onIgnore();
+  };
+
+  const compareBtn = document.createElement('button');
+  compareBtn.className = 'btn btn-ghost';
+  compareBtn.textContent = t('Compare');
+  compareBtn.onclick = () => {
+    close();
+    if (onCompare) onCompare();
+  };
+
+  const reloadBtn = document.createElement('button');
+  reloadBtn.className = 'btn btn-primary';
+  reloadBtn.textContent = t('Reload');
+  reloadBtn.onclick = () => {
+    close();
+    if (onReload) onReload();
+  };
+
+  footer.appendChild(ignoreBtn);
+  footer.appendChild(compareBtn);
+  footer.appendChild(reloadBtn);
+
+  dialog.appendChild(header);
+  dialog.appendChild(body);
+  dialog.appendChild(footer);
+
+  document.body.appendChild(overlay);
+}
