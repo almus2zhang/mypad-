@@ -766,8 +766,10 @@ async function saveFileAs() {
       }
     }
   };
+  const isWorkspaceFile = !!tab.workspacePath;
+  const isWorkspaceConnected = workspaceBrowser && workspaceBrowser.client && workspaceBrowser.client.isConnected();
 
-  if (workspaceBrowser && workspaceBrowser.client && workspaceBrowser.client.isConnected()) {
+  if (isWorkspaceFile || isWorkspaceConnected) {
     const currentPath = tab.workspacePath || tab.webdavPath || '/';
     const currentDir = currentPath.replace(/\/[^/]+$/, '') || '/';
     showWorkspaceSaveAsDialog(workspaceBrowser.client, currentDir, tab.filename, async (newPath) => {
@@ -1019,6 +1021,7 @@ function showFileChangedPrompt(tab, newLastModified) {
             tab.filename + ' ' + t('(Server)'),
             tab.filename + ' ' + t('(Local)')
           );
+          toggleCompareMode();
         });
       } catch(e) {
         showToast(t('Compare failed: ') + e.message, 'error');
