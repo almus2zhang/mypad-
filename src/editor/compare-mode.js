@@ -62,6 +62,10 @@ export class CompareManager {
           <button id="btn-merge-right" class="annotepad-btn" style="padding: 2px 6px; display: flex; align-items: center; gap: 4px; font-size: 13px;" title="Merge Selection to Right">
             Merge &rarr;
           </button>
+          <button id="btn-copy-all-right" class="annotepad-btn" style="padding: 2px 6px; display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text-error);" title="Replace Local with Server (Copy All)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg> Reload Server
+          </button>
+          <div style="width: 1px; height: 16px; background: var(--toolbar-border); margin: 0 4px;"></div>
           <button id="btn-merge-left" class="annotepad-btn" style="padding: 2px 6px; display: flex; align-items: center; gap: 4px; font-size: 13px;" title="Merge Selection to Left">
             &larr; Merge
           </button>
@@ -138,12 +142,21 @@ export class CompareManager {
       const btnPrev = this.container.querySelector('#btn-prev-diff');
       const btnNext = this.container.querySelector('#btn-next-diff');
       const btnMergeRight = this.container.querySelector('#btn-merge-right');
+      const btnCopyAllRight = this.container.querySelector('#btn-copy-all-right');
       const btnMergeLeft = this.container.querySelector('#btn-merge-left');
       const btnClose = this.container.querySelector('#btn-close-compare');
 
       btnPrev.addEventListener('click', () => this.goToPrevDiff());
       btnNext.addEventListener('click', () => this.goToNextDiff());
       btnMergeRight.addEventListener('click', () => this.mergeSelection(this.mergeView.a, this.mergeView.b));
+      btnCopyAllRight.addEventListener('click', () => {
+        if (confirm('Are you sure you want to completely overwrite your local changes with the server version?')) {
+          const content = this.mergeView.a.state.doc.toString();
+          this.mergeView.b.dispatch({
+            changes: { from: 0, to: this.mergeView.b.state.doc.length, insert: content }
+          });
+        }
+      });
       btnMergeLeft.addEventListener('click', () => this.mergeSelection(this.mergeView.b, this.mergeView.a));
       btnClose.addEventListener('click', () => {
         if (typeof this.onClose === 'function') {
