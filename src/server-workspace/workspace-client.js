@@ -237,4 +237,27 @@ export class WorkspaceClient {
     const buffer = await res.arrayBuffer();
     return new Uint8Array(buffer);
   }
+  async getFileMetadata(path) {
+    const url = `/api/workspace/metadata?path=${encodeURIComponent(path)}`;
+    const res = await fetch(url, { headers: this._getHeaders() });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      this._handleError(res, err);
+    }
+    return res.json();
+  }
+
+  async setFileMetadata(path, metadata) {
+    const url = `/api/workspace/metadata`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: this._getHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ path, metadata })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      this._handleError(res, err);
+    }
+    return res.json();
+  }
 }

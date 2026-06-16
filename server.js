@@ -184,6 +184,27 @@ class OperationLogger {
 
 const opLogger = new OperationLogger(10000);
 
+// File Metadata storage
+const METADATA_FILE = path.join(__dirname, 'file_metadata.json');
+let fileMetadata = {};
+try {
+  if (fsSync.existsSync(METADATA_FILE)) {
+    fileMetadata = JSON.parse(fsSync.readFileSync(METADATA_FILE, 'utf8'));
+  }
+} catch (e) {
+  console.error('Failed to load file metadata', e);
+}
+
+function saveFileMetadata() {
+  try {
+    fsSync.writeFile(METADATA_FILE, JSON.stringify(fileMetadata, null, 2), (err) => {
+      if (err) console.error('Failed to async save file_metadata.json', err.message);
+    });
+  } catch (e) {
+    console.error('Failed to save file metadata', e);
+  }
+}
+
 console.log(`Starting MyPad++ Server`);
 console.log(`Workspaces: ${workspaces.map(w => w.name + ' (' + w.path + ')').join(', ')}`);
 if (serverPassword) {

@@ -82,6 +82,10 @@ function saveGlobalBookmarks(tab) {
     delete globalBookmarks[path];
   }
   saveJSON('mypad_global_bookmarks', globalBookmarks);
+  
+  if (tab.workspacePath && workspaceBrowser && workspaceBrowser.client && workspaceBrowser.client.isConnected()) {
+    workspaceBrowser.client.setFileMetadata(tab.workspacePath, { bookmarks: tab.bookmarks || [] }).catch(() => {});
+  }
 }
 /** @type {number} */
 let tabSize = parseInt(loadString('mypad_tab_size', '4'), 10);
@@ -894,12 +898,25 @@ async function handleWorkspaceFileOpen(filename, arrayBuffer, path, lastModified
     const fileInfo = await fileHandler.openFileFromBuffer(arrayBuffer, filename);
     const langName = getLanguageNameByFilename(filename);
 
+    let serverBookmarks = [];
+    try {
+      if (workspaceBrowser && workspaceBrowser.client && workspaceBrowser.client.isConnected()) {
+        const meta = await workspaceBrowser.client.getFileMetadata(path);
+        if (meta && meta.bookmarks) {
+          serverBookmarks = meta.bookmarks;
+          globalBookmarks[path] = serverBookmarks;
+          saveJSON('mypad_global_bookmarks', globalBookmarks);
+        }
+      }
+    } catch (e) {}
+
     const tab = tabManager.createTab({
       filename,
       content: fileInfo.content,
       encoding: fileInfo.encoding,
       language: langName,
       workspacePath: path,
+      bookmarks: serverBookmarks.length > 0 ? serverBookmarks : undefined,
       remoteLastModified: lastModified || new Date().toISOString(),
     });
     openEditorForTab(tab);
@@ -939,6 +956,12 @@ async function saveFileToWorkspace(tab) {
       workspacePath: tab.workspacePath,
     });
     tabManager.markModified(tab.id, false);
+    
+    if (tab.id === tabManager.activeTabId && editorManager.hasView) {
+      tab.bookmarks = getAllBookmarks(editorManager.getState());
+    }
+    saveGlobalBookmarks(tab);
+    
     saveSession();
     showToast(`${t('File saved:')} ${tab.filename}`, 'success');
   } catch (e) {
