@@ -332,6 +332,22 @@ const fileTreeSidebar = new FileTreeSidebar(workspaceBrowser.client, {
   onFileSelect: (item) => {
     // Open the file in a new tab
     if (item.isDirectory) return;
+
+    // Check if already open
+    const tabs = tabManager.getAllTabs();
+    const existing = tabs.find(t => 
+      t.workspacePath === item.path || 
+      t.filePath === item.path || 
+      t.webdavPath === item.path || 
+      t.path === item.path || 
+      (t.filename === item.name && (t.workspacePath === item.path || !t.workspacePath))
+    );
+
+    if (existing) {
+      switchToTab(existing.id);
+      return;
+    }
+
     workspaceBrowser.client.readFile(item.path)
       .then(buffer => handleWorkspaceFileOpen(item.name, buffer, item.path))
       .catch(e => showToast(`${t('Failed to open file:')} ${e.message}`, "error"));
