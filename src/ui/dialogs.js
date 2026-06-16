@@ -50,6 +50,16 @@ function createDialogBase({ className, ariaLabel, onClose }) {
   if (ariaLabel) dialog.setAttribute('aria-label', ariaLabel);
   dialog.tabIndex = -1;
 
+  dialog.addEventListener('focusin', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      if (localStorage.getItem('mypad_keyboard_enabled') === 'false') {
+        e.target.setAttribute('inputmode', 'none');
+      } else {
+        e.target.removeAttribute('inputmode');
+      }
+    }
+  });
+
   overlay.appendChild(dialog);
 
   function close() {
@@ -957,7 +967,7 @@ export function showLoading(msg = 'Loading...') {
   document.body.appendChild(loadingOverlay);
 }
 
-export async function showWorkspaceSaveAsDialog(client, initialDir, defaultFilename, onSave) {
+export async function showWorkspaceSaveAsDialog(client, initialDir, defaultFilename, onSave, onSaveLocal) {
   let currentDir = initialDir || '/';
 
   const { overlay, dialog, close } = createDialogBase({
@@ -1042,6 +1052,14 @@ export async function showWorkspaceSaveAsDialog(client, initialDir, defaultFilen
   const footer = document.createElement('div');
   footer.className = 'dialog-footer';
   
+  const localBtn = document.createElement('button');
+  localBtn.className = 'btn btn-ghost';
+  localBtn.textContent = t('Local Machine...');
+  localBtn.onclick = () => {
+    close();
+    if (onSaveLocal) onSaveLocal();
+  };
+
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'btn btn-ghost';
   cancelBtn.textContent = t('Cancel');
@@ -1057,8 +1075,16 @@ export async function showWorkspaceSaveAsDialog(client, initialDir, defaultFilen
     onSave(fullPath);
   };
 
-  footer.appendChild(cancelBtn);
-  footer.appendChild(saveBtn);
+  footer.appendChild(localBtn);
+  footer.style.justifyContent = 'space-between';
+  
+  const rightBtns = document.createElement('div');
+  rightBtns.style.display = 'flex';
+  rightBtns.style.gap = '8px';
+  rightBtns.appendChild(cancelBtn);
+  rightBtns.appendChild(saveBtn);
+  
+  footer.appendChild(rightBtns);
 
   dialog.appendChild(header);
   dialog.appendChild(pathLabel);

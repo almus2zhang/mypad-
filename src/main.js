@@ -746,6 +746,27 @@ async function saveFileAs() {
 
   tab.content = editorManager.getContent();
 
+  const doSaveLocal = async () => {
+    try {
+      const result = await fileHandler.saveFileAs(tab.content, tab.encoding, tab.filename);
+      if (result && result.fileHandle) {
+        tabManager.updateTab(tab.id, {
+          fileHandle: result.fileHandle,
+          filename: result.name || tab.filename,
+          filePath: result.name || tab.filename,
+        });
+      }
+      tabManager.markModified(tab.id, false);
+      saveSession();
+      showToast(`${t('File saved:')} ${tab.filename}`, 'success');
+    } catch (e) {
+      if (e.name !== 'AbortError') {
+        console.error('Failed to save:', e);
+        showToast(`${t('Error saving file:')} ${e.message}`, 'error');
+      }
+    }
+  };
+
   if (workspaceBrowser && workspaceBrowser.client && workspaceBrowser.client.isConnected()) {
     const currentPath = tab.workspacePath || tab.webdavPath || '/';
     const currentDir = currentPath.replace(/\/[^/]+$/, '') || '/';
@@ -757,28 +778,11 @@ async function saveFileAs() {
       } catch (e) {
         showToast(`${t('Error saving file:')} ${e.message}`, 'error');
       }
-    });
+    }, doSaveLocal);
     return;
   }
 
-  try {
-    const result = await fileHandler.saveFileAs(tab.content, tab.encoding, tab.filename);
-    if (result && result.fileHandle) {
-      tabManager.updateTab(tab.id, {
-        fileHandle: result.fileHandle,
-        filename: result.name || tab.filename,
-        filePath: result.name || tab.filename,
-      });
-    }
-    tabManager.markModified(tab.id, false);
-    saveSession();
-    showToast(`${t('File saved:')} ${tab.filename}`, 'success');
-  } catch (e) {
-    if (e.name !== 'AbortError') {
-      console.error('Failed to save:', e);
-      showToast(`${t('Error saving file:')} ${e.message}`, 'error');
-    }
-  }
+  await doSaveLocal();
 }
 
 function handleFileOpened(fileInfo) {
