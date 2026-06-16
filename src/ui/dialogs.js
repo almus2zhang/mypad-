@@ -911,3 +911,56 @@ export function showHelpDialog() {
   closeBtn.focus();
 }
 
+let loadingOverlay = null;
+
+export function showLoading(msg = 'Loading...') {
+  hideLoading();
+  loadingOverlay = document.createElement('div');
+  loadingOverlay.style.position = 'fixed';
+  loadingOverlay.style.top = '0';
+  loadingOverlay.style.left = '0';
+  loadingOverlay.style.width = '100vw';
+  loadingOverlay.style.height = '100vh';
+  loadingOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.4)';
+  loadingOverlay.style.zIndex = '9999';
+  loadingOverlay.style.display = 'flex';
+  loadingOverlay.style.flexDirection = 'column';
+  loadingOverlay.style.alignItems = 'center';
+  loadingOverlay.style.justifyContent = 'center';
+  loadingOverlay.style.backdropFilter = 'blur(2px)';
+  
+  const spinner = document.createElement('div');
+  spinner.style.width = '40px';
+  spinner.style.height = '40px';
+  spinner.style.border = '4px solid rgba(255,255,255,0.3)';
+  spinner.style.borderTop = '4px solid white';
+  spinner.style.borderRadius = '50%';
+  spinner.style.animation = 'mypad-spin 1s linear infinite';
+  
+  const text = document.createElement('div');
+  text.style.color = 'white';
+  text.style.marginTop = '16px';
+  text.style.fontSize = '14px';
+  text.style.fontWeight = '500';
+  text.style.fontFamily = 'var(--font-ui)';
+  text.textContent = msg;
+
+  if (!document.getElementById('mypad-spin-style')) {
+    const style = document.createElement('style');
+    style.id = 'mypad-spin-style';
+    style.textContent = '@keyframes mypad-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+    document.head.appendChild(style);
+  }
+
+  loadingOverlay.appendChild(spinner);
+  loadingOverlay.appendChild(text);
+  document.body.appendChild(loadingOverlay);
+}
+
+export function hideLoading() {
+  if (loadingOverlay && loadingOverlay.parentNode) {
+    loadingOverlay.parentNode.removeChild(loadingOverlay);
+    loadingOverlay = null;
+  }
+}
+

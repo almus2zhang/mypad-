@@ -50,7 +50,7 @@ import { findDefinitionInContent } from './editor/go-to-definition.js';
 import { showHistoryDialog } from './ui/history-dialog.js';
 import { createContextMenu, getDefaultMenuItems } from './ui/context-menu.js';
 import { FileTreeSidebar } from './ui/file-tree-sidebar.js';
-import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog } from './ui/dialogs.js';
+import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog, showLoading, hideLoading } from './ui/dialogs.js';
 import { t } from './i18n.js';
 
 // Utils
@@ -348,9 +348,16 @@ const fileTreeSidebar = new FileTreeSidebar(workspaceBrowser.client, {
       return;
     }
 
+    showLoading(t('Loading...'));
     workspaceBrowser.client.readFile(item.path)
-      .then(buffer => handleWorkspaceFileOpen(item.name, buffer, item.path))
-      .catch(e => showToast(`${t('Failed to open file:')} ${e.message}`, "error"));
+      .then(buffer => {
+        hideLoading();
+        handleWorkspaceFileOpen(item.name, buffer, item.path);
+      })
+      .catch(e => {
+        hideLoading();
+        showToast(`${t('Failed to open file:')} ${e.message}`, "error");
+      });
   },
   onContextMenu: (e, item, tree) => {
     if (item.isDirectory && (item.path !== '/' || item.isPinned)) {
