@@ -429,8 +429,7 @@ export class WorkspaceBrowser {
       if (item.isDirectory) {
         icon.textContent = '📁';
       } else {
-        const isPDF = item.name.toLowerCase().endsWith('.pdf');
-        icon.textContent = isPDF ? '📕' : '📄';
+        icon.textContent = _getFileIcon(item.name);
       }
 
       const textContainer = document.createElement('div');
@@ -552,4 +551,26 @@ export class WorkspaceBrowser {
       this._footerEl.appendChild(wrapper);
     }
   }
+}
+// ---- Helpers ----
+
+function _getFileIcon(filename) {
+  const ext = (filename.split('.').pop() || '').toLowerCase();
+  const icons = {
+    // Code
+    py: '🐍', js: '📜', ts: '📘', html: '🌐', htm: '🌐',
+    css: '🎨', json: '📋', xml: '📄', md: '📝',
+    c: '⚙️', cpp: '⚙️', h: '⚙️', hpp: '⚙️',
+    java: '☕', go: '🔵', rs: '🦀', php: '🐘',
+    sql: '🗃️', yaml: '📑', yml: '📑', sh: '🖥️',
+    txt: '📄', log: '📄', ini: '⚙️', cfg: '⚙️',
+    // Media & Docs
+    pdf: '📑', doc: '📘', docx: '📘', xls: '📊', xlsx: '📊', ppt: '📙', pptx: '📙',
+    png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️', svg: '🖼️', webp: '🖼️', ico: '🖼️',
+    mp4: '🎬', webm: '🎬', mkv: '🎬', avi: '🎬',
+    mp3: '🎵', wav: '🎵', ogg: '🎵', flac: '🎵',
+    // Archives
+    zip: '📦', rar: '📦', tar: '📦', gz: '📦', '7z': '📦',
+  };
+  return icons[ext] || '📄';
 }

@@ -182,8 +182,7 @@ export class FileTreeSidebar {
     if (item.isDirectory) {
       icon.textContent = item.isPinned ? '⭐' : '📁';
     } else {
-      const isPDF = item.name.toLowerCase().endsWith('.pdf');
-      icon.textContent = isPDF ? '📕' : '📄';
+      icon.textContent = _getFileIcon(item.name);
     }
     
     const name = document.createElement('span');
@@ -359,13 +358,12 @@ export class FileTreeSidebar {
     });
   }
 
-  formatBytes(bytes, decimals = 1) {
+  formatBytes(bytes) {
     if (bytes === 0) return '0 B';
     const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 
   updateBookmarks(bookmarks) {
@@ -436,4 +434,35 @@ export class FileTreeSidebar {
       this.outlineContainer.appendChild(item);
     });
   }
+
+  formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+}
+
+// ---- Helpers ----
+
+function _getFileIcon(filename) {
+  const ext = (filename.split('.').pop() || '').toLowerCase();
+  const icons = {
+    // Code
+    py: '🐍', js: '📜', ts: '📘', html: '🌐', htm: '🌐',
+    css: '🎨', json: '📋', xml: '📄', md: '📝',
+    c: '⚙️', cpp: '⚙️', h: '⚙️', hpp: '⚙️',
+    java: '☕', go: '🔵', rs: '🦀', php: '🐘',
+    sql: '🗃️', yaml: '📑', yml: '📑', sh: '🖥️',
+    txt: '📄', log: '📄', ini: '⚙️', cfg: '⚙️',
+    // Media & Docs
+    pdf: '📑', doc: '📘', docx: '📘', xls: '📊', xlsx: '📊', ppt: '📙', pptx: '📙',
+    png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️', svg: '🖼️', webp: '🖼️', ico: '🖼️',
+    mp4: '🎬', webm: '🎬', mkv: '🎬', avi: '🎬',
+    mp3: '🎵', wav: '🎵', ogg: '🎵', flac: '🎵',
+    // Archives
+    zip: '📦', rar: '📦', tar: '📦', gz: '📦', '7z': '📦',
+  };
+  return icons[ext] || '📄';
 }
