@@ -268,12 +268,23 @@ export class WebDAVClient {
    */
   loadProfiles() {
     const profiles = loadJSON(PROFILES_KEY, []);
-    return profiles.map((p) => ({
-      name: p.name,
-      url: p.url,
-      username: p.username,
-      password: p.password ? atob(p.password) : '',
-    }));
+    return profiles.map((p) => {
+      let pwd = '';
+      if (p.password) {
+        try {
+          pwd = atob(p.password);
+        } catch (e) {
+          // Fallback if password was saved in plaintext before base64 obfuscation was added
+          pwd = p.password;
+        }
+      }
+      return {
+        name: p.name,
+        url: p.url,
+        username: p.username,
+        password: pwd,
+      };
+    });
   }
 
   /**
