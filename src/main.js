@@ -662,10 +662,59 @@ function showTabContextMenu(tabId, event) {
 // File Operations
 // ============================================================
 
+function getMimeType(filename) {
+  const ext = filename.split('.').pop().toLowerCase();
+  const map = {
+    'pdf': 'application/pdf',
+    'png': 'image/png',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'svg': 'image/svg+xml',
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'ogg': 'audio/ogg',
+    'ico': 'image/x-icon'
+  };
+  return map[ext] || null;
+}
+
+function tryOpenMediaInBrowser(filename, arrayBuffer) {
+  const mimeType = getMimeType(filename);
+  if (!mimeType) return false;
+
+  const blob = new Blob([arrayBuffer], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  
+  const win = window.open(url, '_blank');
+  if (!win) {
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    if (mimeType === 'application/pdf') {
+      a.download = filename;
+    }
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+  
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  showToast(`${t('File opened:')} ${filename}`, 'success');
+  return true;
+}
+
 async function openFile() {
   try {
     const fileInfo = await fileHandler.openFile();
     if (!fileInfo) return;
+
+    if (tryOpenMediaInBrowser(fileInfo.name, fileInfo.arrayBuffer)) {
+      return;
+    }
 
     // Check if already open (using file handle)
     let existing = null;
@@ -806,20 +855,7 @@ function showWebDAV() {
 
 async function handleWebDAVFileOpen(path, arrayBuffer, filename) {
   try {
-    const isPDF = filename.toLowerCase().endsWith('.pdf');
-
-    if (isPDF) {
-      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.target = '_blank';
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-      showToast(`${t('File downloaded:')} ${filename}`, 'success');
+    if (tryOpenMediaInBrowser(filename, arrayBuffer)) {
       return;
     }
 
@@ -876,22 +912,7 @@ async function saveFileToWebDAV(tab) {
 
 async function handleWorkspaceFileOpen(filename, arrayBuffer, path, lastModified) {
   try {
-    const isPDF = filename.toLowerCase().endsWith('.pdf');
-
-    if (isPDF) {
-      // Direct opening/downloading logic for PDF instead of a new tab
-      // Some browsers block Blob URL viewing and force download anyway, which is perfectly fine for Android.
-      const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.target = '_blank';
-      a.download = filename; // Suggest downloading to avoid white screen on strict WebViews
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-      showToast(`${t('File downloaded:')} ${filename}`, 'success');
+    if (tryOpenMediaInBrowser(filename, arrayBuffer)) {
       return;
     }
 
