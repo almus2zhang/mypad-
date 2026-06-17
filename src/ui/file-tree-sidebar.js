@@ -180,9 +180,9 @@ export class FileTreeSidebar {
     const icon = document.createElement('span');
     icon.className = 'file-tree-icon';
     if (item.isDirectory) {
-      icon.textContent = item.isPinned ? '⭐' : '📁';
+      icon.innerHTML = item.isPinned ? '⭐' : '📁';
     } else {
-      icon.textContent = _getFileIcon(item.name);
+      icon.innerHTML = _getFileIcon(item.name);
     }
     
     const name = document.createElement('span');
@@ -457,7 +457,8 @@ function _getFileIcon(filename) {
     sql: '🗃️', yaml: '📑', yml: '📑', sh: '🖥️',
     txt: '📄', log: '📄', ini: '⚙️', cfg: '⚙️',
     // Media & Docs
-    pdf: '📑', doc: '📘', docx: '📘', xls: '📊', xlsx: '📊', ppt: '📙', pptx: '📙',
+    pdf: '<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -0.125em;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"></path><path d="M14 2v6h6"></path><rect x="3" y="10" width="18" height="8" rx="2" fill="var(--bg-primary, white)" stroke="currentColor" stroke-width="2"></rect><text x="12" y="16" font-size="5.5" font-family="Arial, sans-serif" font-weight="900" fill="currentColor" stroke="none" text-anchor="middle">PDF</text></svg>',
+    doc: '📘', docx: '📘', xls: '📊', xlsx: '📊', ppt: '📙', pptx: '📙',
     png: '🖼️', jpg: '🖼️', jpeg: '🖼️', gif: '🖼️', svg: '🖼️', webp: '🖼️', ico: '🖼️',
     mp4: '🎬', webm: '🎬', mkv: '🎬', avi: '🎬',
     mp3: '🎵', wav: '🎵', ogg: '🎵', flac: '🎵',
