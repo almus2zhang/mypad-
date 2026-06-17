@@ -220,7 +220,19 @@ export class WebDAVBrowser {
         }
       });
 
-      profileRow.append(select, connectProfileBtn);
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'btn';
+      deleteBtn.textContent = '🗑️';
+      deleteBtn.title = 'Delete saved connection';
+      deleteBtn.addEventListener('click', () => {
+        if (!select.value) return;
+        if (confirm(`Delete connection "${select.value}"?`)) {
+          this.client.deleteProfile(select.value);
+          this._showConnectionForm();
+        }
+      });
+
+      profileRow.append(select, connectProfileBtn, deleteBtn);
       this._connectBar.appendChild(profileRow);
     }
 
@@ -229,6 +241,8 @@ export class WebDAVBrowser {
     form.style.display = 'flex';
     form.style.flexDirection = 'column';
     form.style.gap = 'var(--space-3)';
+
+    const nameInput = _createInput('Connection Name (optional)', 'e.g. My Home NAS', 'webdav-name');
 
     const urlInput = _createInput('WebDAV URL', 'https://dav.example.com/files', 'webdav-url');
     const userInput = _createInput('Username', 'username', 'webdav-user');
@@ -251,6 +265,7 @@ export class WebDAVBrowser {
       const url = urlInput.querySelector('input').value.trim();
       const user = userInput.querySelector('input').value.trim();
       const pass = passInput.querySelector('input').value;
+      let name = nameInput.querySelector('input').value.trim();
 
       if (!url) { alert('Please enter a WebDAV URL'); return; }
 
@@ -261,7 +276,9 @@ export class WebDAVBrowser {
 
         // Save profile if checked
         if (rememberCb.checked && url) {
-          const name = new URL(url).hostname;
+          if (!name) {
+            try { name = new URL(url).hostname; } catch { name = url; }
+          }
           this.client.saveProfile({ name, url, username: user, password: pass });
         }
 
@@ -275,7 +292,7 @@ export class WebDAVBrowser {
       }
     });
 
-    form.append(urlInput, userInput, passInput, rememberLabel, connectBtn);
+    form.append(nameInput, urlInput, userInput, passInput, rememberLabel, connectBtn);
     this._connectBar.appendChild(form);
 
     this._fileListEl.innerHTML = `<div class="empty-state" style="padding:2rem;">
