@@ -42,8 +42,9 @@ export class HexEditorDialog {
 
     const dialog = document.createElement('div');
     dialog.className = 'dialog';
-    dialog.style.width = '90vw';
-    dialog.style.maxWidth = '1000px';
+    dialog.style.width = 'max-content';
+    dialog.style.minWidth = '80vw';
+    dialog.style.maxWidth = '95vw';
     dialog.style.height = '85vh';
     dialog.style.display = 'flex';
     dialog.style.flexDirection = 'column';

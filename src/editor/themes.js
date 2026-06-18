@@ -25,7 +25,7 @@ const light = {
   number: '#fe640b',
   function: '#1e66f5',
   type: '#df8e1d',
-  selection: 'rgba(30, 102, 245, 0.15)',
+  selection: 'rgba(30, 102, 245, 0.3)',
   activeLine: 'rgba(0, 0, 0, 0.04)',
   cursor: '#4c4f69',
   matchingBracket: 'rgba(30, 102, 245, 0.2)',
@@ -51,7 +51,7 @@ const dark = {
   number: '#fab387',
   function: '#89b4fa',
   type: '#f9e2af',
-  selection: 'rgba(137, 180, 250, 0.3)',
+  selection: 'rgba(137, 180, 250, 0.4)',
   activeLine: 'rgba(255, 255, 255, 0.06)',
   cursor: '#f5e0dc',
   matchingBracket: 'rgba(137, 180, 250, 0.25)',
@@ -97,8 +97,11 @@ function buildEditorTheme(pal, isDark) {
       },
 
       /* Selection */
-      '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
-        backgroundColor: pal.selection,
+      '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
+        backgroundColor: pal.selection + ' !important',
+      },
+      '.cm-content ::selection': {
+        backgroundColor: 'transparent',
       },
 
       /* Active line */
