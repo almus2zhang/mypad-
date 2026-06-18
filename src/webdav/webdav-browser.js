@@ -71,6 +71,13 @@ export class WebDAVBrowser {
    */
   async navigateTo(path) {
     this._currentPath = path || '/';
+
+    // Intercept search paths so we don't try to PROPFIND a search string
+    if (this._currentPath.startsWith('Search: ')) {
+      const q = this._currentPath.substring(8);
+      return this.searchQuery(q);
+    }
+
     this._loading = true;
     this._renderBreadcrumb();
     this._fileListEl.innerHTML = '<div style="text-align:center;padding:2rem;"><div class="spinner" style="margin:0 auto;"></div><p style="margin-top:1rem;color:var(--text-tertiary);">Loading...</p></div>';
