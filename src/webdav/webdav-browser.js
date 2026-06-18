@@ -270,7 +270,10 @@ export class WebDAVBrowser {
         if (getInp('Name')) getInp('Name').value = profile.name || '';
         if (getInp('URL')) getInp('URL').value = profile.url || '';
         if (getInp('Username')) getInp('Username').value = profile.username || '';
-        if (getInp('Password')) getInp('Password').value = profile.password || '';
+        if (getInp('Password')) {
+          getInp('Password').value = '';
+          getInp('Password').placeholder = '•••••••• (unchanged)';
+        }
         if (getInp('Index File Path')) getInp('Index File Path').value = profile.indexPath || '/webdav_index.json';
       });
 
@@ -346,17 +349,25 @@ export class WebDAVBrowser {
 
       if (!url) { alert('Please enter a WebDAV URL'); return; }
 
+      let finalPass = pass;
+      if (!finalPass) {
+        const existing = this.client.loadProfiles().find(p => p.name === name || p.url === url);
+        if (existing) {
+          finalPass = existing.password;
+        }
+      }
+
       try {
         connectBtn.disabled = true;
         connectBtn.textContent = t('Connecting...');
-        await this.client.connect(url, user, pass, indexPath);
+        await this.client.connect(url, user, finalPass, indexPath);
 
         // Save profile if checked
         if (rememberCb.checked && url) {
           if (!name) {
             try { name = new URL(url).hostname; } catch { name = url; }
           }
-          this.client.saveProfile({ name, url, username: user, password: pass, indexPath });
+          this.client.saveProfile({ name, url, username: user, password: finalPass, indexPath });
         }
 
         this._connectBar.style.display = 'none';
