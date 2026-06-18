@@ -19,14 +19,15 @@ Experience MyPad++ instantly in your browser:
 ## ✨ Features
 
 - **PWA & Touch Optimized:** Designed to run beautifully on Android/iPad tablets as a Progressive Web App (fullscreen immersive mode). Includes a "No Keyboard" toggle mode to comfortably scroll and read code without the virtual keyboard interrupting you.
-- **Advanced Code Editing:** Powered by CodeMirror 6, featuring syntax highlighting for over 15+ languages, line numbers, code folding, auto-closing brackets, and multiple cursor selections.
+- **Advanced Code Editing:** Powered by CodeMirror 6, featuring syntax highlighting for over 15+ languages, line numbers, code folding, auto-closing brackets, and multi-cursor block selections (Alt+Drag).
+- **Dedicated Hex Editor:** Includes a high-performance, virtualized Hex Editor for modifying binary data with 16/32 byte layout options.
 - **Side-by-Side Compare (Diff):** Built-in full-screen file comparison tool with bidirectional editing, quick line merging, and a "Show Only Diffs" toggle.
-- **File Change Detection:** Automatically detects if a file has been modified externally on the server and prompts you to compare or reload.
+- **Responsive Global Search:** Features sequential multi-term fuzzy matching (e.g. `abc pdf`), Regex support, and "Find All" history.
+- **Secure WebDAV & Remote Workspace:** Connect to WebDAV servers with local XOR password obfuscation, or use a custom Node.js workspace backend to edit code directly on your servers.
 - **Cloud Bookmarks Sync:** Set bookmarks on lines of code and they automatically sync to the server, persisting across devices and sessions.
 - **Custom Highlights:** Select text and instantly highlight it with custom colors (Red, Green, Blue, Yellow, etc.). Great for code reviewing or studying.
 - **Local File System Access:** Securely open, edit, and save files straight to your local hard drive using the modern Native File System Access API.
-- **WebDAV & Remote Workspace:** Connect directly to your remote WebDAV server or a custom Node.js workspace backend to edit code directly on your servers.
-- **Responsive Global Search:** A sleek bottom/side floating search panel with regex support, "Find All" history, and dynamic font scaling.
+- **File Change Detection:** Automatically detects if a file has been modified externally on the server and prompts you to compare or reload.
 - **Multi-Tab Management:** Auto-saving sessions. Never lose your tabs or unsaved modifications when you accidentally close the browser.
 
 ## 📖 Usage & Icons
@@ -59,6 +60,7 @@ Experience MyPad++ instantly in your browser:
 | <img src="docs/icons/compare.svg" width="18" height="18" alt="Compare Mode"> | **Compare Mode** | Side-by-side view to diff files intelligently. |
 | <img src="docs/icons/webdav.svg" width="18" height="18" alt="WebDAV"> | **WebDAV** | Connect to a remote WebDAV server for remote file editing. |
 | <img src="docs/icons/workspace.svg" width="18" height="18" alt="Server Workspace"> | **Server Workspace** | Use a remote directory via Node.js as your local workspace. |
+| **0x** | **Hex Editor** | Open the current file in a standalone virtualized Hex Viewer/Editor. |
 | <img src="docs/icons/highlights.svg" width="18" height="18" alt="Highlights"> | **Highlights** | Manage custom highlights. Select text and use the context menu to instantly colorize words. |
 
 ## 🚀 Getting Started
