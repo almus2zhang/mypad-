@@ -154,6 +154,27 @@ WantedBy=multi-user.target
 ```
 然后启用并启动该服务：`sudo systemctl daemon-reload && sudo systemctl enable --now mypad`
 
+## ☁️ WebDAV 配置指南
+
+当使用 MyPad++ 连接远程 WebDAV 服务器（例如通过 **Lucky** 或 Nginx 等反向代理工具）时，你必须正确配置 **CORS (跨源资源共享)**，因为浏览器默认会拦截跨域请求。
+
+### 1. 开启 WebDAV 的 CORS 支持
+在你的反向代理或 WebDAV 服务端配置中，请确保响应头包含以下字段：
+
+- `Access-Control-Allow-Origin`: `*` (或者你的 MyPad++ 实例所在的具体域名)
+- `Access-Control-Allow-Methods`: `OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, COPY, MOVE, MKCOL, PROPFIND, PROPPATCH, LOCK, UNLOCK`
+- `Access-Control-Allow-Headers`: `Authorization, Content-Type, Depth, Destination, Overwrite, x-requested-with, If-Match, If-None-Match, Cache-Control`
+- `Access-Control-Expose-Headers`: `DAV, content-length, Allow`
+
+**非常重要：** WebDAV 强依赖 `PROPFIND` 方法来列出目录结构。如果你在浏览器控制台看到 `Method PROPFIND is not allowed by Access-Control-Allow-Methods` 类似的报错，请务必检查你的反向代理是否放行了 `PROPFIND` 方法。
+
+### 2. 搜索索引 (Search Index) 配置
+MyPad++ 支持极速的“连续多词模糊匹配”搜索（例如输入 `abc pdf` 可以瞬间找到 `*abc*pdf*` 的文件）。由于 WebDAV 的根目录可能极其庞大，MyPad++ 采用了静态 JSON 索引文件的方式，避免了缓慢的整树遍历。
+
+- 索引文件应该是一个包含了相对文件路径的 JSON 数组。
+- 你可以在连接 WebDAV 的设置弹窗中输入**自定义搜索索引 URL (Custom Search Index URL)**。这意味着你可以将索引文件托管在任何地方，而不必强制放在 WebDAV 的根目录。
+- 你可以使用任意的后台脚本（如 Python、Shell）定期生成文件列表 JSON 并通过 HTTP 暴露出来供 MyPad++ 读取。
+
 ## 🛠️ 技术栈
 
 - **核心：** 原生 JavaScript (ES Modules)、HTML5、CSS3 (CSS 变量)

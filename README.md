@@ -156,6 +156,27 @@ WantedBy=multi-user.target
 ```
 Then enable and start it: `sudo systemctl daemon-reload && sudo systemctl enable --now mypad`
 
+## ☁️ WebDAV Configuration Guide
+
+When connecting MyPad++ to a WebDAV server (such as via a reverse proxy like **Lucky** or Nginx), you must ensure that **CORS (Cross-Origin Resource Sharing)** is correctly configured, as browsers block cross-origin requests by default.
+
+### 1. Enabling CORS for WebDAV
+In your reverse proxy/WebDAV server configuration, ensure the following headers are appended to responses:
+
+- `Access-Control-Allow-Origin`: `*` (or the specific domain hosting your MyPad++ instance)
+- `Access-Control-Allow-Methods`: `OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, COPY, MOVE, MKCOL, PROPFIND, PROPPATCH, LOCK, UNLOCK`
+- `Access-Control-Allow-Headers`: `Authorization, Content-Type, Depth, Destination, Overwrite, x-requested-with, If-Match, If-None-Match, Cache-Control`
+- `Access-Control-Expose-Headers`: `DAV, content-length, Allow`
+
+**Important:** WebDAV relies heavily on the `PROPFIND` method to list directories. If you see an error like `Method PROPFIND is not allowed by Access-Control-Allow-Methods`, ensure `PROPFIND` is explicitly listed in the allowed methods.
+
+### 2. Search Index Configuration
+MyPad++ supports blazing-fast sequential multi-term fuzzy searching (e.g., typing `abc pdf` to match `*abc*pdf*`) for your remote files. Because WebDAV root directories can be massive, MyPad++ relies on a static JSON index file rather than traversing the entire WebDAV tree.
+
+- The index file should be a JSON array of relative file paths.
+- You can specify a **Custom Search Index URL** in the WebDAV connection dialog. This allows you to host the index file anywhere, even outside the WebDAV root directory.
+- Simply generate the index list using your backend tools and expose it via HTTP.
+
 ## 🛠️ Tech Stack
 
 - **Core:** Vanilla JavaScript (ES Modules), HTML5, CSS3 (CSS Variables/Custom Properties)
