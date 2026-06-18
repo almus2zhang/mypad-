@@ -78,6 +78,7 @@ export function createExtensions(options = {}) {
       closedText: '▸',
     }),
     dropCursor(),
+    drawSelection(),
     EditorState.allowMultipleSelections.of(true),
     indentOnInput(),
     syntaxHighlighting(defaultHighlightStyle, { fallback: true }),

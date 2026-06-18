@@ -97,11 +97,8 @@ function buildEditorTheme(pal, isDark) {
       },
 
       /* Selection */
-      '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-        backgroundColor: pal.selection + ' !important',
-      },
-      '.cm-content ::selection': {
-        backgroundColor: 'transparent',
+      '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection': {
+        backgroundColor: pal.selection,
       },
 
       /* Active line */
