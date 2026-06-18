@@ -261,6 +261,19 @@ export class WebDAVBrowser {
         select.appendChild(opt);
       });
 
+      select.addEventListener('change', () => {
+        const profile = profiles.find((p) => p.name === select.value);
+        if (!profile) return;
+        // The inputs are defined below, but will be accessible when this event fires
+        const inputs = Array.from(this._connectBar.querySelectorAll('input'));
+        const getInp = (id) => inputs.find(i => i.parentElement.querySelector('label')?.textContent.includes(id));
+        if (getInp('Name')) getInp('Name').value = profile.name || '';
+        if (getInp('URL')) getInp('URL').value = profile.url || '';
+        if (getInp('Username')) getInp('Username').value = profile.username || '';
+        if (getInp('Password')) getInp('Password').value = profile.password || '';
+        if (getInp('Index File Path')) getInp('Index File Path').value = profile.indexPath || '/webdav_index.json';
+      });
+
       const connectProfileBtn = document.createElement('button');
       connectProfileBtn.className = 'btn btn-primary';
       connectProfileBtn.textContent = t('Connect');

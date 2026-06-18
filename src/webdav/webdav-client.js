@@ -320,10 +320,13 @@ export class WebDAVClient {
       let pwd = '';
       if (p.password) {
         try {
-          pwd = atob(p.password);
-        } catch (e) {
-          // Fallback if password was saved in plaintext before base64 obfuscation was added
-          pwd = p.password;
+          pwd = decodeURIComponent(atob(p.password));
+        } catch (e1) {
+          try {
+            pwd = atob(p.password);
+          } catch (e2) {
+            pwd = p.password;
+          }
         }
       }
       return {
