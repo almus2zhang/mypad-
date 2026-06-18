@@ -365,19 +365,37 @@ export class WebDAVClient {
     return headers;
   }
 
-  /**
-   * Proxy-aware fetch wrapper
-   * Sends request to our NodeJS backend proxy to bypass CORS
-   */
   async _fetch(url, options = {}) {
-    const proxyOptions = {
-      ...options,
-      headers: {
-        ...(options.headers || {}),
-        'X-Proxy-Target': url,
-      },
-    };
-    return fetch('/api/proxy', proxyOptions);
+    try {
+      // Try direct connection first (requires CORS if cross-origin)
+      const res = await fetch(url, options);
+      return res;
+    } catch (e) {
+      // If direct fetch fails (usually CORS or mixed-content), fallback to backend proxy
+      console.warn('Direct fetch failed, falling back to /api/proxy:', e);
+      const proxyOptions = {
+        ...options,
+        headers: {
+          ...(options.headers || {}),
+          'X-Proxy-Target': url,
+        },
+      };
+      
+      let proxyRes;
+      try {
+        proxyRes = await fetch('/api/proxy', proxyOptions);
+      } catch (proxyErr) {
+        throw new Error(`Direct connection failed (${e.message}), and proxy is unreachable.`);
+      }
+
+      // If the proxy returns 404 or 405, it means the backend proxy is not running
+      // (e.g. running on Cloudflare Pages static hosting)
+      if (proxyRes.status === 404 || proxyRes.status === 405) {
+        throw new Error(`Direct connection blocked by browser (CORS). Backend proxy is unavailable (${proxyRes.status}). Please enable CORS on your WebDAV server.`);
+      }
+
+      return proxyRes;
+    }
   }
 
   /**
