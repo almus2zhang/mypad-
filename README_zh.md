@@ -6,6 +6,17 @@ MyPad++ 是一款现代、轻量且极速的网页版代码编辑器和记事本
 
 ![MyPad++](https://img.shields.io/badge/Status-Active-success) ![License](https://img.shields.io/badge/License-MIT-blue)
 
+## 🌐 在线体验 (Live Demo)
+
+你现在可以直接在浏览器中体验 MyPad++：
+**👉 [https://mypad.almuszhang.workers.dev/](https://mypad.almuszhang.workers.dev/)**
+
+*(注：在线静态版本完全支持本地文件编辑和 WebDAV 远程连接。但“服务器工作区”功能需要你在本地环境运行 Node.js 才能体验。)*
+
+<p align="center">
+  <img src="docs/screenshot.png" alt="MyPad++ Screenshot" width="800">
+</p>
+
 ## ✨ 功能特性
 
 - **PWA & 触控优化：** 专为 Android / iPad 平板设计，支持作为渐进式 Web 应用 (PWA) 安装（全屏沉浸模式）。提供“无键盘”切换模式，让你在舒服地滚动阅读代码时，不会被虚拟键盘打断。

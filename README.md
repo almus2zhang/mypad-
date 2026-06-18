@@ -5,6 +5,17 @@ MyPad++ is a modern, lightweight, and incredibly fast web-based code editor and 
 
 ![MyPad++](https://img.shields.io/badge/Status-Active-success) ![License](https://img.shields.io/badge/License-MIT-blue)
 
+## 🌐 Live Demo / Try it Online
+
+Experience MyPad++ instantly in your browser:
+**👉 [https://mypad.almuszhang.workers.dev/](https://mypad.almuszhang.workers.dev/)**
+
+*(Note: The online static version fully supports Local Files API and WebDAV connections. Node.js Server Workspace features require running the app locally.)*
+
+<p align="center">
+  <img src="docs/screenshot.png" alt="MyPad++ Screenshot" width="800">
+</p>
+
 ## ✨ Features
 
 - **PWA & Touch Optimized:** Designed to run beautifully on Android/iPad tablets as a Progressive Web App (fullscreen immersive mode). Includes a "No Keyboard" toggle mode to comfortably scroll and read code without the virtual keyboard interrupting you.
