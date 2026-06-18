@@ -299,7 +299,7 @@ export class WebDAVClient {
       name: profile.name,
       url: profile.url,
       username: profile.username,
-      password: btoa(encodeURIComponent(profile.password)),
+      password: this._obfuscate(profile.password),
       indexPath: profile.indexPath || '/webdav_index.json',
     };
     if (idx >= 0) {
@@ -319,15 +319,7 @@ export class WebDAVClient {
     return profiles.map((p) => {
       let pwd = '';
       if (p.password) {
-        try {
-          pwd = decodeURIComponent(atob(p.password));
-        } catch (e1) {
-          try {
-            pwd = atob(p.password);
-          } catch (e2) {
-            pwd = p.password;
-          }
-        }
+        pwd = this._deobfuscate(p.password);
       }
       return {
         name: p.name,
@@ -337,6 +329,52 @@ export class WebDAVClient {
         indexPath: p.indexPath || '/webdav_index.json',
       };
     });
+  }
+
+  // ---- Obfuscation Helpers ----
+
+  /**
+   * Basic obfuscation to prevent casual shoulder-surfing of localStorage.
+   * This is not secure encryption! It's just client-side obfuscation.
+   * @param {string} str 
+   * @returns {string}
+   */
+  _obfuscate(str) {
+    if (!str) return '';
+    const encoded = encodeURIComponent(str);
+    const key = 'mypad_webdav_v1';
+    let xor = '';
+    for (let i = 0; i < encoded.length; i++) {
+      xor += String.fromCharCode(encoded.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return btoa(xor);
+  }
+
+  /**
+   * Deobfuscates password with backwards compatibility for old saved profiles
+   * @param {string} str 
+   * @returns {string}
+   */
+  _deobfuscate(str) {
+    if (!str) return '';
+    try {
+      const xor = atob(str);
+      const key = 'mypad_webdav_v1';
+      let decoded = '';
+      for (let i = 0; i < xor.length; i++) {
+        decoded += String.fromCharCode(xor.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+      }
+      return decodeURIComponent(decoded);
+    } catch (e1) {
+      // Fallback 1: Old Base64 + URI encode
+      try { return decodeURIComponent(atob(str)); } 
+      catch (e2) {
+        // Fallback 2: Old Base64
+        try { return atob(str); } 
+        // Fallback 3: Plaintext
+        catch (e3) { return str; }
+      }
+    }
   }
 
   /**
