@@ -222,10 +222,7 @@ export class WebDAVBrowser {
     document.getElementById('dialog-overlay')?.parentElement?.appendChild(this._overlay)
       || document.body.appendChild(this._overlay);
 
-    // Close on overlay click
-    this._overlay.addEventListener('click', (e) => {
-      if (e.target === this._overlay) this.hide();
-    });
+    // Removed 'Close on overlay click' to prevent accidental closure
 
     // Close on Escape
     this._overlay.addEventListener('keydown', (e) => {
