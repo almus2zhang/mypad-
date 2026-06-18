@@ -158,11 +158,12 @@ export const ICONS = {
     <path d="M10 8h.001"/>
     <path d="M14 8h.001"/>
     <path d="M18 8h.001"/>
-    <path d="M8 12h.001"/>
-    <path d="M12 12h.001"/>
-    <path d="M16 12h.001"/>
-    <path d="M7 16h10"/>
-    <line x1="2" y1="2" x2="22" y2="22"/>
+    <path d="M8 12h8"/>
+  </svg>`,
+
+  hexView: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+    <text x="12" y="16" font-size="10" font-family="monospace" text-anchor="middle" fill="currentColor" stroke="none" font-weight="bold">0x</text>
   </svg>`,
 
   help: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -261,6 +262,8 @@ function createDivider() {
  * @param {Function} [callbacks.onCompare]     - Compare tabs
  * @param {Function} [callbacks.onHistory]     - Local File History
  * @param {Function} [callbacks.onWebDAV]      - Open WebDAV dialog
+ * @param {Function} [callbacks.onWorkspace]   - Open Server Workspace dialog
+ * @param {Function} [callbacks.onHexView]     - Open Hex Editor
  * @param {Function} [callbacks.onHelp]        - Open Help dialog
  * @returns {HTMLElement} The toolbar DOM element.
  */
@@ -328,6 +331,7 @@ export function createToolbar(callbacks = {}) {
     createButton({ id: 'btn-compare', icon: ICONS.compare, tooltip: t('Compare with...'), onClick: callbacks.onCompare }),
     createButton({ id: 'btn-webdav', icon: ICONS.webdav, tooltip: t('WebDAV'), onClick: callbacks.onWebDAV }),
     createButton({ id: 'btn-workspace', icon: ICONS.workspace, tooltip: t('Server Workspace'), onClick: callbacks.onWorkspace }),
+    createButton({ id: 'btn-hex-view', icon: ICONS.hexView, tooltip: t('Hex Editor'), onClick: callbacks.onHexView }),
     createButton({ id: 'btn-highlights', icon: ICONS.highlights, tooltip: t('Toggle Highlight Mode'), onClick: callbacks.onCustomHighlights }),
     createButton({ id: 'btn-help', icon: ICONS.help, tooltip: 'Help', onClick: callbacks.onHelp }),
     createButton({

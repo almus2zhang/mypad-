@@ -60,6 +60,7 @@ import { undo, redo } from '@codemirror/commands';
 import { nextDiagnostic } from '@codemirror/lint';
 import { CompareManager } from './editor/compare-mode.js';
 import { getLanguageByName } from './editor/languages.js';
+import { hexEditorDialog } from './editor/hex-editor.js';
 
 // ============================================================
 // Application State
@@ -234,6 +235,35 @@ const toolbar = createToolbar({
   onWorkspace: () => {
     const tab = tabManager.getActiveTab();
     workspaceBrowser.show('open', tab?.filename);
+  },
+  onHexView: () => {
+    const tab = tabManager.getActiveTab();
+    if (!tab) {
+      showToast(t('No active file'), 'warning');
+      return;
+    }
+    const text = editorManager.getContent();
+    const encoding = tab.encoding || 'utf-8';
+    let data;
+    try {
+      data = encode(text, encoding);
+    } catch (e) {
+      showToast('Encoding error: ' + e.message, 'error');
+      return;
+    }
+    
+    hexEditorDialog.show(data, tab.filename, (modifiedData) => {
+      try {
+        const decoded = decode(modifiedData, encoding);
+        editorManager.setContent(decoded);
+        tab.isDirty = true;
+        tabManager.updateTab(tab.id, { isDirty: true });
+        updateTitle();
+        showToast('Hex changes applied to text view', 'success');
+      } catch (e) {
+        showToast('Decode error: ' + e.message, 'error');
+      }
+    });
   },
   onExplorer: () => fileTreeSidebar.toggle(),
   onCustomHighlights: () => highlightManager.toggle(),
