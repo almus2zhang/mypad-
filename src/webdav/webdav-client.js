@@ -18,6 +18,8 @@ export class WebDAVClient {
     this._connected = false;
     /** @type {Array<string>|null} */
     this._indexCache = null;
+    /** @type {string} */
+    this._indexPath = '/webdav_index.json';
   }
 
   /**
@@ -25,12 +27,14 @@ export class WebDAVClient {
    * @param {string} url - Base URL (e.g. https://dav.example.com/files)
    * @param {string} username
    * @param {string} password
+   * @param {string} indexPath
    * @returns {Promise<boolean>}
    */
-  async connect(url, username, password) {
+  async connect(url, username, password, indexPath = '/webdav_index.json') {
     // Normalize URL — remove trailing slash
     this._baseUrl = url.replace(/\/+$/, '');
     this._authHeader = 'Basic ' + btoa(username + ':' + password);
+    this._indexPath = indexPath;
 
     try {
       // Test connection with a PROPFIND on root
@@ -206,7 +210,7 @@ export class WebDAVClient {
   }
 
   async _fetchIndex() {
-    const url = this._resolvePath('/webdav_index.json');
+    const url = this._resolvePath(this._indexPath);
     try {
       const response = await this._fetch(url, {
         method: 'GET',
@@ -295,7 +299,8 @@ export class WebDAVClient {
       name: profile.name,
       url: profile.url,
       username: profile.username,
-      password: btoa(profile.password), // Basic obfuscation
+      password: btoa(encodeURIComponent(profile.password)),
+      indexPath: profile.indexPath || '/webdav_index.json',
     };
     if (idx >= 0) {
       profiles[idx] = saved;
@@ -326,6 +331,7 @@ export class WebDAVClient {
         url: p.url,
         username: p.username,
         password: pwd,
+        indexPath: p.indexPath || '/webdav_index.json',
       };
     });
   }
