@@ -370,11 +370,10 @@ class WorkspaceIndexer {
     if (params.ext) {
       return files.filter(f => f.name.endsWith(params.ext));
     } else if (params.q) {
-      const terms = params.q.toLowerCase().split(/\s+/).filter(Boolean);
-      return files.filter(f => {
-        const pathLower = f.path.toLowerCase();
-        return terms.every(term => pathLower.includes(term));
-      });
+      const terms = params.q.trim().split(/\s+/).filter(Boolean);
+      const regexStr = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*');
+      const regex = new RegExp(regexStr, 'i');
+      return files.filter(f => regex.test(f.path));
     }
     return [];
   }

@@ -385,10 +385,12 @@ export class WebDAVBrowser {
 
     try {
       const index = await this.client.loadIndex();
-      const qLower = q.toLowerCase();
+      const terms = q.trim().split(/\s+/).filter(Boolean);
+      const regexStr = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*');
+      const regex = new RegExp(regexStr, 'i');
+
       const matches = index.filter(p => {
-        const basename = p.replace(/\/$/, '').split('/').pop().toLowerCase();
-        return basename.includes(qLower);
+        return regex.test(p);
       });
       
       const items = matches.slice(0, 100).map(p => {
