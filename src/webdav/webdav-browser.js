@@ -138,13 +138,67 @@ export class WebDAVBrowser {
     this._breadcrumbEl = document.createElement('div');
     this._breadcrumbEl.className = 'webdav-breadcrumb';
 
+    // Filter bar
+    this._filterBarEl = document.createElement('div');
+    this._filterBarEl.style.padding = '8px 16px';
+    this._filterBarEl.style.display = 'flex';
+    this._filterBarEl.style.gap = '8px';
+    this._filterBarEl.style.flexWrap = 'wrap';
+    this._filterBarEl.style.borderBottom = '1px solid var(--dialog-border)';
+    this._filterBarEl.style.background = 'var(--bg-secondary)';
+
+    const searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = 'Search by name... (Requires index daemon)';
+    searchInput.className = 'input';
+    searchInput.style.padding = '4px 8px';
+    searchInput.style.fontSize = '12px';
+    searchInput.style.flex = '1';
+
+    const refreshBtn = document.createElement('button');
+    refreshBtn.className = 'btn';
+    refreshBtn.textContent = '🔄 Refresh Index';
+    refreshBtn.title = 'Fetch latest index from server';
+    refreshBtn.style.padding = '4px 8px';
+    refreshBtn.style.fontSize = '12px';
+    refreshBtn.addEventListener('click', async () => {
+      refreshBtn.disabled = true;
+      try {
+        await this.client.loadIndex(true);
+        if (searchInput.value.trim()) {
+          await this.searchQuery(searchInput.value.trim());
+        }
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        refreshBtn.disabled = false;
+      }
+    });
+
+    let searchTimeout = null;
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.trim();
+      clearTimeout(searchTimeout);
+      if (!q) {
+        if (this._currentPath.startsWith('Search:')) {
+          this.navigateTo('/');
+        }
+        return;
+      }
+      searchTimeout = setTimeout(() => {
+        this.searchQuery(q);
+      }, 300);
+    });
+
+    this._filterBarEl.append(searchInput, refreshBtn);
+
     // File list
     this._fileListEl = document.createElement('div');
     this._fileListEl.className = 'webdav-file-list';
     this._fileListEl.style.flex = '1';
     this._fileListEl.style.overflowY = 'auto';
 
-    body.append(this._breadcrumbEl, this._fileListEl);
+    body.append(this._breadcrumbEl, this._filterBarEl, this._fileListEl);
 
     // Footer
     this._footerEl = document.createElement('div');
@@ -301,7 +355,65 @@ export class WebDAVBrowser {
     this._breadcrumbEl.innerHTML = '';
   }
 
+  async searchQuery(q) {
+    this._currentPath = 'Search: ' + q;
+    
+    this._breadcrumbEl.innerHTML = '';
+    const title = document.createElement('span');
+    title.textContent = 'Search Results';
+    title.style.fontWeight = 'bold';
+    
+    const backBtn = document.createElement('button');
+    backBtn.textContent = '← Back to root';
+    backBtn.className = 'btn';
+    backBtn.style.padding = '2px 8px';
+    backBtn.style.fontSize = '12px';
+    backBtn.style.marginLeft = 'auto';
+    backBtn.addEventListener('click', () => {
+      this._filterBarEl.querySelector('input').value = '';
+      this.navigateTo('/');
+    });
+
+    this._breadcrumbEl.append(title, backBtn);
+    this._breadcrumbEl.style.display = 'flex';
+    this._breadcrumbEl.style.alignItems = 'center';
+
+    this._fileListEl.innerHTML = '<div style="padding:2rem;text-align:center;">Searching...</div>';
+
+    try {
+      const index = await this.client.loadIndex();
+      const qLower = q.toLowerCase();
+      const matches = index.filter(p => {
+        const basename = p.replace(/\/$/, '').split('/').pop().toLowerCase();
+        return basename.includes(qLower);
+      });
+      
+      const items = matches.slice(0, 100).map(p => {
+        const isDir = p.endsWith('/');
+        const cleanPath = p.replace(/\/$/, '');
+        const name = cleanPath.split('/').pop() || '/';
+        return {
+          name,
+          path: p.startsWith('/') ? p : '/' + cleanPath,
+          isDirectory: isDir,
+          size: 0,
+          lastModified: ''
+        };
+      });
+
+      this._renderFileList(items);
+      this._statusEl.textContent = `Found ${matches.length} items (showing ${items.length})`;
+    } catch (e) {
+      this._fileListEl.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--danger);">
+        <p>Search failed</p>
+        <p style="font-size: 12px; margin-top: 10px;">${e.message}</p>
+      </div>`;
+      this._statusEl.textContent = 'Search failed';
+    }
+  }
+
   _renderBreadcrumb() {
+    if (this._currentPath.startsWith('Search:')) return;
     this._breadcrumbEl.innerHTML = '';
     const parts = this._currentPath.split('/').filter(Boolean);
 

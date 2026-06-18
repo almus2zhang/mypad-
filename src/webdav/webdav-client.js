@@ -16,6 +16,8 @@ export class WebDAVClient {
     this._authHeader = null;
     /** @type {boolean} */
     this._connected = false;
+    /** @type {Array<string>|null} */
+    this._indexCache = null;
   }
 
   /**
@@ -177,6 +179,47 @@ export class WebDAVClient {
     if (!response.ok && response.status !== 201) {
       throw new Error(`MKCOL failed: ${response.status} ${response.statusText}`);
     }
+  }
+
+  /**
+   * Load the static webdav_index.json for fast searching
+   * @param {boolean} force - Force cache invalidation
+   * @returns {Promise<Array<string>>}
+   */
+  async loadIndex(force = false) {
+    if (force) {
+      this._indexCache = null;
+    }
+    if (this._indexCache) {
+      // Trigger background fetch to keep it fresh
+      this._fetchIndex().then(data => {
+        if (data) this._indexCache = data;
+      }).catch(console.error);
+      return this._indexCache;
+    }
+    
+    this._indexCache = await this._fetchIndex();
+    if (!this._indexCache) {
+      throw new Error("No webdav_index.json found at WebDAV root. Please configure and run the python indexer daemon on your server.");
+    }
+    return this._indexCache;
+  }
+
+  async _fetchIndex() {
+    const url = this._resolvePath('/webdav_index.json');
+    try {
+      const response = await this._fetch(url, {
+        method: 'GET',
+        headers: this._getHeaders(),
+        cache: 'no-cache' // Will utilize ETag/Last-Modified for 304 Not Modified
+      });
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (e) {
+      console.warn("Failed to fetch webdav_index.json:", e);
+    }
+    return null;
   }
 
   /**
