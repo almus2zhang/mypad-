@@ -260,7 +260,7 @@ export class WebDAVClient {
     
     this._indexCache = await this._fetchIndex();
     if (!this._indexCache) {
-      throw new Error("No webdav_index.json found at WebDAV root. Please configure and run the python indexer daemon on your server.");
+      throw new Error(`Failed to load search index from ${this._resolvePath(this._indexPath)}. Please check the file path and ensure CORS is enabled.`);
     }
     return this._indexCache;
   }
