@@ -173,7 +173,37 @@ MyPad++ 支持极速的“连续多词模糊匹配”搜索（例如输入 `abc 
 
 - 索引文件应该是一个包含了相对文件路径的 JSON 数组。
 - 你可以在连接 WebDAV 的设置弹窗中输入**自定义搜索索引 URL (Custom Search Index URL)**。这意味着你可以将索引文件托管在任何地方，而不必强制放在 WebDAV 的根目录。
-- 你可以使用任意的后台脚本（如 Python、Shell）定期生成文件列表 JSON 并通过 HTTP 暴露出来供 MyPad++ 读取。
+
+#### 自动化生成 WebDAV 索引
+我们已经在项目代码中提供了一个开箱即用的 Python 后台脚本，位于项目的 `scripts` 目录中。
+此脚本能够通过 watchdog 监听本地文件系统变动，一旦文件有修改，自动在极短时间内为你重新生成 WebDAV 用的 `webdav_index.json` 文件！
+
+**配置与使用步骤：**
+
+1. 进入 `scripts` 目录：
+   ```bash
+   cd scripts
+   ```
+
+2. 安装所需依赖：
+   ```bash
+   pip install watchdog
+   ```
+
+3. 复制配置示例并进行修改：
+   ```bash
+   cp config.json.example config.json
+   ```
+   **`config.json` 详解：**
+   - `"output_file"`: 最终生成的 json 文件的保存路径（请保存在能通过 HTTP/HTTPS 被直接访问到的静态目录下）。
+   - `"mappings"`: 配置你想要建立索引的本地绝对路径 (`local_dir`)，以及它们对应在客户端 MyPad++ 里的相对 WebDAV 路径 (`webdav_prefix`)。支持多个映射。
+   - `"excludes"`: （可选）不需要被索引的垃圾目录或文件后缀（例如 `.git`、`node_modules`），过滤它们可以极大提升搜索速度。
+
+4. 运行后台守护进程：
+   ```bash
+   python webdav_indexer_daemon.py config.json
+   ```
+   *提示：推荐使用 `nohup`, `screen`, 或者 `systemd` 将其挂在后台常驻运行。只要对应的文件夹里有新的变动，它就会自动为你生成全新的索引供 MyPad++ 使用！*
 
 ## 🛠️ 技术栈
 

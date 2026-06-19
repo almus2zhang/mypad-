@@ -175,7 +175,37 @@ MyPad++ supports blazing-fast sequential multi-term fuzzy searching (e.g., typin
 
 - The index file should be a JSON array of relative file paths.
 - You can specify a **Custom Search Index URL** in the WebDAV connection dialog. This allows you to host the index file anywhere, even outside the WebDAV root directory.
-- Simply generate the index list using your backend tools and expose it via HTTP.
+
+#### Auto-generating the WebDAV Index
+We provide an out-of-the-box Python background script located in the `scripts` directory of this repository. 
+This script uses watchdog to monitor local filesystem changes and automatically regenerates the `webdav_index.json` file almost instantly whenever a file is modified!
+
+**Configuration and Usage:**
+
+1. Navigate to the `scripts` directory:
+   ```bash
+   cd scripts
+   ```
+
+2. Install the required dependencies:
+   ```bash
+   pip install watchdog
+   ```
+
+3. Copy the configuration example and edit it:
+   ```bash
+   cp config.json.example config.json
+   ```
+   **`config.json` details:**
+   - `"output_file"`: The path to save the generated JSON file (should be accessible via your HTTP/HTTPS static server).
+   - `"mappings"`: Configure the absolute local paths (`local_dir`) and their corresponding relative paths on the MyPad++ WebDAV client side (`webdav_prefix`). Multiple mappings are supported.
+   - `"excludes"`: (Optional) Directories or file extensions to ignore (e.g., `.git`, `node_modules`). Filtering these will vastly improve search speed.
+
+4. Run the background daemon:
+   ```bash
+   python webdav_indexer_daemon.py config.json
+   ```
+   *Tip: It's recommended to run this via `nohup`, `screen`, or `systemd` to keep it running in the background. Whenever changes occur in the mapped directories, a fresh index will be automatically generated for MyPad++!*
 
 ## 🛠️ Tech Stack
 
