@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "start": "node server.js"
+    "preview": "npm run build && wrangler dev",
+    "start": "node server.js",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.18.0",
@@ -39,6 +40,8 @@
     "express": "^5.2.1"
   },
   "devDependencies": {
-    "vite": "^6.3.0"
+    "@cloudflare/vite-plugin": "^1.42.0",
+    "vite": "^6.3.0",
+    "wrangler": "^4.102.0"
   }
 }
