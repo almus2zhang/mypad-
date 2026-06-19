@@ -389,6 +389,11 @@ export class WebDAVBrowser {
   async searchQuery(q) {
     this._currentPath = 'Search: ' + q;
     
+    const searchInput = this._filterBarEl.querySelector('input');
+    if (searchInput && searchInput.value !== q) {
+      searchInput.value = q;
+    }
+    
     this._breadcrumbEl.innerHTML = '';
     const title = document.createElement('span');
     title.textContent = 'Search Results';
