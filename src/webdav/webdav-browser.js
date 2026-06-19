@@ -418,7 +418,9 @@ export class WebDAVBrowser {
       const regex = new RegExp(regexStr, 'i');
 
       const matches = index.filter(p => {
-        return regex.test(p);
+        const cleanPath = p.replace(/\/$/, '');
+        const name = cleanPath.split('/').pop() || '';
+        return regex.test(name);
       });
       
       const items = matches.slice(0, 100).map(p => {
