@@ -42,6 +42,15 @@ export class WebDAVClient {
       this._connected = true;
       return true;
     } catch (e) {
+      if (indexPath && (e.message.includes('405') || e.message.includes('Method Not Allowed') || e.message.includes('501'))) {
+        try {
+          await this.loadIndex();
+          this._connected = true;
+          return true;
+        } catch (idxErr) {
+          // Fall through to throw original error
+        }
+      }
       this._connected = false;
       this._baseUrl = null;
       this._authHeader = null;
@@ -69,14 +78,15 @@ export class WebDAVClient {
   async listDirectory(path) {
     const url = this._resolvePath(path);
 
-    const response = await this._fetch(url, {
-      method: 'PROPFIND',
-      headers: {
-        ...this._getHeaders(),
-        'Depth': '1',
-        'Content-Type': 'application/xml; charset=utf-8',
-      },
-      body: `<?xml version="1.0" encoding="UTF-8"?>
+    try {
+      const response = await this._fetch(url, {
+        method: 'PROPFIND',
+        headers: {
+          ...this._getHeaders(),
+          'Depth': '1',
+          'Content-Type': 'application/xml; charset=utf-8',
+        },
+        body: `<?xml version="1.0" encoding="UTF-8"?>
 <D:propfind xmlns:D="DAV:">
   <D:prop>
     <D:displayname/>
@@ -86,14 +96,60 @@ export class WebDAVClient {
     <D:resourcetype/>
   </D:prop>
 </D:propfind>`,
-    });
+      });
 
-    if (!response.ok && response.status !== 207) {
-      throw new Error(`PROPFIND failed: ${response.status} ${response.statusText}`);
+      if (!response.ok && response.status !== 207) {
+        throw new Error(`PROPFIND failed: ${response.status} ${response.statusText}`);
+      }
+
+      const text = await response.text();
+      return this._parsePropfindResponse(text, path);
+    } catch (e) {
+      if ((e.message.includes('405') || e.message.includes('Method Not Allowed') || e.message.includes('501')) && this._indexPath) {
+        try {
+          const index = await this.loadIndex();
+          return this._synthesizeDirectoryFromIndex(path, index);
+        } catch (idxErr) {
+          throw new Error(`PROPFIND failed (${e.message}) and fallback index failed: ${idxErr.message}`);
+        }
+      }
+      throw e;
     }
+  }
 
-    const text = await response.text();
-    return this._parsePropfindResponse(text, path);
+  _synthesizeDirectoryFromIndex(path, index) {
+    let dirPath = path;
+    if (!dirPath.endsWith('/')) dirPath += '/';
+    if (dirPath === '//') dirPath = '/';
+
+    const items = new Map();
+
+    for (const p of index) {
+      const fullPath = p.startsWith('/') ? p : '/' + p;
+      if (fullPath.startsWith(dirPath) && fullPath !== dirPath) {
+        const relative = fullPath.substring(dirPath.length);
+        const parts = relative.split('/');
+        const isDir = parts.length > 1 || p.endsWith('/');
+        const name = parts[0];
+        
+        if (!items.has(name) && name) {
+          items.set(name, {
+            name: name,
+            path: dirPath + name + (isDir ? '/' : ''),
+            isDirectory: isDir,
+            size: 0,
+            lastModified: '',
+            contentType: ''
+          });
+        }
+      }
+    }
+    
+    return Array.from(items.values()).sort((a, b) => {
+      if (a.isDirectory && !b.isDirectory) return -1;
+      if (!a.isDirectory && b.isDirectory) return 1;
+      return a.name.localeCompare(b.name);
+    });
   }
 
   /**
@@ -396,6 +452,7 @@ export class WebDAVClient {
    */
   _resolvePath(path) {
     if (!this._baseUrl) throw new Error('Not connected');
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
     const cleanPath = path.startsWith('/') ? path : '/' + path;
     return this._baseUrl + cleanPath;
   }
