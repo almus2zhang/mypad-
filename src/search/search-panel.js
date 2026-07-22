@@ -522,7 +522,17 @@ export function createSearchPanel(editorManager) {
 
     const escapeHtml = (text) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    matches.forEach(res => {
+    const displayedMatches = [];
+    const lineMatchesMap = new Map();
+    for (const res of matches) {
+      if (!lineMatchesMap.has(res.lineNum)) {
+        lineMatchesMap.set(res.lineNum, []);
+        displayedMatches.push(res);
+      }
+      lineMatchesMap.get(res.lineNum).push(res);
+    }
+
+    displayedMatches.forEach(res => {
       const item = document.createElement('div');
       item.className = 'annotepad-result-item';
 
@@ -533,15 +543,19 @@ export function createSearchPanel(editorManager) {
       const textSpan = document.createElement('span');
       textSpan.className = 'annotepad-result-text';
       
-      let html = escapeHtml(res.text);
-      if (res.matchLen) {
-        const matchCol = res.col;
-        const matchLen = res.matchLen;
-        const before = escapeHtml(res.text.substring(0, matchCol));
-        const match = escapeHtml(res.text.substring(matchCol, matchCol + matchLen));
-        const after = escapeHtml(res.text.substring(matchCol + matchLen));
-        html = `${before}<span class="annotepad-result-hl">${match}</span>${after}`;
-      }
+      const allResInLine = lineMatchesMap.get(res.lineNum);
+      let html = '';
+      let lastIndex = 0;
+      
+      allResInLine.forEach(m => {
+        if (m.col >= lastIndex) {
+          html += escapeHtml(res.text.substring(lastIndex, m.col));
+          html += `<span class="annotepad-result-hl">${escapeHtml(res.text.substring(m.col, m.col + m.matchLen))}</span>`;
+          lastIndex = m.col + m.matchLen;
+        }
+      });
+      html += escapeHtml(res.text.substring(lastIndex));
+      
       textSpan.innerHTML = html;
 
       item.append(lineNo, textSpan);
