@@ -30,7 +30,7 @@ export function createSearchPanel(editorManager) {
   let matches = [];
   
   let isFindAllMode = false;
-  let isLayoutVertical = false;
+  let isLayoutVertical = true;
   let returnPosition = null;
 
   // Load search history
@@ -126,7 +126,7 @@ export function createSearchPanel(editorManager) {
   const LAYOUT_BOTTOM_SVG = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="15" x2="21" y2="15"></line></svg>`;
 
   const layoutBtn = _createToggle('', t('Toggle Results Layout'), 'search-layout-btn');
-  layoutBtn.innerHTML = LAYOUT_SIDE_SVG;
+  layoutBtn.innerHTML = LAYOUT_BOTTOM_SVG;
   layoutBtn.style.display = 'none';
 
   const countSpan = document.createElement('span');
