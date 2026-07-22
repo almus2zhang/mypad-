@@ -753,9 +753,13 @@ export function createSearchPanel(editorManager) {
 
   function setKeyboardEnabled(enabled) {
     if (enabled) {
+      findInput.removeAttribute('readonly');
+      replaceInput.removeAttribute('readonly');
       findInput.removeAttribute('inputmode');
       replaceInput.removeAttribute('inputmode');
     } else {
+      findInput.setAttribute('readonly', 'readonly');
+      replaceInput.setAttribute('readonly', 'readonly');
       findInput.setAttribute('inputmode', 'none');
       replaceInput.setAttribute('inputmode', 'none');
     }

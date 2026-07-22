@@ -152,6 +152,15 @@ export const ICONS = {
     <line x1="3" y1="16" x2="21" y2="16"/>
   </svg>`,
 
+  keyboard: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/>
+    <path d="M6 8h.001"/>
+    <path d="M10 8h.001"/>
+    <path d="M14 8h.001"/>
+    <path d="M18 8h.001"/>
+    <path d="M8 12h8"/>
+  </svg>`,
+
   keyboardOff: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <rect x="2" y="4" width="20" height="16" rx="2" ry="2"/>
     <path d="M6 8h.001"/>
@@ -159,6 +168,7 @@ export const ICONS = {
     <path d="M14 8h.001"/>
     <path d="M18 8h.001"/>
     <path d="M8 12h8"/>
+    <line x1="2" y1="2" x2="22" y2="22"/>
   </svg>`,
 
   hexView: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -315,7 +325,7 @@ export function createToolbar(callbacks = {}) {
   const viewGroup = [
     createButton({ id: 'btn-word-wrap', icon: ICONS.wordWrap, tooltip: t('Toggle Word Wrap'), onClick: callbacks.onWordWrap, toggle: true }),
     createButton({ id: 'btn-status-bar', icon: ICONS.statusBar, tooltip: t('Toggle Status Bar'), onClick: callbacks.onToggleStatusBar, toggle: true }),
-    createButton({ id: 'btn-keyboard', icon: ICONS.keyboardOff, tooltip: t('Toggle Virtual Keyboard Block'), onClick: callbacks.onToggleKeyboard, toggle: true }),
+    createButton({ id: 'btn-keyboard', icon: ICONS.keyboard, tooltip: t('Toggle Virtual Keyboard Block'), onClick: callbacks.onToggleKeyboard, toggle: true }),
     createButton({ id: 'btn-fullscreen', icon: ICONS.fullscreen, tooltip: t('Toggle Fullscreen'), onClick: callbacks.onFullscreen, toggle: true }),
     createButton({ id: 'btn-zoom-in', icon: ICONS.zoomIn, tooltip: t('Toggle Zoom In'), onClick: callbacks.onZoomIn }),
     createButton({ id: 'btn-zoom-out', icon: ICONS.zoomOut, tooltip: t('Toggle Zoom Out'), onClick: callbacks.onZoomOut }),

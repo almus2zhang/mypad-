@@ -41,7 +41,7 @@ import { WorkspaceBrowser } from './server-workspace/workspace-browser.js';
 // UI
 import '@fontsource/inter';
 import '@fontsource/jetbrains-mono';
-import { createToolbar } from './ui/toolbar.js';
+import { createToolbar, ICONS } from './ui/toolbar.js';
 import { createStatusBar } from './ui/statusbar.js';
 import { createSymbolBar } from './ui/symbol-bar.js';
 import { createSidebar } from './ui/sidebar.js';
@@ -1305,6 +1305,7 @@ function applyKeyboardVisibility() {
   if (btn) {
     btn.setAttribute('aria-pressed', String(!keyboardEnabled));
     btn.classList.toggle('toolbar-btn--active', !keyboardEnabled);
+    btn.innerHTML = !keyboardEnabled ? ICONS.keyboardOff : ICONS.keyboard;
   }
 }
 
