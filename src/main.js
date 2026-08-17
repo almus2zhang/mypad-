@@ -1803,13 +1803,16 @@ sidebar.onOutlineSelect((item) => {
 // PWA Service Worker
 // ============================================================
 
+import { registerSW } from 'virtual:pwa-register';
+
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').then((reg) => {
-      console.log('Service Worker registered:', reg.scope);
-    }).catch((err) => {
-      console.warn('Service Worker registration failed:', err);
-    });
+  const updateSW = registerSW({
+    onNeedRefresh() {
+      // Could show a toast here in the future
+    },
+    onOfflineReady() {
+      console.log('App is ready to work offline');
+    },
   });
 }
 

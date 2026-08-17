@@ -1,10 +1,20 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   root: '.',
   base: './',
-  plugins: [],
+  plugins: [
+    VitePWA({
+      registerType: 'autoUpdate',
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,woff,woff2,svg,png,jpg,json}'],
+        maximumFileSizeToCacheInBytes: 5000000,
+      },
+      manifest: false, // We already have a manifest.json in public/
+    })
+  ],
 
   build: {
     outDir: 'dist',
