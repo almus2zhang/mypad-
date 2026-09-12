@@ -422,22 +422,36 @@ export class WebDAVBrowser {
       const regexStr = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*');
       const regex = new RegExp(regexStr, 'i');
 
-      const matches = index.filter(p => {
+      const matches = [];
+      for (const entry of index) {
+        let p = '', size = 0, mtime = 0;
+        if (Array.isArray(entry)) {
+          p = entry[0] || '';
+          size = entry[1] || 0;
+          mtime = entry[2] || 0;
+        } else if (typeof entry === 'object' && entry !== null) {
+          p = entry.path || entry.p || '';
+          size = entry.size ?? entry.s ?? 0;
+          mtime = entry.mtime ?? entry.m ?? 0;
+        } else {
+          p = String(entry || '');
+        }
+
         const cleanPath = p.replace(/\/$/, '');
         const name = cleanPath.split('/').pop() || '';
-        return regex.test(name);
-      });
+        if (regex.test(name)) {
+          matches.push({ p, name, cleanPath, size, mtime });
+        }
+      }
       
-      const items = matches.slice(0, 100).map(p => {
-        const isDir = p.endsWith('/');
-        const cleanPath = p.replace(/\/$/, '');
-        const name = cleanPath.split('/').pop() || '/';
+      const items = matches.slice(0, 100).map(m => {
+        const isDir = m.p.endsWith('/');
         return {
-          name,
-          path: p.startsWith('/') ? p : '/' + cleanPath,
+          name: m.name || '/',
+          path: m.p.startsWith('/') ? m.p : '/' + m.cleanPath,
           isDirectory: isDir,
-          size: 0,
-          lastModified: ''
+          size: m.size,
+          lastModified: m.mtime
         };
       });
 
@@ -673,11 +687,15 @@ function _formatSize(bytes) {
 }
 
 function _formatDate(dateStr) {
+  if (!dateStr) return '';
   try {
-    const d = new Date(dateStr);
+    const d = typeof dateStr === 'number'
+      ? new Date(dateStr < 1e11 ? dateStr * 1000 : dateStr)
+      : new Date(dateStr);
+    if (isNaN(d.getTime())) return String(dateStr);
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
   } catch {
-    return dateStr;
+    return String(dateStr);
   }
 }
 

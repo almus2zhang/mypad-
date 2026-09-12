@@ -47,12 +47,25 @@ class IndexerDaemon:
                         current_prefix = webdav_prefix
                     else:
                         current_prefix = f"{webdav_prefix}{rel_path}/"
-                        items.append(current_prefix)
+                        try:
+                            d_stat = os.stat(dirpath)
+                            d_mtime = int(d_stat.st_mtime)
+                        except Exception:
+                            d_mtime = 0
+                        items.append([current_prefix, 0, d_mtime])
                         
                     for f in filenames:
                         if f == os.path.basename(self.output_file) or f in self.excludes:
                             continue
-                        items.append(f"{current_prefix}{f}")
+                        file_path = os.path.join(dirpath, f)
+                        try:
+                            f_stat = os.stat(file_path)
+                            size = f_stat.st_size
+                            mtime = int(f_stat.st_mtime)
+                        except Exception:
+                            size = 0
+                            mtime = 0
+                        items.append([f"{current_prefix}{f}", size, mtime])
             
             # Write atomically to prevent partial reads by the frontend
             tmp_output = self.output_file + '.tmp'

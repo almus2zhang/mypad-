@@ -124,7 +124,20 @@ export class WebDAVClient {
 
     const items = new Map();
 
-    for (const p of index) {
+    for (const entry of index) {
+      let p = '', size = 0, mtime = 0;
+      if (Array.isArray(entry)) {
+        p = entry[0] || '';
+        size = entry[1] || 0;
+        mtime = entry[2] || 0;
+      } else if (typeof entry === 'object' && entry !== null) {
+        p = entry.path || entry.p || '';
+        size = entry.size ?? entry.s ?? 0;
+        mtime = entry.mtime ?? entry.m ?? 0;
+      } else {
+        p = String(entry || '');
+      }
+
       const fullPath = p.startsWith('/') ? p : '/' + p;
       if (fullPath.startsWith(dirPath) && fullPath !== dirPath) {
         const relative = fullPath.substring(dirPath.length);
@@ -137,8 +150,8 @@ export class WebDAVClient {
             name: name,
             path: dirPath + name + (isDir ? '/' : ''),
             isDirectory: isDir,
-            size: 0,
-            lastModified: '',
+            size: isDir ? 0 : size,
+            lastModified: mtime || '',
             contentType: ''
           });
         }

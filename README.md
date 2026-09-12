@@ -173,7 +173,7 @@ In your reverse proxy/WebDAV server configuration, ensure the following headers 
 ### 2. Search Index Configuration
 MyPad++ supports blazing-fast sequential multi-term fuzzy searching (e.g., typing `abc pdf` to match `*abc*pdf*`) for your remote files. Because WebDAV root directories can be massive, MyPad++ relies on a static JSON index file rather than traversing the entire WebDAV tree.
 
-- The index file should be a JSON array of relative file paths.
+- The index file uses a compact tuple array format `[["/relative_path", size_in_bytes, unix_timestamp], ...]` (fully backward-compatible with legacy plain string arrays).
 - You can specify a **Custom Search Index URL** in the WebDAV connection dialog. This allows you to host the index file anywhere, even outside the WebDAV root directory.
 
 #### Auto-generating the WebDAV Index
