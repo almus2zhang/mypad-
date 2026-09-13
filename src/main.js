@@ -1858,3 +1858,107 @@ window.addEventListener('mypad-goto-definition', (e) => {
     handleGoToDefinition(e.detail.word, e.detail.line, e.detail.col);
   }
 });
+
+// ============================================================
+// External File & Share Target Handlers (PWA)
+// ============================================================
+
+async function openSharedOrExternalFile(arrayBuffer, filename, fileHandle = null) {
+  try {
+    const uint8 = new Uint8Array(arrayBuffer);
+    const detected = detectEncoding(uint8);
+    const content = decode(uint8, detected.encoding);
+    const langName = getLanguageNameByFilename(filename);
+
+    const tab = tabManager.createTab({
+      filename,
+      content,
+      encoding: detected.encoding,
+      language: langName,
+      fileHandle,
+    });
+    openEditorForTab(tab);
+
+    recentFiles.add({ name: filename, encoding: detected.encoding });
+    sidebar.updateRecentFiles(recentFiles.getAll());
+    showToast(`${t('File opened:')} ${filename}`, 'success');
+  } catch (err) {
+    console.error('Failed to open external or shared file:', filename, err);
+    showToast(`${t('Failed to open file:')} ${filename}`, 'error');
+  }
+}
+
+// 1. File Handling API (Desktop / OS double-click or Open With)
+if ('launchQueue' in window && typeof window.launchQueue.setConsumer === 'function') {
+  window.launchQueue.setConsumer(async (launchParams) => {
+    if (!launchParams.files || launchParams.files.length === 0) return;
+    for (const handle of launchParams.files) {
+      try {
+        const file = await handle.getFile();
+        const arrayBuffer = await file.arrayBuffer();
+        await openSharedOrExternalFile(arrayBuffer, file.name, handle);
+      } catch (err) {
+        console.error('Failed to open file from launchQueue:', err);
+      }
+    }
+  });
+}
+
+// 2. Web Share Target API (Android Share Sheet)
+async function checkAndOpenSharedFiles() {
+  try {
+    const req = indexedDB.open('mypad_shared_db', 1);
+    req.onupgradeneeded = () => {
+      req.result.createObjectStore('shares', { autoIncrement: true });
+    };
+    req.onsuccess = () => {
+      const db = req.result;
+      const tx = db.transaction('shares', 'readwrite');
+      const store = tx.objectStore('shares');
+      const getAllReq = store.getAll();
+      getAllReq.onsuccess = async () => {
+        const items = getAllReq.result || [];
+        if (items.length > 0) {
+          store.clear();
+          for (const item of items) {
+            if (item && item.buffer) {
+              await openSharedOrExternalFile(item.buffer, item.name);
+            }
+          }
+        }
+      };
+    };
+  } catch (e) {
+    console.warn('Error checking shared files:', e);
+  }
+}
+
+// Check on initial load
+setTimeout(checkAndOpenSharedFiles, 300);
+
+// Clean URL query param if present
+if (window.location.search.includes('received_share=1')) {
+  const cleanUrl = new URL(window.location);
+  cleanUrl.searchParams.delete('received_share');
+  window.history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search);
+}
+
+// Listen to message from Service Worker when a share arrives while app is already open
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'MYPAD_SHARED_FILE') {
+      checkAndOpenSharedFiles();
+    }
+  });
+}
+
+// Check when app regains focus or visibility
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    checkAndOpenSharedFiles();
+  }
+});
+window.addEventListener('focus', () => {
+  checkAndOpenSharedFiles();
+});
+

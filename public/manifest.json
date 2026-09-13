@@ -19,5 +19,98 @@
   ],
   "screenshots": [],
   "lang": "en",
-  "dir": "ltr"
+  "dir": "ltr",
+  "share_target": {
+    "action": "./share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            "text/*",
+            "application/json",
+            "application/javascript",
+            "application/xml",
+            ".txt",
+            ".md",
+            ".markdown",
+            ".json",
+            ".js",
+            ".mjs",
+            ".cjs",
+            ".ts",
+            ".tsx",
+            ".jsx",
+            ".py",
+            ".pyw",
+            ".c",
+            ".h",
+            ".cpp",
+            ".cc",
+            ".cxx",
+            ".hpp",
+            ".hxx",
+            ".html",
+            ".htm",
+            ".css",
+            ".scss",
+            ".less",
+            ".java",
+            ".rs",
+            ".go",
+            ".php",
+            ".sql",
+            ".yaml",
+            ".yml",
+            ".xml",
+            ".xsl",
+            ".xsd",
+            ".sh",
+            ".bash",
+            ".ps1",
+            ".bat",
+            ".cmd",
+            ".log",
+            ".ini",
+            ".cfg",
+            ".conf",
+            ".toml"
+          ]
+        }
+      ]
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "./",
+      "name": "Text & Code files",
+      "accept": {
+        "text/plain": [".txt", ".text", ".log", ".ini", ".cfg", ".conf", ".toml"],
+        "text/markdown": [".md", ".markdown"],
+        "text/javascript": [".js", ".mjs", ".cjs"],
+        "text/typescript": [".ts", ".tsx"],
+        "text/jsx": [".jsx"],
+        "text/x-python": [".py", ".pyw"],
+        "text/html": [".html", ".htm"],
+        "text/css": [".css", ".scss", ".less"],
+        "application/json": [".json"],
+        "text/x-c": [".c", ".h", ".cpp", ".cc", ".cxx", ".hpp", ".hxx"],
+        "text/x-java-source": [".java"],
+        "text/rust": [".rs"],
+        "text/x-go": [".go"],
+        "text/x-php": [".php"],
+        "text/x-sql": [".sql"],
+        "application/xml": [".xml", ".xsl", ".xsd", ".svg"],
+        "text/yaml": [".yaml", ".yml"],
+        "application/x-sh": [".sh", ".bash"],
+        "application/x-bat": [".bat", ".cmd"],
+        "application/x-powershell": [".ps1"]
+      }
+    }
+  ]
 }

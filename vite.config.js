@@ -11,6 +11,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff,woff2,svg,png,jpg,json}'],
         maximumFileSizeToCacheInBytes: 5000000,
+        importScripts: ['sw-share-target.js'],
       },
       manifest: false, // We already have a manifest.json in public/
     })
