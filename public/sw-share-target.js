@@ -84,7 +84,8 @@ self.addEventListener('fetch', (event) => {
         }
       } catch (e) {}
 
-      return Response.redirect('./?received_share=1', 303);
+      const redirectUrl = new URL('./?received_share=1', self.location.href).href;
+      return Response.redirect(redirectUrl, 303);
     })());
   }
 });

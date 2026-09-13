@@ -44,7 +44,10 @@
         {
           "name": "files",
           "accept": [
+            "*/*",
             "text/*",
+            "text/plain",
+            "application/octet-stream",
             "application/json",
             "application/javascript",
             "application/xml",
