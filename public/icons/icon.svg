@@ -2,61 +2,58 @@
   <!-- Pure White Background -->
   <rect width="512" height="512" fill="#ffffff"/>
 
-  <!-- Centered Document Icon (Smaller with comfortable padding) -->
-  <g id="document">
+  <!-- Centered Document Icon scaled to 2/3 (scale 0.67 centered around 256, 252) -->
+  <g id="document" transform="translate(256, 252) scale(0.67) translate(-256, -252)">
     <!-- Subtle drop shadow for document -->
-    <rect x="150" y="112" width="212" height="288" rx="20" fill="#e2e8f0"/>
+    <rect x="150" y="114" width="212" height="288" rx="24" fill="#e2e8f0"/>
 
     <!-- Main document page -->
-    <!-- Path with top-right corner fold: 
-         Starts at (150, 108), width 212, height 288.
-         Top edge goes to 312, then folds to (362, 158), down to (362, 396), left to (150, 396), up to (150, 108) -->
-    <path d="M 166 108 
-             L 312 108 
-             L 362 158 
-             L 362 380 
-             A 16 16 0 0 1 346 396 
-             L 166 396 
-             A 16 16 0 0 1 150 380 
-             L 150 124 
-             A 16 16 0 0 1 166 108 Z" 
+    <path d="M 168 108 
+             L 310 108 
+             L 362 160 
+             L 362 378 
+             A 18 18 0 0 1 344 396 
+             L 168 396 
+             A 18 18 0 0 1 150 378 
+             L 150 126 
+             A 18 18 0 0 1 168 108 Z" 
           fill="#f8fafc" 
           stroke="#334155" 
-          stroke-width="12" 
+          stroke-width="14" 
           stroke-linejoin="round" 
           stroke-linecap="round"/>
 
     <!-- Folded corner flap -->
-    <path d="M 312 108 
-             L 312 146 
-             A 12 12 0 0 0 324 158 
-             L 362 158 Z" 
+    <path d="M 310 108 
+             L 310 146 
+             A 14 14 0 0 0 324 160 
+             L 362 160 Z" 
           fill="#cbd5e1" 
           stroke="#334155" 
-          stroke-width="12" 
+          stroke-width="14" 
           stroke-linejoin="round" 
           stroke-linecap="round"/>
 
     <!-- Text / Code lines -->
     <!-- Accent line 1 -->
-    <line x1="184" y1="172" x2="250" y2="172" stroke="#2563eb" stroke-width="12" stroke-linecap="round"/>
+    <line x1="184" y1="172" x2="252" y2="172" stroke="#2563eb" stroke-width="14" stroke-linecap="round"/>
     <!-- Line 2 -->
-    <line x1="184" y1="212" x2="328" y2="212" stroke="#64748b" stroke-width="10" stroke-linecap="round"/>
+    <line x1="184" y1="214" x2="328" y2="214" stroke="#64748b" stroke-width="12" stroke-linecap="round"/>
     <!-- Line 3 -->
-    <line x1="184" y1="248" x2="300" y2="248" stroke="#94a3b8" stroke-width="10" stroke-linecap="round"/>
+    <line x1="184" y1="252" x2="298" y2="252" stroke="#94a3b8" stroke-width="12" stroke-linecap="round"/>
     <!-- Line 4 -->
-    <line x1="184" y1="284" x2="328" y2="284" stroke="#64748b" stroke-width="10" stroke-linecap="round"/>
+    <line x1="184" y1="290" x2="328" y2="290" stroke="#64748b" stroke-width="12" stroke-linecap="round"/>
     <!-- Line 5 -->
-    <line x1="184" y1="320" x2="270" y2="320" stroke="#94a3b8" stroke-width="10" stroke-linecap="round"/>
+    <line x1="184" y1="328" x2="268" y2="328" stroke="#94a3b8" stroke-width="12" stroke-linecap="round"/>
 
     <!-- ++ badge in bottom-right -->
-    <g stroke="#2563eb" stroke-width="10" stroke-linecap="round">
+    <g stroke="#2563eb" stroke-width="12" stroke-linecap="round">
       <!-- First + -->
-      <line x1="284" y1="358" x2="304" y2="358"/>
-      <line x1="294" y1="348" x2="294" y2="368"/>
+      <line x1="284" y1="360" x2="304" y2="360"/>
+      <line x1="294" y1="350" x2="294" y2="370"/>
       <!-- Second + -->
-      <line x1="316" y1="358" x2="336" y2="358"/>
-      <line x1="326" y1="348" x2="326" y2="368"/>
+      <line x1="316" y1="360" x2="336" y2="360"/>
+      <line x1="326" y1="350" x2="326" y2="370"/>
     </g>
   </g>
 </svg>
