@@ -52,6 +52,7 @@ import { createContextMenu, getDefaultMenuItems } from './ui/context-menu.js';
 import { FileTreeSidebar } from './ui/file-tree-sidebar.js';
 import { showEncodingPicker, showGoToLineDialog, showSaveConfirmDialog, showLanguagePicker, showCompareSelectorDialog, showHelpDialog, showLoading, hideLoading, updateLoadingMessage, showWorkspaceSaveAsDialog, showFileChangedDialog } from './ui/dialogs.js';
 import { t } from './i18n.js';
+import { previewManager, isPreviewable } from './viewer/preview-manager.js';
 
 // Utils
 import { loadJSON, saveJSON, loadString, saveString } from './utils/storage.js';
@@ -483,6 +484,23 @@ const keymapCallbacks = {
  * @param {import('./tabs/tab-manager.js').Tab} tab
  */
 async function openEditorForTab(tab) {
+  const editorContainer = document.getElementById('editor-container');
+  const viewerContainer = document.getElementById('viewer-container');
+
+  if (tab.isPreviewTab) {
+    if (editorContainer) editorContainer.style.display = 'none';
+    if (viewerContainer) viewerContainer.style.display = 'block';
+    editorManager.destroyView();
+    await previewManager.render(viewerContainer, tab, currentTheme);
+    updateStatusBar();
+    return;
+  }
+
+  // Regular code/text editor tab
+  previewManager.destroy();
+  if (viewerContainer) viewerContainer.style.display = 'none';
+  if (editorContainer) editorContainer.style.display = 'block';
+
   // Load language support
   let langSupport = null;
   try {
@@ -617,12 +635,16 @@ async function switchToTab(id) {
 
   // Save current tab state
   const prevTab = tabManager.getActiveTab();
-  if (prevTab && editorManager.hasView) {
-    prevTab.content = editorManager.getContent();
-    prevTab.selection = editorManager.getState().selection;
-    prevTab.scrollPos = editorManager.getScrollPosition();
-    prevTab.bookmarks = getAllBookmarks(editorManager.getState());
-    saveGlobalBookmarks(prevTab);
+  if (prevTab) {
+    if (prevTab.isPreviewTab) {
+      previewManager.destroy();
+    } else if (editorManager.hasView) {
+      prevTab.content = editorManager.getContent();
+      prevTab.selection = editorManager.getState().selection;
+      prevTab.scrollPos = editorManager.getScrollPosition();
+      prevTab.bookmarks = getAllBookmarks(editorManager.getState());
+      saveGlobalBookmarks(prevTab);
+    }
   }
 
   tabManager.switchTab(id);
@@ -635,6 +657,15 @@ async function switchToTab(id) {
 async function closeTab(id) {
   const tab = tabManager.getTab(id);
   if (!tab) return;
+
+  if (tab.isPreviewTab) {
+    if (tab.id === tabManager.activeTabId) {
+      previewManager.destroy();
+    }
+    tabManager.closeTab(id);
+    handleTabClosed();
+    return;
+  }
 
   // Save bookmarks before closing
   if (tab.id === tabManager.activeTabId && editorManager.hasView) {
@@ -671,6 +702,11 @@ function handleTabClosed() {
   if (activeTab) {
     openEditorForTab(activeTab);
   } else {
+    previewManager.destroy();
+    const viewerContainer = document.getElementById('viewer-container');
+    if (viewerContainer) viewerContainer.style.display = 'none';
+    const editorContainer = document.getElementById('editor-container');
+    if (editorContainer) editorContainer.style.display = 'block';
     editorManager.destroyView();
     showEmptyState();
     updateStatusBar();
@@ -712,7 +748,22 @@ function getMimeType(filename) {
   return map[ext] || null;
 }
 
-function tryOpenMediaInBrowser(filename, arrayBuffer) {
+function tryOpenMediaInBrowser(filename, arrayBuffer, options = {}) {
+  if (isPreviewable(filename)) {
+    const tab = tabManager.createTab({
+      filename,
+      previewBuffer: arrayBuffer,
+      isPreviewTab: true,
+      language: 'Preview',
+      ...options,
+    });
+    openEditorForTab(tab);
+    recentFiles.add({ name: filename, encoding: 'binary', workspacePath: options.workspacePath });
+    sidebar.updateRecentFiles(recentFiles.getAll());
+    showToast(`${t('File opened:')} ${filename}`, 'success');
+    return true;
+  }
+
   const mimeType = getMimeType(filename);
   if (!mimeType) return false;
 
@@ -742,7 +793,7 @@ async function openFile() {
     const fileInfo = await fileHandler.openFile();
     if (!fileInfo) return;
 
-    if (tryOpenMediaInBrowser(fileInfo.name, fileInfo.arrayBuffer)) {
+    if (tryOpenMediaInBrowser(fileInfo.name, fileInfo.arrayBuffer, { fileHandle: fileInfo.fileHandle })) {
       return;
     }
 
@@ -885,7 +936,7 @@ function showWebDAV() {
 
 async function handleWebDAVFileOpen(path, arrayBuffer, filename) {
   try {
-    if (tryOpenMediaInBrowser(filename, arrayBuffer)) {
+    if (tryOpenMediaInBrowser(filename, arrayBuffer, { webdavPath: path })) {
       return;
     }
 
@@ -942,7 +993,7 @@ async function saveFileToWebDAV(tab) {
 
 async function handleWorkspaceFileOpen(filename, arrayBuffer, path, lastModified) {
   try {
-    if (tryOpenMediaInBrowser(filename, arrayBuffer)) {
+    if (tryOpenMediaInBrowser(filename, arrayBuffer, { workspacePath: path })) {
       return;
     }
 
@@ -1129,6 +1180,7 @@ function toggleTheme() {
   if (editorManager.hasView) {
     editorManager.setTheme(currentTheme);
   }
+  previewManager.setTheme(currentTheme);
 
   // Update meta theme color
   const metaLight = document.querySelector('meta[name="theme-color"][media="(prefers-color-scheme: light)"]');
@@ -1341,6 +1393,19 @@ function showGoToLine() {
 
 function updateStatusBar() {
   const tab = tabManager.getActiveTab();
+  if (tab && tab.isPreviewTab) {
+    statusBar.setCursorPosition(0, 0);
+    statusBar.setSelection('', 0);
+    statusBar.setEncoding('Preview', null);
+    const ext = (tab.filename.split('.').pop() || '').toUpperCase();
+    statusBar.setLanguage(ext + ' Preview', null);
+    statusBar.setFilePath(tab.workspacePath || tab.webdavPath || tab.filePath || '');
+    if (tab.previewBuffer) {
+      statusBar.setFileSize(tab.previewBuffer.byteLength);
+    }
+    return;
+  }
+
   if (!editorManager.hasView) {
     statusBar.setCursorPosition(0, 0);
     statusBar.setSelection('', 0);
@@ -1624,6 +1689,9 @@ document.addEventListener('drop', async (e) => {
   for (const file of files) {
     try {
       const arrayBuffer = await file.arrayBuffer();
+      if (tryOpenMediaInBrowser(file.name, arrayBuffer)) {
+        continue;
+      }
       const uint8 = new Uint8Array(arrayBuffer);
       const detected = detectEncoding(uint8);
       const content = decode(uint8, detected.encoding);
@@ -1865,6 +1933,9 @@ window.addEventListener('mypad-goto-definition', (e) => {
 
 async function openSharedOrExternalFile(arrayBuffer, filename, fileHandle = null) {
   try {
+    if (tryOpenMediaInBrowser(filename, arrayBuffer, { fileHandle })) {
+      return;
+    }
     const uint8 = new Uint8Array(arrayBuffer);
     const detected = detectEncoding(uint8);
     const content = decode(uint8, detected.encoding);
@@ -1960,5 +2031,9 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('focus', () => {
   checkAndOpenSharedFiles();
+});
+
+window.addEventListener('resize', () => {
+  previewManager.resize();
 });
 

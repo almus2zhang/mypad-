@@ -62,6 +62,8 @@ export class TabManager extends EventTarget {
       fileHandle: options.fileHandle || null,
       webdavPath: options.webdavPath || null,
       workspacePath: options.workspacePath || null,
+      isPreviewTab: Boolean(options.isPreviewTab),
+      previewBuffer: options.previewBuffer || null,
       createdAt: Date.now(),
     };
 
@@ -244,7 +246,7 @@ export class TabManager extends EventTarget {
   /** Save current session to localStorage */
   saveSession() {
     const session = {
-      tabs: this.getAllTabs().map((t) => ({
+      tabs: this.getAllTabs().filter((t) => !t.isPreviewTab).map((t) => ({
         filename: t.filename,
         content: t.content,
         encoding: t.encoding,

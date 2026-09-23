@@ -50,6 +50,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src'),
+      '@napi-rs/canvas': resolve(__dirname, 'src/viewer/empty-module.js'),
     },
   },
 });
