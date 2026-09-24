@@ -6,18 +6,29 @@
 
 let coreModule = null;
 let pdfWorkerSrc = null;
+let enhancedImagePluginFn = null;
+let enhancedPdfPluginFn = null;
 
 async function loadViewerDeps() {
   if (!coreModule) {
     await import('@open-file-viewer/core/style.css');
-    const [core, worker] = await Promise.all([
+    const [core, worker, imgPlugin, pdfPlugin] = await Promise.all([
       import('@open-file-viewer/core'),
-      import('pdfjs-dist/build/pdf.worker.mjs?url')
+      import('pdfjs-dist/build/pdf.worker.mjs?url'),
+      import('./enhanced-image-plugin.js'),
+      import('./enhanced-pdf-plugin.js')
     ]);
     coreModule = core;
     pdfWorkerSrc = worker.default;
+    enhancedImagePluginFn = imgPlugin.enhancedImagePlugin;
+    enhancedPdfPluginFn = pdfPlugin.enhancedPdfPlugin;
   }
-  return { core: coreModule, workerSrc: pdfWorkerSrc };
+  return {
+    core: coreModule,
+    workerSrc: pdfWorkerSrc,
+    enhancedImagePlugin: enhancedImagePluginFn,
+    enhancedPdfPlugin: enhancedPdfPluginFn
+  };
 }
 
 export const PREVIEW_EXTENSIONS = new Set([
@@ -69,7 +80,7 @@ export class PreviewManager {
     `;
 
     try {
-      const { core, workerSrc } = await loadViewerDeps();
+      const { core, workerSrc, enhancedImagePlugin, enhancedPdfPlugin } = await loadViewerDeps();
 
       // Ensure tab hasn't switched while loading
       if (this.currentTabId !== tab.id) return;
@@ -77,10 +88,10 @@ export class PreviewManager {
       container.innerHTML = '';
 
       const plugins = [
-        core.imagePlugin(),
+        enhancedImagePlugin(),
+        enhancedPdfPlugin({ workerSrc }),
         core.videoPlugin(),
         core.audioPlugin(),
-        core.pdfPlugin({ workerSrc }),
         core.officePlugin(),
         core.archivePlugin(),
         core.xmindPlugin(),
