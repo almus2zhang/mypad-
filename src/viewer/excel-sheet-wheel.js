@@ -1,19 +1,17 @@
 /**
- * Excel Floating Sheet Wheel Picker
- * Displays a 3D wheel-style sheet picker floating in the bottom-right corner.
- * Shows 3 sheets at a time with smooth up/down dragging and mouse-wheel support.
- * - Clicking the center when on a different sheet jumps to that sheet.
- * - Clicking the center on the currently active sheet expands the full sheets list modal.
+ * Excel Floating Sheet Selector
+ * Displays a clean floating sheet selector button in the bottom-right corner.
+ * Clicking it directly opens a sheet list popup to choose and switch sheets.
  * @module viewer/excel-sheet-wheel
  */
 
-export function initExcelSheetWheel(container) {
+export function initExcelSheetSelector(container) {
   let destroyed = false;
   let observer = null;
-  let wheelContainer = null;
-  let allSheetsPopup = null;
+  let pillButton = null;
+  let sheetsPopup = null;
+  let activeSyncTimer = null;
 
-  // Find .ofv-tabs inside container
   function tryAttach() {
     if (destroyed) return;
     const officePanel = container.querySelector('.ofv-office');
@@ -25,11 +23,10 @@ export function initExcelSheetWheel(container) {
     const tabButtons = Array.from(tabsBar.querySelectorAll('button[role="tab"]'));
     if (tabButtons.length === 0) return;
 
-    // Disconnect observer once found
     observer?.disconnect();
     observer = null;
 
-    buildWheelPicker(container, tabButtons);
+    buildSheetSelector(container, tabButtons);
   }
 
   observer = new MutationObserver(() => {
@@ -37,11 +34,11 @@ export function initExcelSheetWheel(container) {
   });
   observer.observe(container, { childList: true, subtree: true });
 
-  // Initial check
   tryAttach();
 
-  function buildWheelPicker(root, buttons) {
-    if (wheelContainer) wheelContainer.remove();
+  function buildSheetSelector(root, buttons) {
+    if (pillButton) pillButton.remove();
+    if (sheetsPopup) sheetsPopup.remove();
 
     const sheets = buttons.map((btn, idx) => ({
       name: btn.textContent.trim(),
@@ -49,263 +46,114 @@ export function initExcelSheetWheel(container) {
       index: idx
     }));
 
-    let activeSheetIndex = sheets.findIndex(s => s.button.classList.contains('is-active') || s.button.getAttribute('aria-selected') === 'true');
-    if (activeSheetIndex < 0) activeSheetIndex = 0;
-    let selectedIndex = activeSheetIndex;
+    function getActiveIndex() {
+      const idx = sheets.findIndex(s => 
+        s.button.classList.contains('is-active') || 
+        s.button.getAttribute('aria-selected') === 'true'
+      );
+      return idx >= 0 ? idx : 0;
+    }
 
-    const wheel = document.createElement('div');
-    wheel.className = 'mypad-excel-sheet-wheel';
-    wheel.style.cssText = `
+    let activeIndex = getActiveIndex();
+
+    // Floating Sheet Pill Button
+    const pill = document.createElement('button');
+    pill.className = 'mypad-excel-sheet-pill';
+    pill.type = 'button';
+    pill.title = '选择工作表';
+    pill.style.cssText = `
       position: absolute;
       bottom: 24px;
       right: 24px;
-      width: 176px;
-      height: 108px;
+      height: 38px;
+      padding: 0 14px 0 12px;
       background: rgba(24, 24, 37, 0.88);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-      z-index: 55;
-      overflow: hidden;
-      user-select: none;
-      touch-action: none;
-      display: flex;
-      flex-direction: column;
-      box-sizing: border-box;
-    `;
-
-    // Center active slot highlight bar
-    const centerSlotBar = document.createElement('div');
-    centerSlotBar.style.cssText = `
-      position: absolute;
-      top: 36px;
-      left: 6px;
-      right: 6px;
-      height: 36px;
-      background: rgba(59, 130, 246, 0.2);
-      border: 1px solid rgba(96, 165, 250, 0.45);
-      border-radius: 8px;
-      pointer-events: none;
-      z-index: 1;
-    `;
-    wheel.appendChild(centerSlotBar);
-
-    // 3 Item rows
-    const topRow = document.createElement('div');
-    const midRow = document.createElement('div');
-    const btmRow = document.createElement('div');
-
-    const rowCommonStyle = `
-      height: 36px;
-      line-height: 36px;
-      text-align: center;
-      padding: 0 10px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      border-radius: 19px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+      color: #f1f5f9;
+      font-size: 13px;
+      font-weight: 500;
       cursor: pointer;
-      position: relative;
-      z-index: 2;
-      transition: transform 0.15s ease, opacity 0.15s ease, color 0.15s ease;
-      box-sizing: border-box;
-    `;
-
-    topRow.style.cssText = rowCommonStyle + `
-      font-size: 11.5px;
-      color: rgba(255, 255, 255, 0.45);
-      transform: perspective(300px) rotateX(24deg) scale(0.9);
-      opacity: 0.65;
-    `;
-
-    midRow.style.cssText = rowCommonStyle + `
-      font-size: 13.5px;
-      font-weight: 600;
-      color: #ffffff;
-      transform: perspective(300px) rotateX(0deg) scale(1);
-      opacity: 1;
+      user-select: none;
+      z-index: 55;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 5px;
+      gap: 7px;
+      box-sizing: border-box;
+      outline: none;
+      transition: all 0.18s ease;
     `;
 
-    btmRow.style.cssText = rowCommonStyle + `
-      font-size: 11.5px;
-      color: rgba(255, 255, 255, 0.45);
-      transform: perspective(300px) rotateX(-24deg) scale(0.9);
-      opacity: 0.65;
+    const svgIcon = `
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
+      </svg>
     `;
 
-    wheel.append(topRow, midRow, btmRow);
+    function updatePillText() {
+      activeIndex = getActiveIndex();
+      const current = sheets[activeIndex] || sheets[0];
+      const sheetName = current ? current.name : 'Sheet';
+      pill.innerHTML = `
+        ${svgIcon}
+        <span style="max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${sheetName}</span>
+        <span class="sheet-caret" style="font-size: 11px; opacity: 0.75; transition: transform 0.2s;">▾</span>
+      `;
+    }
 
-    function updateWheelView() {
-      const prev = sheets[selectedIndex - 1];
-      const curr = sheets[selectedIndex];
-      const next = sheets[selectedIndex + 1];
+    updatePillText();
 
-      topRow.textContent = prev ? prev.name : '';
-      topRow.style.visibility = prev ? 'visible' : 'hidden';
+    // Hover styles
+    pill.onmouseenter = () => {
+      pill.style.background = 'rgba(35, 35, 55, 0.95)';
+      pill.style.borderColor = 'rgba(96, 165, 250, 0.5)';
+      pill.style.boxShadow = '0 8px 28px rgba(0, 0, 0, 0.5)';
+    };
+    pill.onmouseleave = () => {
+      if (!sheetsPopup) {
+        pill.style.background = 'rgba(24, 24, 37, 0.88)';
+        pill.style.borderColor = 'rgba(255, 255, 255, 0.16)';
+        pill.style.boxShadow = '0 6px 24px rgba(0, 0, 0, 0.4)';
+      }
+    };
 
-      btmRow.textContent = next ? next.name : '';
-      btmRow.style.visibility = next ? 'visible' : 'hidden';
-
-      if (curr) {
-        const isCurrentActive = selectedIndex === activeSheetIndex;
-        midRow.innerHTML = `
-          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:130px;">${curr.name}</span>
-          <span style="font-size:10px;opacity:0.8;flex-shrink:0;">${isCurrentActive ? '▾' : '↵'}</span>
-        `;
-        midRow.title = isCurrentActive ? `${curr.name} (点击展开所有表)` : `${curr.name} (点击跳转)`;
-        if (!isCurrentActive) {
-          centerSlotBar.style.background = 'rgba(234, 179, 8, 0.22)';
-          centerSlotBar.style.borderColor = 'rgba(234, 179, 8, 0.6)';
-        } else {
-          centerSlotBar.style.background = 'rgba(59, 130, 246, 0.22)';
-          centerSlotBar.style.borderColor = 'rgba(96, 165, 250, 0.5)';
-        }
-      } else {
-        midRow.textContent = '';
+    function closePopup() {
+      if (sheetsPopup) {
+        sheetsPopup.remove();
+        sheetsPopup = null;
+        const caret = pill.querySelector('.sheet-caret');
+        if (caret) caret.style.transform = 'rotate(0deg)';
+        pill.style.background = 'rgba(24, 24, 37, 0.88)';
+        pill.style.borderColor = 'rgba(255, 255, 255, 0.16)';
       }
     }
 
-    // Step index
-    function setIndex(newIdx) {
-      const clamped = Math.max(0, Math.min(sheets.length - 1, newIdx));
-      if (clamped !== selectedIndex) {
-        selectedIndex = clamped;
-        updateWheelView();
-      }
-    }
-
-    // Click top/bottom to rotate
-    topRow.onclick = (e) => {
-      e.stopPropagation();
-      setIndex(selectedIndex - 1);
-    };
-
-    btmRow.onclick = (e) => {
-      e.stopPropagation();
-      setIndex(selectedIndex + 1);
-    };
-
-    // Center click action:
-    // If not active sheet -> jump to it!
-    // If already active sheet -> expand all sheets list!
-    midRow.onclick = (e) => {
-      e.stopPropagation();
-      if (selectedIndex !== activeSheetIndex) {
-        // Jump to selected sheet
-        activeSheetIndex = selectedIndex;
-        sheets[selectedIndex].button.click();
-        updateWheelView();
-      } else {
-        // Expand all sheets list
-        showAllSheetsModal();
-      }
-    };
-
-    // Touch Drag interaction
-    let touchStartY = 0;
-    let accumulatedDelta = 0;
-    const DRAG_STEP = 26; // pixels per item scroll
-
-    wheel.addEventListener('touchstart', (e) => {
-      if (e.touches.length === 1) {
-        e.preventDefault();
-        e.stopPropagation();
-        touchStartY = e.touches[0].clientY;
-        accumulatedDelta = 0;
-      }
-    }, { passive: false });
-
-    wheel.addEventListener('touchmove', (e) => {
-      if (e.touches.length === 1) {
-        e.preventDefault();
-        e.stopPropagation();
-        const currentY = e.touches[0].clientY;
-        const diff = currentY - touchStartY;
-        touchStartY = currentY;
-        accumulatedDelta += diff;
-
-        if (accumulatedDelta <= -DRAG_STEP) {
-          // Dragged up -> next sheet
-          setIndex(selectedIndex + 1);
-          accumulatedDelta = 0;
-        } else if (accumulatedDelta >= DRAG_STEP) {
-          // Dragged down -> prev sheet
-          setIndex(selectedIndex - 1);
-          accumulatedDelta = 0;
-        }
-      }
-    }, { passive: false });
-
-    // Mouse drag support
-    let isMouseDown = false;
-    let mouseStartY = 0;
-    let mouseAccum = 0;
-
-    wheel.addEventListener('mousedown', (e) => {
-      if (e.button === 0) {
-        isMouseDown = true;
-        mouseStartY = e.clientY;
-        mouseAccum = 0;
-      }
-    });
-
-    window.addEventListener('mousemove', (e) => {
-      if (!isMouseDown) return;
-      const diff = e.clientY - mouseStartY;
-      mouseStartY = e.clientY;
-      mouseAccum += diff;
-      if (mouseAccum <= -DRAG_STEP) {
-        setIndex(selectedIndex + 1);
-        mouseAccum = 0;
-      } else if (mouseAccum >= DRAG_STEP) {
-        setIndex(selectedIndex - 1);
-        mouseAccum = 0;
-      }
-    });
-
-    window.addEventListener('mouseup', () => {
-      isMouseDown = false;
-    });
-
-    // Mouse Wheel support
-    wheel.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.deltaY > 0) {
-        setIndex(selectedIndex + 1);
-      } else if (e.deltaY < 0) {
-        setIndex(selectedIndex - 1);
-      }
-    }, { passive: false });
-
-    // All Sheets Modal / Dropdown
-    function showAllSheetsModal() {
-      if (allSheetsPopup) allSheetsPopup.remove();
+    function openPopup() {
+      closePopup();
 
       const modal = document.createElement('div');
       modal.className = 'mypad-excel-all-sheets-modal';
       modal.style.cssText = `
         position: absolute;
-        bottom: 140px;
+        bottom: 70px;
         right: 24px;
-        width: 240px;
+        width: 230px;
         max-height: 320px;
         background: rgba(24, 24, 37, 0.95);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 14px;
-        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55);
         z-index: 70;
         display: flex;
         flex-direction: column;
         overflow: hidden;
-        animation: fadeSlideUp 0.18s ease-out;
+        animation: fadeSlideUp 0.15s ease-out;
       `;
 
       // Header
@@ -319,13 +167,17 @@ export function initExcelSheetWheel(container) {
         color: #fff;
         font-size: 13px;
         font-weight: 600;
+        user-select: none;
       `;
       header.innerHTML = `
-        <span>所有工作表 (${sheets.length})</span>
-        <button class="modal-close-btn" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
+        <span>工作表 (${sheets.length})</span>
+        <button type="button" class="modal-close-btn" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">×</button>
       `;
 
-      header.querySelector('.modal-close-btn').onclick = () => modal.remove();
+      header.querySelector('.modal-close-btn').onclick = (e) => {
+        e.stopPropagation();
+        closePopup();
+      };
 
       // List container
       const listContainer = document.createElement('div');
@@ -336,9 +188,11 @@ export function initExcelSheetWheel(container) {
         max-height: 260px;
       `;
 
+      activeIndex = getActiveIndex();
+
       sheets.forEach((s) => {
         const item = document.createElement('div');
-        const isActive = s.index === activeSheetIndex;
+        const isActive = s.index === activeIndex;
         item.style.cssText = `
           padding: 8px 14px;
           font-size: 13px;
@@ -349,25 +203,25 @@ export function initExcelSheetWheel(container) {
           align-items: center;
           justify-content: space-between;
           transition: background 0.12s ease;
+          user-select: none;
         `;
         item.innerHTML = `
           <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.name}</span>
-          ${isActive ? '<span style="font-size:12px;color:#60a5fa;margin-left:8px;">✓</span>' : ''}
+          ${isActive ? '<span style="font-size:12px;color:#60a5fa;margin-left:8px;font-weight:bold;">✓</span>' : ''}
         `;
 
         item.onmouseenter = () => {
-          if (!isActive) item.style.background = 'rgba(255, 255, 255, 0.08)';
+          if (s.index !== activeIndex) item.style.background = 'rgba(255, 255, 255, 0.08)';
         };
         item.onmouseleave = () => {
-          if (!isActive) item.style.background = 'transparent';
+          if (s.index !== activeIndex) item.style.background = 'transparent';
         };
 
-        item.onclick = () => {
-          activeSheetIndex = s.index;
-          selectedIndex = s.index;
+        item.onclick = (e) => {
+          e.stopPropagation();
           s.button.click();
-          updateWheelView();
-          modal.remove();
+          closePopup();
+          setTimeout(updatePillText, 50);
         };
 
         listContainer.appendChild(item);
@@ -375,29 +229,55 @@ export function initExcelSheetWheel(container) {
 
       modal.append(header, listContainer);
       root.appendChild(modal);
-      allSheetsPopup = modal;
+      sheetsPopup = modal;
 
-      // Close on outside click
+      const caret = pill.querySelector('.sheet-caret');
+      if (caret) caret.style.transform = 'rotate(180deg)';
+      pill.style.background = 'rgba(35, 35, 55, 0.98)';
+      pill.style.borderColor = '#3b82f6';
+
+      // Outside click handler
       const onDocClick = (e) => {
-        if (!modal.contains(e.target) && !wheel.contains(e.target)) {
-          modal.remove();
-          document.removeEventListener('click', onDocClick);
+        if (sheetsPopup && !sheetsPopup.contains(e.target) && !pill.contains(e.target)) {
+          closePopup();
+          document.removeEventListener('click', onDocClick, true);
         }
       };
-      setTimeout(() => document.addEventListener('click', onDocClick), 50);
+      setTimeout(() => document.addEventListener('click', onDocClick, true), 20);
     }
 
-    updateWheelView();
-    root.appendChild(wheel);
-    wheelContainer = wheel;
+    pill.onclick = (e) => {
+      e.stopPropagation();
+      if (sheetsPopup) {
+        closePopup();
+      } else {
+        openPopup();
+      }
+    };
+
+    root.appendChild(pill);
+    pillButton = pill;
+
+    // Periodic check in case sheets change externally
+    activeSyncTimer = setInterval(() => {
+      if (!destroyed && pillButton) {
+        const currentActive = getActiveIndex();
+        if (currentActive !== activeIndex) {
+          updatePillText();
+        }
+      }
+    }, 1000);
   }
 
   return {
     destroy() {
       destroyed = true;
       observer?.disconnect();
-      wheelContainer?.remove();
-      allSheetsPopup?.remove();
+      if (activeSyncTimer) clearInterval(activeSyncTimer);
+      pillButton?.remove();
+      sheetsPopup?.remove();
     }
   };
 }
+
+export const initExcelSheetWheel = initExcelSheetSelector;

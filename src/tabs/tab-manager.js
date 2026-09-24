@@ -64,6 +64,8 @@ export class TabManager extends EventTarget {
       workspacePath: options.workspacePath || null,
       isPreviewTab: Boolean(options.isPreviewTab),
       previewBuffer: options.previewBuffer || null,
+      loading: Boolean(options.loading),
+      loadingProgress: options.loadingProgress || '',
       createdAt: Date.now(),
     };
 
@@ -246,7 +248,7 @@ export class TabManager extends EventTarget {
   /** Save current session to localStorage */
   saveSession() {
     const session = {
-      tabs: this.getAllTabs().filter((t) => !t.isPreviewTab).map((t) => ({
+      tabs: this.getAllTabs().filter((t) => !t.isPreviewTab && !t.loading).map((t) => ({
         filename: t.filename,
         content: t.content,
         encoding: t.encoding,

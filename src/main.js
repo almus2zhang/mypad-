@@ -341,12 +341,7 @@ sidebar.onRecentFileSelect(async (file) => {
       showToast(t('Cannot connect to Server Workspace.'), 'error');
       return;
     }
-    try {
-      const buffer = await workspaceBrowser.client.readFile(file.workspacePath);
-      await handleWorkspaceFileOpen(file.name, buffer, file.workspacePath);
-    } catch (e) {
-      showToast(`${t('Failed to open recent workspace file:')} ${e.message}`, "error");
-    }
+    await openWorkspaceFile(file.workspacePath, file.name);
   } else if (file.webdavPath) {
     showToast(t('Opening WebDAV file directly is not supported yet.'), "error");
   } else {
@@ -371,59 +366,148 @@ const workspaceBrowser = new WorkspaceBrowser({
   onError: (msg) => showToast(msg, 'error'),
 });
 
+/**
+ * Asynchronously open a workspace file inside a background loading tab.
+ * Creates the tab immediately with loading state so UI and other tabs are never blocked.
+ */
+async function openWorkspaceFile(path, filename, lastModified) {
+  const name = filename || path.split('/').pop() || 'file';
+
+  // Check if already open
+  const tabs = tabManager.getAllTabs();
+  const existing = tabs.find(t => 
+    t.workspacePath === path || 
+    t.filePath === path || 
+    t.webdavPath === path || 
+    t.path === path || 
+    (t.filename === name && (t.workspacePath === path || !t.workspacePath))
+  );
+
+  if (existing) {
+    switchToTab(existing.id);
+    return existing;
+  }
+
+  const isPreview = isPreviewable(name);
+  const langName = isPreview ? 'Preview' : getLanguageNameByFilename(name);
+
+  // 1. Create tab immediately in loading state
+  const tab = tabManager.createTab({
+    filename: name,
+    workspacePath: path,
+    remoteLastModified: lastModified || new Date().toISOString(),
+    language: langName,
+    isPreviewTab: isPreview,
+    loading: true,
+    loadingProgress: t('Loading...'),
+    content: '',
+  });
+
+  // Switch to this new tab immediately
+  await openEditorForTab(tab);
+
+  recentFiles.add({ name, workspacePath: path, encoding: isPreview ? 'binary' : 'utf-8' });
+  sidebar.updateRecentFiles(recentFiles.getAll());
+
+  const onProgress = (loaded, total, startTime) => {
+    // Check if tab still exists
+    if (!tabManager.getTab(tab.id)) return;
+
+    const elapsed = (Date.now() - startTime) / 1000;
+    let speed = '';
+    if (elapsed > 0) {
+      const bytesPerSec = loaded / elapsed;
+      const kbps = (bytesPerSec / 1024).toFixed(1);
+      const mbps = (bytesPerSec / 1024 / 1024).toFixed(2);
+      speed = bytesPerSec > 1024 * 1024 ? `${mbps} MB/s` : `${kbps} KB/s`;
+    }
+    
+    let msg = t('Loading...');
+    if (total > 0) {
+      const percent = Math.round((loaded / total) * 100);
+      msg = `${t('Loading...')} ${percent}% (${speed})`;
+    } else {
+      const loadedKb = (loaded / 1024).toFixed(1);
+      msg = `${t('Loaded')} ${loadedKb} KB (${speed})`;
+    }
+
+    tab.loadingProgress = msg;
+    if (tabManager.activeTabId === tab.id) {
+      const statusEl = document.getElementById('tab-loading-status-text');
+      if (statusEl) statusEl.textContent = msg;
+    }
+  };
+
+  try {
+    const buffer = await workspaceBrowser.client.readFile(path, onProgress);
+
+    // If tab was closed by user while reading, discard
+    if (!tabManager.getTab(tab.id)) return;
+
+    // Fetch server bookmarks if any
+    let serverBookmarks = [];
+    try {
+      if (workspaceBrowser && workspaceBrowser.client && workspaceBrowser.client.isConnected()) {
+        const meta = await workspaceBrowser.client.getFileMetadata(path);
+        if (meta && meta.bookmarks) {
+          serverBookmarks = meta.bookmarks;
+          globalBookmarks[path] = serverBookmarks;
+          saveJSON('mypad_global_bookmarks', globalBookmarks);
+        }
+      }
+    } catch (e) {}
+
+    if (serverBookmarks.length > 0) {
+      tab.bookmarks = serverBookmarks;
+    }
+
+    if (isPreview) {
+      tab.previewBuffer = buffer;
+      tab.loading = false;
+      tabManager.updateTab(tab.id, {
+        previewBuffer: buffer,
+        loading: false,
+        bookmarks: tab.bookmarks,
+      });
+    } else {
+      const mimeType = getMimeType(name);
+      if (mimeType && !mimeType.startsWith('text/') && !mimeType.includes('json') && !mimeType.includes('xml') && !mimeType.includes('javascript')) {
+        tabManager.closeTab(tab.id);
+        handleTabClosed();
+        tryOpenMediaInBrowser(name, buffer, { workspacePath: path });
+        return;
+      }
+
+      const fileInfo = await fileHandler.openFileFromBuffer(buffer, name);
+      tab.content = fileInfo.content;
+      tab.encoding = fileInfo.encoding;
+      tab.loading = false;
+      tabManager.updateTab(tab.id, {
+        content: fileInfo.content,
+        encoding: fileInfo.encoding,
+        loading: false,
+        bookmarks: tab.bookmarks,
+      });
+    }
+
+    // Only render if this tab is currently the active tab
+    if (tabManager.activeTabId === tab.id) {
+      await openEditorForTab(tab);
+    }
+  } catch (e) {
+    if (!tabManager.getTab(tab.id)) return;
+    showToast(`${t('Failed to open file:')} ${e.message}`, 'error');
+    tabManager.closeTab(tab.id);
+    handleTabClosed();
+  }
+}
+
 // --- File Tree Sidebar ---
 const fileTreeSidebar = new FileTreeSidebar(workspaceBrowser.client, {
   onFileSelect: (item) => {
     // Open the file in a new tab
     if (item.isDirectory) return;
-
-    // Check if already open
-    const tabs = tabManager.getAllTabs();
-    const existing = tabs.find(t => 
-      t.workspacePath === item.path || 
-      t.filePath === item.path || 
-      t.webdavPath === item.path || 
-      t.path === item.path || 
-      (t.filename === item.name && (t.workspacePath === item.path || !t.workspacePath))
-    );
-
-    if (existing) {
-      switchToTab(existing.id);
-      return;
-    }
-
-    showLoading(t('Loading...'));
-
-    const onProgress = (loaded, total, startTime) => {
-      const elapsed = (Date.now() - startTime) / 1000;
-      let speed = '';
-      if (elapsed > 0) {
-        const bytesPerSec = loaded / elapsed;
-        const kbps = (bytesPerSec / 1024).toFixed(1);
-        const mbps = (bytesPerSec / 1024 / 1024).toFixed(2);
-        speed = bytesPerSec > 1024 * 1024 ? `${mbps} MB/s` : `${kbps} KB/s`;
-      }
-      
-      let msg = t('Loading...');
-      if (total > 0) {
-        const percent = Math.round((loaded / total) * 100);
-        msg = `${t('Loading...')} ${percent}% (${speed})`;
-      } else {
-        const loadedKb = (loaded / 1024).toFixed(1);
-        msg = `${t('Loaded')} ${loadedKb} KB (${speed})`;
-      }
-      updateLoadingMessage(msg);
-    };
-
-    workspaceBrowser.client.readFile(item.path, onProgress)
-      .then(buffer => {
-        hideLoading();
-        handleWorkspaceFileOpen(item.name, buffer, item.path, item.lastModified);
-      })
-      .catch(e => {
-        hideLoading();
-        showToast(`${t('Failed to open file:')} ${e.message}`, "error");
-      });
+    openWorkspaceFile(item.path, item.name, item.lastModified);
   },
   onContextMenu: (e, item, tree) => {
     if (item.isDirectory && (item.path !== '/' || item.isPinned)) {
@@ -480,6 +564,29 @@ const keymapCallbacks = {
 // Editor Management
 // ============================================================
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function renderTabLoadingUI(container, tab) {
+  if (!container) return;
+  const filename = tab.filename || 'File';
+  const progressMsg = tab.loadingProgress || t('Loading...');
+
+  container.innerHTML = `
+    <div class="tab-loading-card">
+      <div class="tab-loading-icon-spinner"></div>
+      <div class="tab-loading-title">${escapeHtml(filename)}</div>
+      <div class="tab-loading-status" id="tab-loading-status-text">${escapeHtml(progressMsg)}</div>
+    </div>
+  `;
+}
+
 /**
  * Open/create editor for a tab
  * @param {import('./tabs/tab-manager.js').Tab} tab
@@ -487,6 +594,26 @@ const keymapCallbacks = {
 async function openEditorForTab(tab) {
   const editorContainer = document.getElementById('editor-container');
   const viewerContainer = document.getElementById('viewer-container');
+  let tabLoadingContainer = document.getElementById('tab-loading-container');
+  if (!tabLoadingContainer) {
+    tabLoadingContainer = document.createElement('div');
+    tabLoadingContainer.id = 'tab-loading-container';
+    tabLoadingContainer.className = 'tab-loading-view';
+    document.getElementById('editor-layout-wrapper')?.appendChild(tabLoadingContainer);
+  }
+
+  if (tab.loading) {
+    previewManager.hideAll();
+    if (editorContainer) editorContainer.style.display = 'none';
+    if (viewerContainer) viewerContainer.style.display = 'none';
+    tabLoadingContainer.style.display = 'flex';
+    renderTabLoadingUI(tabLoadingContainer, tab);
+    updateStatusBar();
+    return;
+  }
+
+  // Not loading: ensure loading view is hidden
+  tabLoadingContainer.style.display = 'none';
 
   if (tab.isPreviewTab) {
     if (editorContainer) editorContainer.style.display = 'none';
@@ -637,7 +764,7 @@ async function switchToTab(id) {
   // Save current tab state
   const prevTab = tabManager.getActiveTab();
   if (prevTab) {
-    if (!prevTab.isPreviewTab && editorManager.hasView) {
+    if (!prevTab.isPreviewTab && !prevTab.loading && editorManager.hasView) {
       prevTab.content = editorManager.getContent();
       prevTab.selection = editorManager.getState().selection;
       prevTab.scrollPos = editorManager.getScrollPosition();
@@ -656,6 +783,12 @@ async function switchToTab(id) {
 async function closeTab(id) {
   const tab = tabManager.getTab(id);
   if (!tab) return;
+
+  if (tab.loading) {
+    tabManager.closeTab(id);
+    handleTabClosed();
+    return;
+  }
 
   if (tab.isPreviewTab) {
     previewManager.destroyTab(id);
@@ -701,6 +834,8 @@ function handleTabClosed() {
     openEditorForTab(activeTab);
   } else {
     previewManager.destroy();
+    const tabLoadingContainer = document.getElementById('tab-loading-container');
+    if (tabLoadingContainer) tabLoadingContainer.style.display = 'none';
     const viewerContainer = document.getElementById('viewer-container');
     if (viewerContainer) viewerContainer.style.display = 'none';
     const editorContainer = document.getElementById('editor-container');
@@ -1391,6 +1526,15 @@ function showGoToLine() {
 
 function updateStatusBar() {
   const tab = tabManager.getActiveTab();
+  if (tab && tab.loading) {
+    statusBar.setCursorPosition(0, 0);
+    statusBar.setSelection('', 0);
+    statusBar.setEncoding('', null);
+    statusBar.setLanguage(tab.loadingProgress || t('Loading...'), null);
+    statusBar.setFilePath(tab.workspacePath || tab.webdavPath || tab.filePath || '');
+    return;
+  }
+
   if (tab && tab.isPreviewTab) {
     statusBar.setCursorPosition(0, 0);
     statusBar.setSelection('', 0);
