@@ -482,18 +482,10 @@ export class WorkspaceBrowser {
     });
   }
 
-  async _handleFileSelect(item) {
-    try {
-      this._fileListEl.style.opacity = '0.5';
-      const buffer = await this.client.readFile(item.path);
-      this.hide();
-      if (this.callbacks.onFileOpen) {
-        this.callbacks.onFileOpen(item.name, buffer, item.path);
-      }
-    } catch (e) {
-      alert('Failed to open file: ' + e.message);
-    } finally {
-      this._fileListEl.style.opacity = '1';
+  _handleFileSelect(item) {
+    this.hide();
+    if (this.callbacks.onFileOpen) {
+      this.callbacks.onFileOpen(item.name, null, item.path, item.lastModified);
     }
   }
 

@@ -361,7 +361,13 @@ const webdavBrowser = new WebDAVBrowser(webdavClient, {
 
 // --- Workspace Browser ---
 const workspaceBrowser = new WorkspaceBrowser({
-  onFileOpen: handleWorkspaceFileOpen,
+  onFileOpen: (name, buffer, path, lastModified) => {
+    if (buffer) {
+      handleWorkspaceFileOpen(name, buffer, path, lastModified);
+    } else {
+      openWorkspaceFile(path, name, lastModified);
+    }
+  },
   onFileSave: handleWorkspaceFileSave,
   onError: (msg) => showToast(msg, 'error'),
 });
@@ -391,6 +397,8 @@ async function openWorkspaceFile(path, filename, lastModified) {
   const isPreview = isPreviewable(name);
   const langName = isPreview ? 'Preview' : getLanguageNameByFilename(name);
 
+  const abortController = new AbortController();
+
   // 1. Create tab immediately in loading state
   const tab = tabManager.createTab({
     filename: name,
@@ -402,6 +410,7 @@ async function openWorkspaceFile(path, filename, lastModified) {
     loadingProgress: t('Loading...'),
     content: '',
   });
+  tab.abortController = abortController;
 
   // Switch to this new tab immediately
   await openEditorForTab(tab);
@@ -411,7 +420,7 @@ async function openWorkspaceFile(path, filename, lastModified) {
 
   const onProgress = (loaded, total, startTime) => {
     // Check if tab still exists
-    if (!tabManager.getTab(tab.id)) return;
+    if (!tabManager.getTab(tab.id) || abortController.signal.aborted) return;
 
     const elapsed = (Date.now() - startTime) / 1000;
     let speed = '';
@@ -439,10 +448,10 @@ async function openWorkspaceFile(path, filename, lastModified) {
   };
 
   try {
-    const buffer = await workspaceBrowser.client.readFile(path, onProgress);
+    const buffer = await workspaceBrowser.client.readFile(path, onProgress, abortController.signal);
 
     // If tab was closed by user while reading, discard
-    if (!tabManager.getTab(tab.id)) return;
+    if (!tabManager.getTab(tab.id) || abortController.signal.aborted) return;
 
     // Fetch server bookmarks if any
     let serverBookmarks = [];
@@ -495,6 +504,129 @@ async function openWorkspaceFile(path, filename, lastModified) {
       await openEditorForTab(tab);
     }
   } catch (e) {
+    if (abortController.signal.aborted || e.name === 'AbortError') {
+      console.log('Workspace file download cancelled by user:', name);
+      return;
+    }
+    if (!tabManager.getTab(tab.id)) return;
+    showToast(`${t('Failed to open file:')} ${e.message}`, 'error');
+    tabManager.closeTab(tab.id);
+    handleTabClosed();
+  }
+}
+
+/**
+ * Asynchronously open a WebDAV file inside a background loading tab with cancel support.
+ */
+async function openWebDAVFile(path, filename) {
+  const name = filename || path.split('/').pop() || 'file';
+
+  // Check if already open
+  const tabs = tabManager.getAllTabs();
+  const existing = tabs.find(t => 
+    t.webdavPath === path || 
+    t.filePath === path || 
+    t.workspacePath === path || 
+    t.path === path || 
+    (t.filename === name && (t.webdavPath === path || !t.webdavPath))
+  );
+
+  if (existing) {
+    switchToTab(existing.id);
+    return existing;
+  }
+
+  const isPreview = isPreviewable(name);
+  const langName = isPreview ? 'Preview' : getLanguageNameByFilename(name);
+
+  const abortController = new AbortController();
+
+  // 1. Create tab immediately in loading state
+  const tab = tabManager.createTab({
+    filename: name,
+    webdavPath: path,
+    language: langName,
+    isPreviewTab: isPreview,
+    loading: true,
+    loadingProgress: t('Loading...'),
+    content: '',
+  });
+  tab.abortController = abortController;
+
+  // Switch to this new tab immediately
+  await openEditorForTab(tab);
+
+  recentFiles.add({ name, webdavPath: path, encoding: isPreview ? 'binary' : 'utf-8' });
+  sidebar.updateRecentFiles(recentFiles.getAll());
+
+  const onProgress = (loaded, total, startTime) => {
+    if (!tabManager.getTab(tab.id) || abortController.signal.aborted) return;
+
+    const elapsed = (Date.now() - startTime) / 1000;
+    let speed = '';
+    if (elapsed > 0) {
+      const bytesPerSec = loaded / elapsed;
+      const kbps = (bytesPerSec / 1024).toFixed(1);
+      const mbps = (bytesPerSec / 1024 / 1024).toFixed(2);
+      speed = bytesPerSec > 1024 * 1024 ? `${mbps} MB/s` : `${kbps} KB/s`;
+    }
+    
+    let msg = t('Loading...');
+    if (total > 0) {
+      const percent = Math.round((loaded / total) * 100);
+      msg = `${t('Loading...')} ${percent}% (${speed})`;
+    } else {
+      const loadedKb = (loaded / 1024).toFixed(1);
+      msg = `${t('Loaded')} ${loadedKb} KB (${speed})`;
+    }
+
+    tab.loadingProgress = msg;
+    if (tabManager.activeTabId === tab.id) {
+      const statusEl = document.getElementById('tab-loading-status-text');
+      if (statusEl) statusEl.textContent = msg;
+    }
+  };
+
+  try {
+    const buffer = await webdavClient.readFile(path, onProgress, abortController.signal);
+
+    if (!tabManager.getTab(tab.id) || abortController.signal.aborted) return;
+
+    if (isPreview) {
+      tab.previewBuffer = buffer;
+      tab.loading = false;
+      tabManager.updateTab(tab.id, {
+        previewBuffer: buffer,
+        loading: false,
+      });
+    } else {
+      const mimeType = getMimeType(name);
+      if (mimeType && !mimeType.startsWith('text/') && !mimeType.includes('json') && !mimeType.includes('xml') && !mimeType.includes('javascript')) {
+        tabManager.closeTab(tab.id);
+        handleTabClosed();
+        tryOpenMediaInBrowser(name, buffer, { webdavPath: path });
+        return;
+      }
+
+      const fileInfo = await fileHandler.openFileFromBuffer(buffer, name);
+      tab.content = fileInfo.content;
+      tab.encoding = fileInfo.encoding;
+      tab.loading = false;
+      tabManager.updateTab(tab.id, {
+        content: fileInfo.content,
+        encoding: fileInfo.encoding,
+        loading: false,
+      });
+    }
+
+    if (tabManager.activeTabId === tab.id) {
+      await openEditorForTab(tab);
+    }
+  } catch (e) {
+    if (abortController.signal.aborted || e.name === 'AbortError') {
+      console.log('WebDAV file download cancelled by user:', name);
+      return;
+    }
     if (!tabManager.getTab(tab.id)) return;
     showToast(`${t('Failed to open file:')} ${e.message}`, 'error');
     tabManager.closeTab(tab.id);
@@ -583,8 +715,30 @@ function renderTabLoadingUI(container, tab) {
       <div class="tab-loading-icon-spinner"></div>
       <div class="tab-loading-title">${escapeHtml(filename)}</div>
       <div class="tab-loading-status" id="tab-loading-status-text">${escapeHtml(progressMsg)}</div>
+      <button class="tab-loading-cancel-btn" id="btn-cancel-tab-download" type="button" title="${t('Cancel download') || '取消下载'}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:5px;flex-shrink:0;">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+        <span>${t('Cancel') || '取消'}</span>
+      </button>
     </div>
   `;
+
+  const cancelBtn = container.querySelector('#btn-cancel-tab-download');
+  if (cancelBtn) {
+    cancelBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (tab.abortController) {
+        try {
+          tab.abortController.abort();
+        } catch (err) {}
+      }
+      tabManager.closeTab(tab.id);
+      handleTabClosed();
+      showToast(`${t('Download cancelled:') || '已取消下载:'} ${filename}`, 'info');
+    };
+  }
 }
 
 /**
@@ -785,6 +939,11 @@ async function closeTab(id) {
   if (!tab) return;
 
   if (tab.loading) {
+    if (tab.abortController) {
+      try {
+        tab.abortController.abort();
+      } catch (err) {}
+    }
     tabManager.closeTab(id);
     handleTabClosed();
     return;
@@ -1068,6 +1227,9 @@ function showWebDAV() {
 }
 
 async function handleWebDAVFileOpen(path, arrayBuffer, filename) {
+  if (!arrayBuffer) {
+    return openWebDAVFile(path, filename);
+  }
   try {
     if (tryOpenMediaInBrowser(filename, arrayBuffer, { webdavPath: path })) {
       return;
@@ -1125,6 +1287,9 @@ async function saveFileToWebDAV(tab) {
 // ============================================================
 
 async function handleWorkspaceFileOpen(filename, arrayBuffer, path, lastModified) {
+  if (!arrayBuffer) {
+    return openWorkspaceFile(path, filename, lastModified);
+  }
   try {
     if (tryOpenMediaInBrowser(filename, arrayBuffer, { workspacePath: path })) {
       return;

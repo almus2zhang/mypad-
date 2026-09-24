@@ -234,6 +234,8 @@ const ZH_DICTIONARY = {
   'Incorrect password!': '密码错误！',
   'Cannot connect to Server Workspace.': '无法连接到服务器工作区。',
   'Failed to open recent workspace file:': '无法打开最近的工作区文件:',
+  'Cancel download': '取消下载',
+  'Download cancelled:': '已取消下载:',
   'Opening WebDAV file directly is not supported yet.': '目前不支持直接打开 WebDAV 文件。',
   'Local files cannot be reopened automatically due to browser security.': '由于浏览器安全限制，无法自动重新打开本地文件。',
   'Failed to open file:': '打开文件失败:',

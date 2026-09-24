@@ -3002,3 +3002,46 @@ body {
   text-align: center;
 }
 
+.tab-loading-cancel-btn {
+  margin-top: 16px;
+  padding: 6px 18px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+  outline: none;
+  user-select: none;
+}
+
+.tab-loading-cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.6);
+  transform: translateY(-1px);
+}
+
+.tab-loading-cancel-btn:active {
+  transform: translateY(0);
+}
+
+/* Enhanced Image Preview Styles */
+.preview-tab-pane .ofv-image-stage {
+  overflow: hidden !important;
+  touch-action: none !important;
+  position: relative !important;
+}
+
+.preview-tab-pane .ofv-image-scrollbox {
+  margin: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+

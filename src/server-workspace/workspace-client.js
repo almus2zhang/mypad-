@@ -131,9 +131,9 @@ export class WorkspaceClient {
     return data.results;
   }
 
-  async readFile(path, onProgress) {
+  async readFile(path, onProgress, signal) {
     const url = `/api/workspace/read?path=${encodeURIComponent(path)}&${this._getCacheBuster()}`;
-    const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store' });
+    const res = await fetch(url, { headers: this._getHeaders(), cache: 'no-store', signal });
     if (!res.ok) {
       this._handleError(res, {});
     }
@@ -150,14 +150,25 @@ export class WorkspaceClient {
     const chunks = [];
     const startTime = Date.now();
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (value) {
-        chunks.push(value);
-        loaded += value.length;
-        onProgress(loaded, total, startTime);
+    try {
+      while (true) {
+        if (signal?.aborted) {
+          reader.cancel().catch(() => {});
+          const err = new Error('Download aborted');
+          err.name = 'AbortError';
+          throw err;
+        }
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+          chunks.push(value);
+          loaded += value.length;
+          onProgress(loaded, total, startTime);
+        }
       }
+    } catch (e) {
+      reader.cancel().catch(() => {});
+      throw e;
     }
 
     const arrayBuffer = new Uint8Array(loaded);

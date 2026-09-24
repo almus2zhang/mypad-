@@ -55,13 +55,13 @@ export function enhancedImagePlugin() {
 
       const visualBox = document.createElement('div');
       visualBox.className = 'ofv-image-scrollbox';
-      visualBox.style.cssText = 'position:relative;display:flex;align-items:center;justify-content:center;margin:auto;touch-action:none;';
+      visualBox.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;margin:0;pointer-events:none;touch-action:none;';
 
       const image = document.createElement('img');
       image.className = 'ofv-media ofv-image-content';
       image.alt = ctx.file.name || 'Image preview';
       image.draggable = false;
-      image.style.cssText = 'max-width:100%;max-height:100%;object-fit:contain;transform-origin:center center;user-select:none;-webkit-user-drag:none;will-change:transform;';
+      image.style.cssText = 'max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;transform-origin:center center;user-select:none;-webkit-user-drag:none;will-change:transform;pointer-events:auto;';
       if (objectUrl) {
         image.src = objectUrl;
       }
@@ -85,6 +85,8 @@ export function enhancedImagePlugin() {
       let pinchStartMidpoint = { x: 0, y: 0 };
       let pinchStartScale = 1;
       let pinchStartOffset = { x: 0, y: 0 };
+      let pinchImgCenter = { x: 0, y: 0 };
+      let pinchFocalOnImg = { x: 0, y: 0 };
 
       let dragStartX = 0;
       let dragStartY = 0;
@@ -93,6 +95,14 @@ export function enhancedImagePlugin() {
       let lastTapTime = 0;
       let lastTapPos = { x: 0, y: 0 };
 
+      function getUntransformedImageCenter() {
+        const imgRect = image.getBoundingClientRect();
+        return {
+          x: imgRect.left + imgRect.width / 2 - offsetX,
+          y: imgRect.top + imgRect.height / 2 - offsetY,
+        };
+      }
+
       function applyTransform(withTransition = false) {
         image.style.transition = withTransition ? 'transform 180ms cubic-bezier(0.2, 0, 0, 1)' : 'none';
         image.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale}) rotate(${rotation}deg)`;
@@ -100,20 +110,26 @@ export function enhancedImagePlugin() {
       }
 
       /**
-       * Zoom centered on a focal client point (e.g. pinch center or cursor)
+       * Zoom centered on a focal client point (e.g. pinch center, tap point, or cursor)
        */
       function zoomAtPoint(newScale, clientX, clientY, withTransition = false) {
         const clampedScale = Math.min(10, Math.max(0.1, newScale));
-        const stageRect = stage.getBoundingClientRect();
-        const Xc = stageRect.left + stageRect.width / 2;
-        const Yc = stageRect.top + stageRect.height / 2;
-        const Fx = clientX != null ? clientX : Xc;
-        const Fy = clientY != null ? clientY : Yc;
+        if (clampedScale === scale) return;
 
-        const ratio = clampedScale / scale;
-        offsetX = Fx - Xc - (Fx - Xc - offsetX) * ratio;
-        offsetY = Fy - Yc - (Fy - Yc - offsetY) * ratio;
+        const imgCenter = getUntransformedImageCenter();
+        const currentCenterX = imgCenter.x + offsetX;
+        const currentCenterY = imgCenter.y + offsetY;
+
+        const Fx = clientX != null ? clientX : currentCenterX;
+        const Fy = clientY != null ? clientY : currentCenterY;
+
+        const focalOnImgX = (Fx - imgCenter.x - offsetX) / scale;
+        const focalOnImgY = (Fy - imgCenter.y - offsetY) / scale;
+
+        offsetX = Fx - imgCenter.x - clampedScale * focalOnImgX;
+        offsetY = Fy - imgCenter.y - clampedScale * focalOnImgY;
         scale = clampedScale;
+
         applyTransform(withTransition);
       }
 
@@ -142,6 +158,12 @@ export function enhancedImagePlugin() {
           };
           pinchStartScale = scale;
           pinchStartOffset = { x: offsetX, y: offsetY };
+
+          pinchImgCenter = getUntransformedImageCenter();
+          pinchFocalOnImg = {
+            x: (pinchStartMidpoint.x - pinchImgCenter.x - pinchStartOffset.x) / pinchStartScale,
+            y: (pinchStartMidpoint.y - pinchImgCenter.y - pinchStartOffset.y) / pinchStartScale
+          };
         } else if (e.touches.length === 1) {
           const t = e.touches[0];
           const now = Date.now();
@@ -187,13 +209,10 @@ export function enhancedImagePlugin() {
             x: (t1.clientX + t2.clientX) / 2,
             y: (t1.clientY + t2.clientY) / 2
           };
-          const stageRect = stage.getBoundingClientRect();
-          const Xc = stageRect.left + stageRect.width / 2;
-          const Yc = stageRect.top + stageRect.height / 2;
 
-          // Focal-point invariant formula
-          offsetX = (curMidpoint.x - Xc) - (pinchStartMidpoint.x - Xc - pinchStartOffset.x) * (nextScale / pinchStartScale);
-          offsetY = (curMidpoint.y - Yc) - (pinchStartMidpoint.y - Yc - pinchStartOffset.y) * (nextScale / pinchStartScale);
+          // Focal-point invariant formula centered on finger midpoint:
+          offsetX = curMidpoint.x - pinchImgCenter.x - nextScale * pinchFocalOnImg.x;
+          offsetY = curMidpoint.y - pinchImgCenter.y - nextScale * pinchFocalOnImg.y;
           scale = nextScale;
           applyTransform(false);
         } else if (isDragging && e.touches.length === 1 && !isPinching) {

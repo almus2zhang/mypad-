@@ -566,17 +566,10 @@ export class WebDAVBrowser {
   /**
    * @param {Object} item
    */
-  async _openFile(item) {
-    try {
-      this._fileListEl.style.opacity = '0.5';
-      const buffer = await this.client.readFile(item.path);
-      this.callbacks.onFileOpen(item.path, buffer, item.name);
-      this.hide();
-    } catch (e) {
-      alert('Failed to open file: ' + e.message);
-      this.callbacks.onError?.(e.message);
-    } finally {
-      this._fileListEl.style.opacity = '1';
+  _openFile(item) {
+    this.hide();
+    if (this.callbacks.onFileOpen) {
+      this.callbacks.onFileOpen(item.path, null, item.name);
     }
   }
 
