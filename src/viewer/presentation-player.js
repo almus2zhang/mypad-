@@ -124,21 +124,20 @@ export function openPresentationPlayer({ container, tab }) {
   const dock = document.createElement('div');
   dock.className = 'mypad-pres-dock is-collapsed';
 
-  // Toggle Button (3 horizontal lines hamburger / close icon)
-  const btnToggleDock = document.createElement('button');
-  btnToggleDock.type = 'button';
-  btnToggleDock.className = 'mypad-pres-dock-toggle';
-  btnToggleDock.title = '展开控制栏';
-  btnToggleDock.setAttribute('aria-label', 'Toggle presentation controls');
-  btnToggleDock.innerHTML = `
-    <svg class="mypad-pres-icon-menu" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+  // Left Wing Toggle Button (3 horizontal lines hamburger when collapsed / ◂ collapse when expanded)
+  const btnToggleDockLeft = document.createElement('button');
+  btnToggleDockLeft.type = 'button';
+  btnToggleDockLeft.className = 'mypad-pres-dock-toggle mypad-pres-dock-toggle-left';
+  btnToggleDockLeft.title = '展开控制栏';
+  btnToggleDockLeft.setAttribute('aria-label', 'Toggle presentation controls');
+  btnToggleDockLeft.innerHTML = `
+    <svg class="mypad-pres-icon-menu" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
       <line x1="4" y1="6" x2="20" y2="6"></line>
       <line x1="4" y1="12" x2="20" y2="12"></line>
       <line x1="4" y1="18" x2="20" y2="18"></line>
     </svg>
-    <svg class="mypad-pres-icon-close" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18"></line>
-      <line x1="6" y1="6" x2="18" y2="18"></line>
+    <svg class="mypad-pres-icon-collapse-left" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <polygon points="17 19 7 12 17 5 17 19"></polygon>
     </svg>
   `;
 
@@ -227,8 +226,23 @@ export function openPresentationPlayer({ container, tab }) {
     <span class="mypad-pres-dock-text">退出</span>
   `;
 
-  dockContent.append(dockDivider0, btnPrev, pageIndicator, btnNext, dockDivider1, btnResetDock, btnFitToggle, dockDivider2, btnExit);
-  dock.append(btnToggleDock, dockContent);
+  const dockDivider3 = document.createElement('div');
+  dockDivider3.className = 'mypad-pres-dock-divider';
+
+  // Right Wing Toggle Button (▸ collapse when expanded)
+  const btnToggleDockRight = document.createElement('button');
+  btnToggleDockRight.type = 'button';
+  btnToggleDockRight.className = 'mypad-pres-dock-toggle mypad-pres-dock-toggle-right';
+  btnToggleDockRight.title = '收起控制栏';
+  btnToggleDockRight.setAttribute('aria-label', 'Collapse presentation controls');
+  btnToggleDockRight.innerHTML = `
+    <svg class="mypad-pres-icon-collapse-right" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+      <polygon points="7 5 17 12 7 19 7 5"></polygon>
+    </svg>
+  `;
+
+  dockContent.append(dockDivider0, btnPrev, pageIndicator, btnNext, dockDivider1, btnResetDock, btnFitToggle, dockDivider2, btnExit, dockDivider3, btnToggleDockRight);
+  dock.append(btnToggleDockLeft, dockContent);
   overlay.appendChild(dock);
 
   // Top-Right Close Button
@@ -493,7 +507,7 @@ export function openPresentationPlayer({ container, tab }) {
     isDockExpanded = true;
     dock.classList.remove('is-collapsed');
     dock.classList.add('is-expanded');
-    btnToggleDock.title = '收起控制栏';
+    btnToggleDockLeft.title = '收起控制栏';
     resetDockCollapseTimer();
   }
 
@@ -502,7 +516,7 @@ export function openPresentationPlayer({ container, tab }) {
     isDockExpanded = false;
     dock.classList.remove('is-expanded');
     dock.classList.add('is-collapsed');
-    btnToggleDock.title = '展开控制栏';
+    btnToggleDockLeft.title = '展开控制栏';
     clearTimeout(dockCollapseTimer);
     dockCollapseTimer = null;
   }
@@ -518,13 +532,18 @@ export function openPresentationPlayer({ container, tab }) {
     }
   }
 
-  btnToggleDock.onclick = (e) => {
+  btnToggleDockLeft.onclick = (e) => {
     e.stopPropagation();
     if (isDockExpanded) {
       collapseDock();
     } else {
       expandDock();
     }
+  };
+
+  btnToggleDockRight.onclick = (e) => {
+    e.stopPropagation();
+    collapseDock();
   };
 
   dock.onclick = (e) => {
