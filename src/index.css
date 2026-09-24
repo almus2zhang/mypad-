@@ -2896,7 +2896,7 @@ body {
   margin-left: 2px;
 }
 
-/* Hide default OFV top tabs bar in Excel since we use floating 3D sheet wheel */
+/* Hide default OFV top tabs bar in Excel since we use floating sheet selector */
 .ofv-office .ofv-tabs {
   display: none !important;
 }
@@ -2905,6 +2905,30 @@ body {
 .ofv-office, .ofv-sheet, .ofv-table-scroll {
   height: 100% !important;
   max-height: 100% !important;
+}
+
+/* PPT Focal Zoom and Touch Scroller styles */
+.preview-tab-pane .ofv-office.ofv-panel {
+  overflow: auto !important;
+  touch-action: pan-x pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.preview-tab-pane .ofv-office .ofv-pptx-viewer,
+.preview-tab-pane .ofv-office .ofv-ppt-binary-viewer,
+.preview-tab-pane .ofv-office .ofv-presentation-slides {
+  overflow: visible !important;
+  height: auto !important;
+  min-height: 100% !important;
+  width: 100% !important;
+  transform-origin: 0 0;
+}
+
+.preview-tab-pane .ofv-office .ofv-pptx-viewer > div[data-slide-index],
+.preview-tab-pane .ofv-office .ofv-slide,
+.preview-tab-pane .ofv-office .ofv-ppt-binary-slide {
+  transform-origin: 0 0;
+  margin: 16px auto;
 }
 
 @keyframes fadeSlideUp {

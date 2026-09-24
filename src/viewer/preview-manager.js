@@ -6,6 +6,7 @@
 
 import { createFloatingFab } from './floating-fab.js';
 import { initExcelSheetWheel } from './excel-sheet-wheel.js';
+import { initPptFocalZoom } from './enhanced-ppt-zoom.js';
 
 let coreModule = null;
 let pdfWorkerSrc = null;
@@ -160,14 +161,17 @@ export class PreviewManager {
       // Attach floating FAB (Fullscreen + Download) in top-right
       const fab = createFloatingFab({ container: subContainer, tab });
 
-      // Check if Excel / Spreadsheet file, attach floating 3D sheet wheel
+      // Check if Excel / Spreadsheet file, attach floating sheet selector
       let excelWheel = null;
+      let pptZoom = null;
       const ext = (tab.filename.split('.').pop() || '').toLowerCase();
       if (['xlsx', 'xls', 'csv', 'tsv', 'ods'].includes(ext)) {
         excelWheel = initExcelSheetWheel(subContainer);
+      } else if (['pptx', 'ppt', 'ppsx', 'pps', 'potx', 'potm', 'odp', 'fodp'].includes(ext)) {
+        pptZoom = initPptFocalZoom(subContainer);
       }
 
-      this.tabInstances.set(tab.id, { viewer, subContainer, tab, fab, excelWheel });
+      this.tabInstances.set(tab.id, { viewer, subContainer, tab, fab, excelWheel, pptZoom });
     } catch (err) {
       console.error('Failed to render file preview:', err);
       if (this.currentTabId !== tab.id) return;
@@ -217,6 +221,7 @@ export class PreviewManager {
       try {
         item.fab?.destroy?.();
         item.excelWheel?.destroy?.();
+        item.pptZoom?.destroy?.();
         item.viewer?.destroy?.();
       } catch (e) {
         console.warn('Error destroying viewer tab:', e);
