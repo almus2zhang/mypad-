@@ -669,6 +669,9 @@ export function openPresentationPlayer({ container, tab }) {
         offsetY = dragStartOffset.y + deltaY;
         slideBox.style.transition = 'none';
         applyTransform();
+      } else {
+        // Prevent default browser viewport scrolling/gestures so swipe is smooth
+        e.preventDefault();
       }
     }
   };
@@ -686,16 +689,30 @@ export function openPresentationPlayer({ container, tab }) {
       dragStartOffset = { x: offsetX, y: offsetY };
     } else if (e.touches.length === 0) {
       if (isDragging && currentZoom <= 1.05) {
-        // Swipe detection when at default scale
+        // Swipe detection when at default scale (supports both horizontal & vertical swipes)
         const deltaX = (e.changedTouches?.[0]?.clientX || dragStartX) - touchStartPos.x;
         const deltaY = (e.changedTouches?.[0]?.clientY || dragStartY) - touchStartPos.y;
         const elapsed = Date.now() - touchStartTime;
 
-        if (elapsed < 350 && Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
-          if (deltaX < 0) {
-            goToNext();
-          } else {
-            goToPrev();
+        if (elapsed < 650) {
+          const absX = Math.abs(deltaX);
+          const absY = Math.abs(deltaY);
+          const minSwipeDist = 38;
+
+          if (absY > absX && absY > minSwipeDist) {
+            // Vertical swipe: swipe up -> next slide, swipe down -> prev slide
+            if (deltaY < 0) {
+              goToNext();
+            } else {
+              goToPrev();
+            }
+          } else if (absX >= absY && absX > minSwipeDist) {
+            // Horizontal swipe: swipe left -> next slide, swipe right -> prev slide
+            if (deltaX < 0) {
+              goToNext();
+            } else {
+              goToPrev();
+            }
           }
         }
       }
@@ -704,12 +721,13 @@ export function openPresentationPlayer({ container, tab }) {
     }
   };
 
-  // Mouse drag panning (Desktop)
+  // Mouse drag panning & swiping (Desktop)
   let isMouseDown = false;
   let mouseStartX = 0;
   let mouseStartY = 0;
   let mouseStartOffset = { x: 0, y: 0 };
   let didMouseMove = false;
+  let mouseStartTime = 0;
 
   const onMouseDown = (e) => {
     if (e.button !== 0) return;
@@ -721,6 +739,7 @@ export function openPresentationPlayer({ container, tab }) {
     mouseStartX = e.clientX;
     mouseStartY = e.clientY;
     mouseStartOffset = { x: offsetX, y: offsetY };
+    mouseStartTime = Date.now();
   };
 
   const onMouseMove = (e) => {
@@ -735,34 +754,99 @@ export function openPresentationPlayer({ container, tab }) {
 
     if (didMouseMove) {
       e.preventDefault();
-      offsetX = mouseStartOffset.x + dx;
-      offsetY = mouseStartOffset.y + dy;
-      slideBox.style.transition = 'none';
-      applyTransform();
+      // Only pan the slide if zoomed in or already offset
+      if (currentZoom > 1.05 || Math.abs(offsetX) > 4 || Math.abs(offsetY) > 4) {
+        offsetX = mouseStartOffset.x + dx;
+        offsetY = mouseStartOffset.y + dy;
+        slideBox.style.transition = 'none';
+        applyTransform();
+      }
     }
   };
 
   const onMouseUp = (e) => {
-    if (isMouseDown && !didMouseMove) {
-      // Click without drag: click left/right 25% of screen advances slide
-      const clickX = e.clientX;
-      const screenW = window.innerWidth;
-      if (clickX < screenW * 0.22) {
-        goToPrev();
-      } else if (clickX > screenW * 0.78) {
-        goToNext();
+    if (isMouseDown) {
+      if (!didMouseMove) {
+        // Click without drag: click left/right 22% of screen advances slide
+        const clickX = e.clientX;
+        const screenW = window.innerWidth;
+        if (clickX < screenW * 0.22) {
+          goToPrev();
+        } else if (clickX > screenW * 0.78) {
+          goToNext();
+        }
+      } else if (currentZoom <= 1.05) {
+        // Drag swipe on desktop when at default scale
+        const dx = e.clientX - mouseStartX;
+        const dy = e.clientY - mouseStartY;
+        const elapsed = Date.now() - mouseStartTime;
+        const absX = Math.abs(dx);
+        const absY = Math.abs(dy);
+
+        if (elapsed < 650) {
+          const minDragDist = 40;
+          if (absY > absX && absY > minDragDist) {
+            // Drag up -> next, drag down -> prev
+            if (dy < 0) {
+              goToNext();
+            } else {
+              goToPrev();
+            }
+          } else if (absX >= absY && absX > minDragDist) {
+            // Drag left -> next, drag right -> prev
+            if (dx < 0) {
+              goToNext();
+            } else {
+              goToPrev();
+            }
+          }
+        }
       }
     }
     isMouseDown = false;
   };
 
-  // Mouse wheel zoom centered at cursor
+  // Mouse wheel & touchpad scroll:
+  // - Holding Ctrl or already zoomed in (>1.05): zoom centered at cursor
+  // - At default view (<=1.05): vertical or horizontal scroll turns pages (with debounce)
+  let lastWheelTime = 0;
   const onWheel = (e) => {
     e.preventDefault();
     e.stopPropagation();
     resetControlsTimer();
-    const factor = e.deltaY < 0 ? 1.15 : 0.85;
-    zoomAtFocalPoint(currentZoom * factor, e.clientX, e.clientY, false);
+
+    if (e.ctrlKey || currentZoom > 1.05) {
+      const factor = e.deltaY < 0 ? 1.15 : 0.85;
+      zoomAtFocalPoint(currentZoom * factor, e.clientX, e.clientY, false);
+    } else {
+      const now = Date.now();
+      if (now - lastWheelTime < 380) {
+        // Debounce trackpad / mouse wheel event bursts
+        return;
+      }
+
+      const absY = Math.abs(e.deltaY);
+      const absX = Math.abs(e.deltaX);
+      if (absY > 15 || absX > 15) {
+        if (absY >= absX) {
+          if (e.deltaY > 0) {
+            lastWheelTime = now;
+            goToNext();
+          } else if (e.deltaY < 0) {
+            lastWheelTime = now;
+            goToPrev();
+          }
+        } else {
+          if (e.deltaX > 0) {
+            lastWheelTime = now;
+            goToNext();
+          } else if (e.deltaX < 0) {
+            lastWheelTime = now;
+            goToPrev();
+          }
+        }
+      }
+    }
   };
 
   // Double click to toggle zoom on desktop
