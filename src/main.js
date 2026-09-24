@@ -2344,3 +2344,23 @@ window.addEventListener('resize', () => {
   previewManager.resize();
 });
 
+// F5 shortcut to launch slideshow presentation for PPT / PDF files
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'F5') {
+    const activeTab = tabManager.getActiveTab();
+    if (activeTab && activeTab.isPreviewTab) {
+      const ext = (activeTab.filename.split('.').pop() || '').toLowerCase();
+      if (['pdf', 'pptx', 'ppt', 'ppsx', 'pps', 'potx', 'potm', 'odp', 'fodp'].includes(ext)) {
+        e.preventDefault();
+        const subContainer = document.querySelector(`.preview-tab-pane[data-tab-id="${activeTab.id}"]`);
+        if (subContainer) {
+          const playBtn = subContainer.querySelector('.mypad-floating-fab .mypad-fab-btn[title*="播放演示"]');
+          if (playBtn) {
+            playBtn.click();
+          }
+        }
+      }
+    }
+  }
+});
+

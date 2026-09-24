@@ -5,6 +5,8 @@
  * @module viewer/floating-fab
  */
 
+import { openPresentationPlayer } from './presentation-player.js';
+
 export function createFloatingFab({ container, tab }) {
   const fab = document.createElement('div');
   fab.className = 'mypad-floating-fab';
@@ -26,6 +28,49 @@ export function createFloatingFab({ container, tab }) {
     user-select: none;
     transition: opacity 0.2s ease, transform 0.2s ease;
   `;
+
+  const ext = (tab.filename.split('.').pop() || '').toLowerCase();
+  const isPresentationSupported = ['pdf', 'pptx', 'ppt', 'ppsx', 'pps', 'potx', 'potm', 'odp', 'fodp'].includes(ext);
+
+  let playBtn = null;
+  let dividerPres = null;
+  if (isPresentationSupported) {
+    playBtn = document.createElement('button');
+    playBtn.type = 'button';
+    playBtn.className = 'mypad-fab-btn';
+    playBtn.title = '播放演示 / Slideshow Presentation (F5)';
+    playBtn.setAttribute('aria-label', 'Slideshow Presentation');
+    playBtn.style.cssText = `
+      width: 30px;
+      height: 30px;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: #38bdf8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: background 0.15s ease, transform 0.15s ease;
+    `;
+    playBtn.innerHTML = `
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+        <polygon points="10 8 15 10 10 12 10 8" fill="currentColor"/>
+      </svg>
+    `;
+    playBtn.onmouseenter = () => { playBtn.style.background = 'rgba(255, 255, 255, 0.15)'; };
+    playBtn.onmouseleave = () => { playBtn.style.background = 'transparent'; };
+    playBtn.onclick = () => {
+      openPresentationPlayer({ container, tab });
+    };
+
+    dividerPres = document.createElement('div');
+    dividerPres.style.cssText = 'width: 1px; height: 14px; background: rgba(255, 255, 255, 0.22);';
+  }
 
   // Fullscreen button
   const fsBtn = document.createElement('button');
@@ -116,6 +161,9 @@ export function createFloatingFab({ container, tab }) {
     setTimeout(() => URL.revokeObjectURL(url), 10000);
   };
 
+  if (playBtn && dividerPres) {
+    fab.append(playBtn, dividerPres);
+  }
   fab.append(fsBtn, divider, dlBtn);
   container.appendChild(fab);
 

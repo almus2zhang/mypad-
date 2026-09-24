@@ -143,6 +143,10 @@ export function enhancedPdfPlugin(pluginOptions = {}) {
 
       pageNavigator.append(prevBtn, pageInput, pageTotal, nextBtn);
       viewer.appendChild(pageNavigator);
+      viewer._pdfDocument = pdfDocument;
+      viewer._pagesMeta = pagesMeta;
+      viewer._numPages = numPages;
+      viewer._getCurrentPage = () => currentPage;
       ctx.viewport.appendChild(viewer);
 
       // State
@@ -576,6 +580,15 @@ export function enhancedPdfPlugin(pluginOptions = {}) {
             return true;
           }
           return false;
+        },
+        getPdfDocument() {
+          return pdfDocument;
+        },
+        getPagesMeta() {
+          return pagesMeta;
+        },
+        getCurrentPage() {
+          return currentPage;
         },
         resize() {
           const oldBase = baseScale;
