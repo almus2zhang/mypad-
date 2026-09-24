@@ -203,7 +203,7 @@ export function openPresentationPlayer({ container, tab }) {
   const btnFitToggle = document.createElement('button');
   btnFitToggle.type = 'button';
   btnFitToggle.className = 'mypad-pres-dock-btn';
-  btnFitToggle.title = '切换缩放铺满模式: 铺满屏幕(默认) / 铺满宽 / 铺满高';
+  btnFitToggle.title = '切换缩放模式: 自适应 (点击切换铺满宽/铺满高)';
   btnFitToggle.innerHTML = `
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
@@ -514,9 +514,16 @@ export function openPresentationPlayer({ container, tab }) {
   let dockCollapseTimer = null;
   let dockAnimTimer = null;
 
+  function updateDockCompactState() {
+    // Narrow screen threshold: below 460px show only icons without text
+    const isNarrow = window.innerWidth < 460;
+    dock.classList.toggle('is-compact', isNarrow);
+  }
+
   function getNaturalDockWidth() {
-    const contentW = dockContent.scrollWidth || 344;
-    const maxW = Math.max(280, window.innerWidth - 24);
+    updateDockCompactState();
+    const contentW = dockContent.scrollWidth || (window.innerWidth < 460 ? 190 : 344);
+    const maxW = Math.max(220, window.innerWidth - 20);
     return Math.min(Math.ceil(contentW + 74), maxW);
   }
 
@@ -644,16 +651,21 @@ export function openPresentationPlayer({ container, tab }) {
 
   btnFitToggle.onclick = (e) => {
     e.stopPropagation();
+    const textEl = document.getElementById('pres-fit-mode-text');
     if (fitMode === 'contain') {
       fitMode = 'width';
-      document.getElementById('pres-fit-mode-text').textContent = '铺满宽';
+      if (textEl) textEl.textContent = '铺满宽';
+      btnFitToggle.title = '切换缩放模式: 铺满宽 (点击切换铺满高)';
     } else if (fitMode === 'width') {
       fitMode = 'height';
-      document.getElementById('pres-fit-mode-text').textContent = '铺满高';
+      if (textEl) textEl.textContent = '铺满高';
+      btnFitToggle.title = '切换缩放模式: 铺满高 (点击切换自适应)';
     } else {
       fitMode = 'contain';
-      document.getElementById('pres-fit-mode-text').textContent = '自适应';
+      if (textEl) textEl.textContent = '自适应';
+      btnFitToggle.title = '切换缩放模式: 自适应 (点击切换铺满宽)';
     }
+    btnFitToggle.classList.toggle('is-active', fitMode !== 'contain');
     calculateDefaultScale();
     resetToDefault(true);
     resetDockCollapseTimer();

@@ -3377,6 +3377,24 @@ body {
   cursor: not-allowed;
 }
 
+/* Narrow screen: hide text labels and keep icon-only layout */
+.mypad-pres-dock.is-compact .mypad-pres-dock-text,
+@media (max-width: 460px) {
+  .mypad-pres-dock .mypad-pres-dock-text {
+    display: none !important;
+  }
+  .mypad-pres-dock .mypad-pres-dock-btn {
+    padding: 0 7px;
+    gap: 0;
+  }
+  .mypad-pres-dock .mypad-pres-page-indicator {
+    padding: 0 4px;
+    font-size: 11.5px;
+    gap: 2px;
+  }
+}
+
+.mypad-pres-dock-btn.is-active,
 .mypad-pres-dock-btn-reset.is-active {
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.2);
