@@ -142,6 +142,9 @@ export function openPresentationPlayer({ container, tab }) {
     </svg>
   `;
 
+  const dockWindow = document.createElement('div');
+  dockWindow.className = 'mypad-pres-dock-window';
+
   const dockContent = document.createElement('div');
   dockContent.className = 'mypad-pres-dock-content';
 
@@ -240,8 +243,18 @@ export function openPresentationPlayer({ container, tab }) {
   `;
 
   dockContent.append(btnPrev, pageIndicator, btnNext, dockDivider1, btnResetDock, btnFitToggle, dockDivider2, btnExit, dockDivider3);
-  dock.append(btnToggleDockLeft, dockContent, btnToggleDockRight);
+  dockWindow.appendChild(dockContent);
+  dock.append(btnToggleDockLeft, dockWindow, btnToggleDockRight);
   overlay.appendChild(dock);
+
+  // Set initial dock width variable so collapsed button is immediately positioned at ◂
+  requestAnimationFrame(() => {
+    if (!isDestroyed) {
+      const initialW = getNaturalDockWidth();
+      dock.style.setProperty('--pres-dock-width', `${initialW}px`);
+      overlay.style.setProperty('--pres-dock-width', `${initialW}px`);
+    }
+  });
 
   // Top-Right Close Button
   const btnCloseTop = document.createElement('button');
@@ -501,6 +514,12 @@ export function openPresentationPlayer({ container, tab }) {
   let dockCollapseTimer = null;
   let dockAnimTimer = null;
 
+  function getNaturalDockWidth() {
+    const contentW = dockContent.scrollWidth || 344;
+    const maxW = Math.max(280, window.innerWidth - 24);
+    return Math.min(Math.ceil(contentW + 74), maxW);
+  }
+
   function expandDock() {
     if (isDestroyed || isDockExpanded) return;
     isDockExpanded = true;
@@ -508,22 +527,19 @@ export function openPresentationPlayer({ container, tab }) {
     clearTimeout(dockAnimTimer);
     clearTimeout(dockCollapseTimer);
 
-    // Prepare dock for width measurement
-    dock.classList.remove('is-collapsed');
-    dock.classList.add('is-expanded', 'is-expanding');
+    const naturalWidth = getNaturalDockWidth();
+    dock.style.setProperty('--pres-dock-width', `${naturalWidth}px`);
+    overlay.style.setProperty('--pres-dock-width', `${naturalWidth}px`);
+
+    dock.classList.remove('is-collapsed', 'is-collapsing');
+    dock.classList.add('is-expanding');
     btnToggleDockLeft.title = '收起控制栏';
 
-    // Measure natural width
-    dock.style.width = 'auto';
-    dock.style.transition = 'none';
-    const naturalWidth = dock.scrollWidth;
-
-    // Start from collapsed 34px
-    dock.style.width = '34px';
+    // Start from collapsed 38px
+    dock.style.width = '38px';
     dock.offsetHeight; // Force reflow
 
-    // Animate smoothly to natural width with spring pop-out
-    dock.style.transition = '';
+    // Animate smoothly to natural width
     requestAnimationFrame(() => {
       dock.style.width = `${naturalWidth}px`;
     });
@@ -531,9 +547,10 @@ export function openPresentationPlayer({ container, tab }) {
     dockAnimTimer = setTimeout(() => {
       if (!isDestroyed && isDockExpanded) {
         dock.classList.remove('is-expanding');
+        dock.classList.add('is-expanded');
         dock.style.width = '';
       }
-    }, 420);
+    }, 400);
 
     resetDockCollapseTimer();
   }
@@ -546,23 +563,30 @@ export function openPresentationPlayer({ container, tab }) {
     clearTimeout(dockCollapseTimer);
     dockCollapseTimer = null;
 
+    const naturalWidth = getNaturalDockWidth();
+    dock.style.setProperty('--pres-dock-width', `${naturalWidth}px`);
+    overlay.style.setProperty('--pres-dock-width', `${naturalWidth}px`);
+
     // Lock starting width for smooth collapse
-    dock.style.width = `${dock.offsetWidth}px`;
+    const currentW = dock.offsetWidth || naturalWidth;
+    dock.style.width = `${currentW}px`;
     dock.offsetHeight; // Force reflow
 
-    dock.classList.remove('is-expanded');
-    dock.classList.add('is-collapsed');
+    dock.classList.remove('is-expanded', 'is-expanding');
+    dock.classList.add('is-collapsing');
     btnToggleDockLeft.title = '展开控制栏';
 
     requestAnimationFrame(() => {
-      dock.style.width = '34px';
+      dock.style.width = '38px';
     });
 
     dockAnimTimer = setTimeout(() => {
       if (!isDestroyed && !isDockExpanded) {
+        dock.classList.remove('is-collapsing');
+        dock.classList.add('is-collapsed');
         dock.style.width = '';
       }
-    }, 350);
+    }, 400);
   }
 
   function resetDockCollapseTimer() {
@@ -1018,6 +1042,11 @@ export function openPresentationPlayer({ container, tab }) {
   const onResize = () => {
     calculateDefaultScale();
     applyTransform();
+    if (!isDestroyed) {
+      const w = getNaturalDockWidth();
+      dock.style.setProperty('--pres-dock-width', `${w}px`);
+      overlay.style.setProperty('--pres-dock-width', `${w}px`);
+    }
   };
 
   // Listeners
