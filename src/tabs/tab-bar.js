@@ -53,6 +53,14 @@ export class TabBar {
       nameSpan.textContent = tab.filename;
       el.appendChild(nameSpan);
 
+      // Loading spinner in tab
+      if (tab.loading) {
+        const spinner = document.createElement('span');
+        spinner.className = 'tab-loading-spinner';
+        spinner.title = 'Loading in background...';
+        el.appendChild(spinner);
+      }
+
       // Modified dot
       if (tab.modified) {
         const dot = document.createElement('span');

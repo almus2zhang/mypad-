@@ -4,6 +4,9 @@
  * @module viewer/preview-manager
  */
 
+import { createFloatingFab } from './floating-fab.js';
+import { initExcelSheetWheel } from './excel-sheet-wheel.js';
+
 let coreModule = null;
 let pdfWorkerSrc = null;
 let enhancedImagePluginFn = null;
@@ -54,8 +57,13 @@ export class PreviewManager {
   constructor() {
     this.container = null;
     this.currentTabId = null;
-    /** @type {Map<string, { viewer: any, subContainer: HTMLElement, tab: any }>} */
+    this.tabManager = null;
+    /** @type {Map<string, { viewer: any, subContainer: HTMLElement, tab: any, fab?: any, excelWheel?: any }>} */
     this.tabInstances = new Map();
+  }
+
+  setTabManager(tm) {
+    this.tabManager = tm;
   }
 
   get isActive() {
@@ -105,6 +113,9 @@ export class PreviewManager {
     `;
     container.appendChild(subContainer);
 
+    tab.loading = true;
+    this.tabManager?.updateTab?.(tab.id, { loading: true });
+
     try {
       const { core, workerSrc, enhancedImagePlugin, enhancedPdfPlugin } = await loadViewerDeps();
 
@@ -133,6 +144,7 @@ export class PreviewManager {
       // Always pass a sliced copy of buffer so original tab.previewBuffer is NEVER detached!
       const safeBuffer = tab.previewBuffer ? tab.previewBuffer.slice(0) : null;
 
+      // Note: toolbar is set to false so no full row is taken up!
       const viewer = core.createViewer({
         container: subContainer,
         file: safeBuffer,
@@ -140,12 +152,22 @@ export class PreviewManager {
         width: '100%',
         height: '100%',
         fit: 'contain',
-        toolbar: true,
+        toolbar: false,
         theme: currentTheme,
         plugins
       });
 
-      this.tabInstances.set(tab.id, { viewer, subContainer, tab });
+      // Attach floating FAB (Fullscreen + Download) in top-right
+      const fab = createFloatingFab({ container: subContainer, tab });
+
+      // Check if Excel / Spreadsheet file, attach floating 3D sheet wheel
+      let excelWheel = null;
+      const ext = (tab.filename.split('.').pop() || '').toLowerCase();
+      if (['xlsx', 'xls', 'csv', 'tsv', 'ods'].includes(ext)) {
+        excelWheel = initExcelSheetWheel(subContainer);
+      }
+
+      this.tabInstances.set(tab.id, { viewer, subContainer, tab, fab, excelWheel });
     } catch (err) {
       console.error('Failed to render file preview:', err);
       if (this.currentTabId !== tab.id) return;
@@ -174,6 +196,9 @@ export class PreviewManager {
           URL.revokeObjectURL(url);
         };
       }
+    } finally {
+      tab.loading = false;
+      this.tabManager?.updateTab?.(tab.id, { loading: false });
     }
   }
 
@@ -190,6 +215,8 @@ export class PreviewManager {
     const item = this.tabInstances.get(tabId);
     if (item) {
       try {
+        item.fab?.destroy?.();
+        item.excelWheel?.destroy?.();
         item.viewer?.destroy?.();
       } catch (e) {
         console.warn('Error destroying viewer tab:', e);

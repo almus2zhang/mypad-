@@ -115,6 +115,7 @@ navigationManager.setCallback((canBack, canForward) => {
 });
 
 const tabManager = new TabManager();
+previewManager.setTabManager(tabManager);
 const editorManager = new EditorManager(document.getElementById('editor-container'));
 const fileHandler = new FileHandler({
   onFileOpened: handleFileOpened,

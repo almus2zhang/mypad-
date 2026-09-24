@@ -83,41 +83,10 @@ export function enhancedPdfPlugin(pluginOptions = {}) {
       viewer.className = 'ofv-pdf-viewer';
       viewer.style.cssText = 'position:relative;width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden;background:#525659;';
 
-      // Page Navigator Bar
-      const pageNavigator = document.createElement('div');
-      pageNavigator.className = 'ofv-pdf-page-navigator';
-      pageNavigator.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 12px;background:var(--ofv-surface,#fff);border-bottom:1px solid var(--ofv-border,#e5e7eb);flex-shrink:0;z-index:2;';
-
-      const prevBtn = document.createElement('button');
-      prevBtn.type = 'button';
-      prevBtn.textContent = '‹';
-      prevBtn.title = 'Previous page';
-      prevBtn.style.cssText = 'min-width:32px;height:28px;padding:0 8px;border:1px solid var(--ofv-border,#d1d5db);border-radius:4px;background:var(--ofv-surface,#fff);cursor:pointer;font-size:16px;';
-
-      const pageInput = document.createElement('input');
-      pageInput.type = 'number';
-      pageInput.min = '1';
-      pageInput.max = String(numPages);
-      pageInput.value = '1';
-      pageInput.style.cssText = 'width:50px;height:28px;padding:0 4px;border:1px solid var(--ofv-border,#d1d5db);border-radius:4px;text-align:center;font-size:13px;';
-
-      const pageTotal = document.createElement('span');
-      pageTotal.textContent = `/ ${numPages}`;
-      pageTotal.style.cssText = 'font-size:13px;color:var(--ofv-text-muted,#6b7280);user-select:none;';
-
-      const nextBtn = document.createElement('button');
-      nextBtn.type = 'button';
-      nextBtn.textContent = '›';
-      nextBtn.title = 'Next page';
-      nextBtn.style.cssText = 'min-width:32px;height:28px;padding:0 8px;border:1px solid var(--ofv-border,#d1d5db);border-radius:4px;background:var(--ofv-surface,#fff);cursor:pointer;font-size:16px;';
-
-      pageNavigator.append(prevBtn, pageInput, pageTotal, nextBtn);
-      viewer.appendChild(pageNavigator);
-
-      // Scroller element
+      // Scroller element takes full view area
       const scroller = document.createElement('div');
       scroller.className = 'ofv-pdf ofv-pdf-pages';
-      scroller.style.cssText = 'flex:1 1 auto;width:100%;height:100%;overflow-x:auto;overflow-y:scroll;padding:16px;box-sizing:border-box;background:#525659;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch;';
+      scroller.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;overflow-x:auto;overflow-y:scroll;padding:16px;box-sizing:border-box;background:#525659;touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch;';
 
       // Pages container (supports GPU hardware transform during pinch)
       const pagesContainer = document.createElement('div');
@@ -126,6 +95,54 @@ export function enhancedPdfPlugin(pluginOptions = {}) {
 
       scroller.appendChild(pagesContainer);
       viewer.appendChild(scroller);
+
+      // Floating Page Navigator Bar (Bottom-Right corner)
+      const pageNavigator = document.createElement('div');
+      pageNavigator.className = 'ofv-pdf-page-navigator mypad-pdf-floating-nav';
+      pageNavigator.style.cssText = `
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: rgba(24, 24, 37, 0.85);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 24px;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+        color: #fff;
+        user-select: none;
+      `;
+
+      const prevBtn = document.createElement('button');
+      prevBtn.type = 'button';
+      prevBtn.textContent = '‹';
+      prevBtn.title = 'Previous page';
+      prevBtn.style.cssText = 'width:28px;height:28px;border:none;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;padding:0;transition:background 0.15s;';
+
+      const pageInput = document.createElement('input');
+      pageInput.type = 'number';
+      pageInput.min = '1';
+      pageInput.max = String(numPages);
+      pageInput.value = '1';
+      pageInput.style.cssText = 'width:42px;height:24px;padding:0 2px;border:1px solid rgba(255,255,255,0.22);border-radius:6px;background:rgba(0,0,0,0.25);color:#fff;text-align:center;font-size:12.5px;font-weight:500;outline:none;';
+
+      const pageTotal = document.createElement('span');
+      pageTotal.textContent = `/ ${numPages}`;
+      pageTotal.style.cssText = 'font-size:12px;color:rgba(255,255,255,0.65);user-select:none;margin-right:2px;';
+
+      const nextBtn = document.createElement('button');
+      nextBtn.type = 'button';
+      nextBtn.textContent = '›';
+      nextBtn.title = 'Next page';
+      nextBtn.style.cssText = 'width:28px;height:28px;border:none;border-radius:50%;background:rgba(255,255,255,0.12);color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;padding:0;transition:background 0.15s;';
+
+      pageNavigator.append(prevBtn, pageInput, pageTotal, nextBtn);
+      viewer.appendChild(pageNavigator);
       ctx.viewport.appendChild(viewer);
 
       // State
