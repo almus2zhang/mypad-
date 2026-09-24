@@ -13,7 +13,7 @@ export function createFloatingFab({ container, tab }) {
   fab.style.cssText = `
     position: absolute;
     top: 14px;
-    right: 16px;
+    right: 38px;
     z-index: 60;
     display: inline-flex;
     align-items: center;

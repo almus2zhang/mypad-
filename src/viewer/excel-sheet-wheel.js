@@ -64,7 +64,7 @@ export function initExcelSheetSelector(container) {
     pill.style.cssText = `
       position: absolute;
       bottom: 24px;
-      right: 24px;
+      right: 38px;
       height: 38px;
       padding: 0 14px 0 12px;
       background: rgba(24, 24, 37, 0.88);
@@ -140,7 +140,7 @@ export function initExcelSheetSelector(container) {
       modal.style.cssText = `
         position: absolute;
         bottom: 70px;
-        right: 24px;
+        right: 38px;
         width: 230px;
         max-height: 320px;
         background: rgba(24, 24, 37, 0.95);

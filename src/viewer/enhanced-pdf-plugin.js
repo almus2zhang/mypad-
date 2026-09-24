@@ -102,7 +102,7 @@ export function enhancedPdfPlugin(pluginOptions = {}) {
       pageNavigator.style.cssText = `
         position: absolute;
         bottom: 20px;
-        right: 20px;
+        right: 38px;
         z-index: 50;
         display: flex;
         align-items: center;

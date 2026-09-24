@@ -7,6 +7,7 @@
 import { createFloatingFab } from './floating-fab.js';
 import { initExcelSheetWheel } from './excel-sheet-wheel.js';
 import { initPptFocalZoom } from './enhanced-ppt-zoom.js';
+import { createTouchScrollbar } from '../ui/touch-scrollbar.js';
 
 let coreModule = null;
 let pdfWorkerSrc = null;
@@ -90,6 +91,7 @@ export class PreviewManager {
         }
       }
       existing.viewer?.resize?.();
+      existing.touchScrollbar?.update?.();
       return;
     }
 
@@ -171,7 +173,10 @@ export class PreviewManager {
         pptZoom = initPptFocalZoom(subContainer);
       }
 
-      this.tabInstances.set(tab.id, { viewer, subContainer, tab, fab, excelWheel, pptZoom });
+      // Attach touch scrollbar for document preview
+      const touchScrollbar = createTouchScrollbar(subContainer, { isContainer: true });
+
+      this.tabInstances.set(tab.id, { viewer, subContainer, tab, fab, excelWheel, pptZoom, touchScrollbar });
     } catch (err) {
       console.error('Failed to render file preview:', err);
       if (this.currentTabId !== tab.id) return;
@@ -222,6 +227,7 @@ export class PreviewManager {
         item.fab?.destroy?.();
         item.excelWheel?.destroy?.();
         item.pptZoom?.destroy?.();
+        item.touchScrollbar?.destroy?.();
         item.viewer?.destroy?.();
       } catch (e) {
         console.warn('Error destroying viewer tab:', e);
@@ -256,6 +262,7 @@ export class PreviewManager {
     if (this.currentTabId) {
       const active = this.tabInstances.get(this.currentTabId);
       active?.viewer?.resize?.();
+      active?.touchScrollbar?.update?.();
     }
   }
 
