@@ -120,9 +120,33 @@ export function openPresentationPlayer({ container, tab }) {
   `;
   overlay.appendChild(resetFloatingBtn);
 
-  // Bottom floating control dock
+  // Bottom floating control dock (default collapsed into small circular hamburger button)
   const dock = document.createElement('div');
-  dock.className = 'mypad-pres-dock';
+  dock.className = 'mypad-pres-dock is-collapsed';
+
+  // Toggle Button (3 horizontal lines hamburger / close icon)
+  const btnToggleDock = document.createElement('button');
+  btnToggleDock.type = 'button';
+  btnToggleDock.className = 'mypad-pres-dock-toggle';
+  btnToggleDock.title = '展开控制栏';
+  btnToggleDock.setAttribute('aria-label', 'Toggle presentation controls');
+  btnToggleDock.innerHTML = `
+    <svg class="mypad-pres-icon-menu" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="4" y1="6" x2="20" y2="6"></line>
+      <line x1="4" y1="12" x2="20" y2="12"></line>
+      <line x1="4" y1="18" x2="20" y2="18"></line>
+    </svg>
+    <svg class="mypad-pres-icon-close" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="18" y1="6" x2="6" y2="18"></line>
+      <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+  `;
+
+  const dockContent = document.createElement('div');
+  dockContent.className = 'mypad-pres-dock-content';
+
+  const dockDivider0 = document.createElement('div');
+  dockDivider0.className = 'mypad-pres-dock-divider';
 
   // Previous Page Button
   const btnPrev = document.createElement('button');
@@ -203,7 +227,8 @@ export function openPresentationPlayer({ container, tab }) {
     <span class="mypad-pres-dock-text">退出</span>
   `;
 
-  dock.append(btnPrev, pageIndicator, btnNext, dockDivider1, btnResetDock, btnFitToggle, dockDivider2, btnExit);
+  dockContent.append(dockDivider0, btnPrev, pageIndicator, btnNext, dockDivider1, btnResetDock, btnFitToggle, dockDivider2, btnExit);
+  dock.append(btnToggleDock, dockContent);
   overlay.appendChild(dock);
 
   // Top-Right Close Button
@@ -459,11 +484,63 @@ export function openPresentationPlayer({ container, tab }) {
     }
   }
 
+  // Control Dock Expand / Collapse State (默认收起为三横小圆按钮，点击后展开，超时自动收回)
+  let isDockExpanded = false;
+  let dockCollapseTimer = null;
+
+  function expandDock() {
+    if (isDestroyed) return;
+    isDockExpanded = true;
+    dock.classList.remove('is-collapsed');
+    dock.classList.add('is-expanded');
+    btnToggleDock.title = '收起控制栏';
+    resetDockCollapseTimer();
+  }
+
+  function collapseDock() {
+    if (isDestroyed) return;
+    isDockExpanded = false;
+    dock.classList.remove('is-expanded');
+    dock.classList.add('is-collapsed');
+    btnToggleDock.title = '展开控制栏';
+    clearTimeout(dockCollapseTimer);
+    dockCollapseTimer = null;
+  }
+
+  function resetDockCollapseTimer() {
+    clearTimeout(dockCollapseTimer);
+    if (isDockExpanded) {
+      dockCollapseTimer = setTimeout(() => {
+        if (!isDestroyed && isDockExpanded) {
+          collapseDock();
+        }
+      }, 4000);
+    }
+  }
+
+  btnToggleDock.onclick = (e) => {
+    e.stopPropagation();
+    if (isDockExpanded) {
+      collapseDock();
+    } else {
+      expandDock();
+    }
+  };
+
+  dock.onclick = (e) => {
+    e.stopPropagation();
+    if (!isDockExpanded) {
+      expandDock();
+    } else {
+      resetDockCollapseTimer();
+    }
+  };
+
   // Button Click Handlers
   prevChevron.onclick = (e) => { e.stopPropagation(); goToPrev(); resetControlsTimer(); };
   nextChevron.onclick = (e) => { e.stopPropagation(); goToNext(); resetControlsTimer(); };
-  btnPrev.onclick = (e) => { e.stopPropagation(); goToPrev(); resetControlsTimer(); };
-  btnNext.onclick = (e) => { e.stopPropagation(); goToNext(); resetControlsTimer(); };
+  btnPrev.onclick = (e) => { e.stopPropagation(); goToPrev(); resetDockCollapseTimer(); resetControlsTimer(); };
+  btnNext.onclick = (e) => { e.stopPropagation(); goToNext(); resetDockCollapseTimer(); resetControlsTimer(); };
 
   resetFloatingBtn.onclick = (e) => {
     e.stopPropagation();
@@ -474,6 +551,7 @@ export function openPresentationPlayer({ container, tab }) {
   btnResetDock.onclick = (e) => {
     e.stopPropagation();
     resetToDefault(true);
+    resetDockCollapseTimer();
     resetControlsTimer();
   };
 
@@ -491,6 +569,7 @@ export function openPresentationPlayer({ container, tab }) {
     }
     calculateDefaultScale();
     resetToDefault(true);
+    resetDockCollapseTimer();
     resetControlsTimer();
   };
 
@@ -500,6 +579,7 @@ export function openPresentationPlayer({ container, tab }) {
   // Page input on indicator click
   pageIndicator.onclick = (e) => {
     e.stopPropagation();
+    resetDockCollapseTimer();
     const input = prompt(`跳转到第几页 (1 - ${numPages}):`, String(currentPage));
     const target = parseInt(input, 10);
     if (!isNaN(target) && target >= 1 && target <= numPages) {
@@ -571,6 +651,11 @@ export function openPresentationPlayer({ container, tab }) {
 
   const onTouchStart = (e) => {
     resetControlsTimer();
+
+    // If dock is expanded and user taps screen outside dock, auto-collapse it
+    if (isDockExpanded && !e.target.closest('.mypad-pres-dock')) {
+      collapseDock();
+    }
 
     if (e.touches.length === 2) {
       e.preventDefault();
@@ -767,6 +852,10 @@ export function openPresentationPlayer({ container, tab }) {
   const onMouseUp = (e) => {
     if (isMouseDown) {
       if (!didMouseMove) {
+        // If dock is expanded and user clicks screen outside dock, auto-collapse it
+        if (isDockExpanded && !e.target.closest('.mypad-pres-dock')) {
+          collapseDock();
+        }
         // Click without drag: click left/right 22% of screen advances slide
         const clickX = e.clientX;
         const screenW = window.innerWidth;
@@ -896,6 +985,7 @@ export function openPresentationPlayer({ container, tab }) {
     isDestroyed = true;
 
     clearTimeout(hideControlsTimer);
+    clearTimeout(dockCollapseTimer);
 
     if (pdfRenderTask) {
       try { pdfRenderTask.cancel(); } catch {}

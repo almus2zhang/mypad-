@@ -3184,25 +3184,141 @@ body {
   transform: translateX(-50%) translateY(0) scale(0.98);
 }
 
-/* Bottom Control Dock */
+/* Bottom Control Dock - Frosted Glass (毛玻璃透光效果) */
 .mypad-pres-dock {
   position: absolute;
-  bottom: 20px;
+  bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  z-index: 100010;
+  color: #f1f5f9;
+  display: inline-flex;
+  align-items: center;
+  user-select: none;
+  transition: width 0.32s cubic-bezier(0.2, 0.9, 0.25, 1),
+              padding 0.25s ease,
+              border-radius 0.3s ease,
+              background 0.25s ease,
+              box-shadow 0.25s ease,
+              opacity 0.25s ease,
+              transform 0.2s ease;
+}
+
+/* Collapsed State: Circular button with 3 horizontal lines (三横小圆按钮) */
+.mypad-pres-dock.is-collapsed {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  justify-content: center;
+  opacity: 0.72;
+  overflow: hidden;
+}
+
+.mypad-pres-dock.is-collapsed:hover {
+  opacity: 1;
+  background: rgba(30, 41, 59, 0.65);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.55), 0 0 22px rgba(56, 189, 248, 0.35);
+  transform: translateX(-50%) scale(1.08);
+}
+
+.mypad-pres-dock.is-collapsed:active {
+  transform: translateX(-50%) scale(0.96);
+}
+
+.mypad-pres-dock.is-collapsed .mypad-pres-dock-content {
+  display: none !important;
+}
+
+.mypad-pres-dock.is-collapsed .mypad-pres-icon-close {
+  display: none !important;
+}
+
+.mypad-pres-dock.is-collapsed .mypad-pres-icon-menu {
+  display: block;
+}
+
+/* Expanded State: Capsule bar with full controls */
+.mypad-pres-dock.is-expanded {
+  width: auto;
+  max-width: 95vw;
+  height: 44px;
+  padding: 0 10px;
+  border-radius: 24px;
+  gap: 6px;
+  opacity: 1;
+  background: rgba(15, 23, 42, 0.58);
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  overflow: visible;
+}
+
+.mypad-pres-dock.is-expanded .mypad-pres-dock-content {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  background: rgba(18, 18, 30, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 26px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
-  z-index: 100010;
+  animation: presDockFadeIn 0.22s ease-out;
+}
+
+@keyframes presDockFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.mypad-pres-dock.is-expanded .mypad-pres-icon-close {
+  display: block;
+}
+
+.mypad-pres-dock.is-expanded .mypad-pres-icon-menu {
+  display: none !important;
+}
+
+/* Toggle Button (Hamburger / Close) */
+.mypad-pres-dock-toggle {
+  border: none;
+  background: transparent;
   color: #f1f5f9;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+
+.mypad-pres-dock.is-collapsed .mypad-pres-dock-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.mypad-pres-dock.is-expanded .mypad-pres-dock-toggle {
+  width: 30px;
+  height: 30px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+}
+
+.mypad-pres-dock.is-expanded .mypad-pres-dock-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  transform: scale(1.05);
 }
 
 .mypad-pres-dock-btn {
@@ -3220,10 +3336,11 @@ body {
   gap: 5px;
   transition: all 0.16s ease;
   outline: none;
+  white-space: nowrap;
 }
 
 .mypad-pres-dock-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.2);
   color: #fff;
   transform: translateY(-1px);
 }
@@ -3241,11 +3358,11 @@ body {
 
 .mypad-pres-dock-btn-exit {
   color: #f87171;
-  background: rgba(239, 68, 68, 0.12);
+  background: rgba(239, 68, 68, 0.14);
 }
 
 .mypad-pres-dock-btn-exit:hover {
-  background: rgba(239, 68, 68, 0.25) !important;
+  background: rgba(239, 68, 68, 0.28) !important;
   color: #fff !important;
 }
 
@@ -3285,9 +3402,9 @@ body {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(20, 20, 32, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(15, 23, 42, 0.42);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #cbd5e1;
   cursor: pointer;
@@ -3300,18 +3417,22 @@ body {
 }
 
 .mypad-pres-top-close-btn:hover {
-  background: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.35);
   color: #fff;
   border-color: rgba(239, 68, 68, 0.6);
   transform: scale(1.08);
 }
 
 /* Controls Auto-Fade Out when idle */
-.mypad-presentation-player.controls-hidden .mypad-pres-dock,
 .mypad-presentation-player.controls-hidden .mypad-pres-chevron,
 .mypad-presentation-player.controls-hidden .mypad-pres-top-close-btn,
 .mypad-presentation-player.controls-hidden .mypad-pres-floating-reset-btn {
   opacity: 0 !important;
   pointer-events: none !important;
+}
+
+/* When idle, collapsed hamburger circle remains subtly translucent */
+.mypad-presentation-player.controls-hidden .mypad-pres-dock.is-collapsed {
+  opacity: 0.42;
 }
 
