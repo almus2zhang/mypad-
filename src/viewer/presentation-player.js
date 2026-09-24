@@ -239,8 +239,8 @@ export function openPresentationPlayer({ container, tab }) {
     </svg>
   `;
 
-  dockContent.append(btnPrev, pageIndicator, btnNext, dockDivider1, btnResetDock, btnFitToggle, dockDivider2, btnExit, dockDivider3, btnToggleDockRight);
-  dock.append(btnToggleDockLeft, dockContent);
+  dockContent.append(btnPrev, pageIndicator, btnNext, dockDivider1, btnResetDock, btnFitToggle, dockDivider2, btnExit, dockDivider3);
+  dock.append(btnToggleDockLeft, dockContent, btnToggleDockRight);
   overlay.appendChild(dock);
 
   // Top-Right Close Button
@@ -496,27 +496,73 @@ export function openPresentationPlayer({ container, tab }) {
     }
   }
 
-  // Control Dock Expand / Collapse State (默认收起为三横小圆按钮，点击后展开，超时自动收回)
+  // Control Dock Expand / Collapse State (默认收起为圆形小按钮居中显示 ◂▸，点击后由 ▸ 带着按钮从左拉到右弹性弹出展开)
   let isDockExpanded = false;
   let dockCollapseTimer = null;
+  let dockAnimTimer = null;
 
   function expandDock() {
-    if (isDestroyed) return;
+    if (isDestroyed || isDockExpanded) return;
     isDockExpanded = true;
+
+    clearTimeout(dockAnimTimer);
+    clearTimeout(dockCollapseTimer);
+
+    // Prepare dock for width measurement
     dock.classList.remove('is-collapsed');
-    dock.classList.add('is-expanded');
+    dock.classList.add('is-expanded', 'is-expanding');
     btnToggleDockLeft.title = '收起控制栏';
+
+    // Measure natural width
+    dock.style.width = 'auto';
+    dock.style.transition = 'none';
+    const naturalWidth = dock.scrollWidth;
+
+    // Start from collapsed 34px
+    dock.style.width = '34px';
+    dock.offsetHeight; // Force reflow
+
+    // Animate smoothly to natural width with spring pop-out
+    dock.style.transition = '';
+    requestAnimationFrame(() => {
+      dock.style.width = `${naturalWidth}px`;
+    });
+
+    dockAnimTimer = setTimeout(() => {
+      if (!isDestroyed && isDockExpanded) {
+        dock.classList.remove('is-expanding');
+        dock.style.width = '';
+      }
+    }, 420);
+
     resetDockCollapseTimer();
   }
 
   function collapseDock() {
-    if (isDestroyed) return;
+    if (isDestroyed || !isDockExpanded) return;
     isDockExpanded = false;
+
+    clearTimeout(dockAnimTimer);
+    clearTimeout(dockCollapseTimer);
+    dockCollapseTimer = null;
+
+    // Lock starting width for smooth collapse
+    dock.style.width = `${dock.offsetWidth}px`;
+    dock.offsetHeight; // Force reflow
+
     dock.classList.remove('is-expanded');
     dock.classList.add('is-collapsed');
     btnToggleDockLeft.title = '展开控制栏';
-    clearTimeout(dockCollapseTimer);
-    dockCollapseTimer = null;
+
+    requestAnimationFrame(() => {
+      dock.style.width = '34px';
+    });
+
+    dockAnimTimer = setTimeout(() => {
+      if (!isDestroyed && !isDockExpanded) {
+        dock.style.width = '';
+      }
+    }, 350);
   }
 
   function resetDockCollapseTimer() {
@@ -1003,6 +1049,7 @@ export function openPresentationPlayer({ container, tab }) {
 
     clearTimeout(hideControlsTimer);
     clearTimeout(dockCollapseTimer);
+    clearTimeout(dockAnimTimer);
 
     if (pdfRenderTask) {
       try { pdfRenderTask.cancel(); } catch {}
