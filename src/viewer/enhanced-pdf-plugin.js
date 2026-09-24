@@ -33,9 +33,9 @@ export function enhancedPdfPlugin(pluginOptions = {}) {
       if (data instanceof Blob) {
         data = new Uint8Array(await data.arrayBuffer());
       } else if (data instanceof ArrayBuffer) {
-        data = new Uint8Array(data);
+        data = new Uint8Array(data.slice(0));
       } else if (ArrayBuffer.isView(data)) {
-        data = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+        data = new Uint8Array(data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength));
       }
 
       const documentParams = {

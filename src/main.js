@@ -497,7 +497,7 @@ async function openEditorForTab(tab) {
   }
 
   // Regular code/text editor tab
-  previewManager.destroy();
+  previewManager.hideAll();
   if (viewerContainer) viewerContainer.style.display = 'none';
   if (editorContainer) editorContainer.style.display = 'block';
 
@@ -636,9 +636,7 @@ async function switchToTab(id) {
   // Save current tab state
   const prevTab = tabManager.getActiveTab();
   if (prevTab) {
-    if (prevTab.isPreviewTab) {
-      previewManager.destroy();
-    } else if (editorManager.hasView) {
+    if (!prevTab.isPreviewTab && editorManager.hasView) {
       prevTab.content = editorManager.getContent();
       prevTab.selection = editorManager.getState().selection;
       prevTab.scrollPos = editorManager.getScrollPosition();
@@ -659,9 +657,7 @@ async function closeTab(id) {
   if (!tab) return;
 
   if (tab.isPreviewTab) {
-    if (tab.id === tabManager.activeTabId) {
-      previewManager.destroy();
-    }
+    previewManager.destroyTab(id);
     tabManager.closeTab(id);
     handleTabClosed();
     return;
@@ -698,6 +694,7 @@ async function closeTab(id) {
 }
 
 function handleTabClosed() {
+  previewManager.syncTabs(tabManager.tabs.map(t => t.id));
   const activeTab = tabManager.getActiveTab();
   if (activeTab) {
     openEditorForTab(activeTab);
@@ -718,7 +715,7 @@ function showTabContextMenu(tabId, event) {
   contextMenu.show(event.clientX, event.clientY, [
     { label: 'Close', shortcut: 'Ctrl+W', action: () => closeTab(tabId) },
     { label: 'Close Others', action: () => { tabManager.closeOthers(tabId); handleTabClosed(); } },
-    { label: 'Close to the Right', action: () => { tabManager.closeToRight(tabId); } },
+    { label: 'Close to the Right', action: () => { tabManager.closeToRight(tabId); handleTabClosed(); } },
     { type: 'separator' },
     { label: 'Close All', action: () => { tabManager.closeAll(); handleTabClosed(); } },
   ]);
