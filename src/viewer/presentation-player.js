@@ -124,17 +124,18 @@ export function openPresentationPlayer({ container, tab }) {
   const dock = document.createElement('div');
   dock.className = 'mypad-pres-dock is-collapsed';
 
-  // Left Wing Toggle Button (3 horizontal lines hamburger when collapsed / ◂ collapse when expanded)
+  // Left Wing Toggle Button:
+  // - When collapsed: displays ◂▸ merged inside the circular button (positioned at ◂)
+  // - When expanded: displays ◂ at the leftmost of the dock
   const btnToggleDockLeft = document.createElement('button');
   btnToggleDockLeft.type = 'button';
   btnToggleDockLeft.className = 'mypad-pres-dock-toggle mypad-pres-dock-toggle-left';
   btnToggleDockLeft.title = '展开控制栏';
   btnToggleDockLeft.setAttribute('aria-label', 'Toggle presentation controls');
   btnToggleDockLeft.innerHTML = `
-    <svg class="mypad-pres-icon-menu" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-      <line x1="4" y1="6" x2="20" y2="6"></line>
-      <line x1="4" y1="12" x2="20" y2="12"></line>
-      <line x1="4" y1="18" x2="20" y2="18"></line>
+    <svg class="mypad-pres-icon-merged" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+      <polygon points="10 6 3 12 10 18 10 6"></polygon>
+      <polygon points="14 6 21 12 14 18 14 6"></polygon>
     </svg>
     <svg class="mypad-pres-icon-collapse-left" width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
       <polygon points="17 19 7 12 17 5 17 19"></polygon>
@@ -143,9 +144,6 @@ export function openPresentationPlayer({ container, tab }) {
 
   const dockContent = document.createElement('div');
   dockContent.className = 'mypad-pres-dock-content';
-
-  const dockDivider0 = document.createElement('div');
-  dockDivider0.className = 'mypad-pres-dock-divider';
 
   // Previous Page Button
   const btnPrev = document.createElement('button');
@@ -241,7 +239,7 @@ export function openPresentationPlayer({ container, tab }) {
     </svg>
   `;
 
-  dockContent.append(dockDivider0, btnPrev, pageIndicator, btnNext, dockDivider1, btnResetDock, btnFitToggle, dockDivider2, btnExit, dockDivider3, btnToggleDockRight);
+  dockContent.append(btnPrev, pageIndicator, btnNext, dockDivider1, btnResetDock, btnFitToggle, dockDivider2, btnExit, dockDivider3, btnToggleDockRight);
   dock.append(btnToggleDockLeft, dockContent);
   overlay.appendChild(dock);
 
