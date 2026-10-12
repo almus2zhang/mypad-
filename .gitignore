@@ -5,3 +5,6 @@ dist/
 .env
 clients.json
 operation_logs.json
+__pycache__/
+*.pyc
+scripts/config.json

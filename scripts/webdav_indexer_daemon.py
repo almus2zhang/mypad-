@@ -12,6 +12,8 @@ class IndexerDaemon:
         self.load_config()
         self.debounce_timer = None
         self.lock = threading.Lock()
+        self.stop_event = threading.Event()
+        self.periodic_thread = None
         
     def load_config(self):
         with open(self.config_path, 'r', encoding='utf-8') as f:
@@ -20,6 +22,9 @@ class IndexerDaemon:
         self.mappings = self.config.get('mappings', [])
         self.excludes = set(self.config.get('excludes', ['.git', 'node_modules', '__pycache__']))
         self.debounce_seconds = self.config.get('debounce_seconds', 2.0)
+        # Default: 1440 minutes (24 hours / 1 day)
+        self.interval_minutes = self.config.get('interval_minutes', 1440)
+        self.use_polling = self.config.get('use_polling', False)
         
     def generate_index(self):
         with self.lock:
@@ -86,6 +91,35 @@ class IndexerDaemon:
             self.debounce_timer = threading.Timer(self.debounce_seconds, self.generate_index)
             self.debounce_timer.start()
 
+    def start_periodic_refresh(self):
+        if not self.interval_minutes or self.interval_minutes <= 0:
+            print("[Periodic Refresh] Disabled (interval_minutes <= 0)")
+            return
+
+        interval_seconds = self.interval_minutes * 60
+        hours = self.interval_minutes / 60
+        print(f"[Periodic Refresh] Scheduled every {self.interval_minutes} minutes ({hours:.1f} hours)")
+
+        def periodic_worker():
+            while not self.stop_event.is_set():
+                # Wait until timeout or stop signal is received
+                if self.stop_event.wait(interval_seconds):
+                    break
+                print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] [Periodic Refresh] Triggering scheduled full index refresh...")
+                try:
+                    self.generate_index()
+                except Exception as e:
+                    print(f"Error during scheduled refresh: {e}")
+
+        self.periodic_thread = threading.Thread(target=periodic_worker, daemon=True)
+        self.periodic_thread.start()
+
+    def stop(self):
+        self.stop_event.set()
+        with self.lock:
+            if self.debounce_timer is not None:
+                self.debounce_timer.cancel()
+
 class ChangeHandler(FileSystemEventHandler):
     def __init__(self, daemon):
         self.daemon = daemon
@@ -106,8 +140,18 @@ def main():
     # Generate initial index
     daemon.generate_index()
     
+    # Start periodic full refresh timer
+    daemon.start_periodic_refresh()
+    
     # Setup filesystem observer
-    observer = Observer()
+    if daemon.use_polling:
+        from watchdog.observers.polling import PollingObserver
+        observer = PollingObserver()
+        print("[Watchdog Observer] Using PollingObserver (recommended for network/mounted filesystems)")
+    else:
+        observer = Observer()
+        print("[Watchdog Observer] Using Native OS Observer")
+        
     handler = ChangeHandler(daemon)
     
     for mapping in daemon.mappings:
@@ -121,6 +165,8 @@ def main():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
+        print("\nStopping daemon...")
+        daemon.stop()
         observer.stop()
     observer.join()
 
