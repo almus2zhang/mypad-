@@ -24,7 +24,6 @@ class IndexerDaemon:
         self.debounce_seconds = self.config.get('debounce_seconds', 2.0)
         # Default: 1440 minutes (24 hours / 1 day)
         self.interval_minutes = self.config.get('interval_minutes', 1440)
-        self.use_polling = self.config.get('use_polling', False)
         
     def generate_index(self):
         with self.lock:
@@ -144,13 +143,7 @@ def main():
     daemon.start_periodic_refresh()
     
     # Setup filesystem observer
-    if daemon.use_polling:
-        from watchdog.observers.polling import PollingObserver
-        observer = PollingObserver()
-        print("[Watchdog Observer] Using PollingObserver (recommended for network/mounted filesystems)")
-    else:
-        observer = Observer()
-        print("[Watchdog Observer] Using Native OS Observer")
+    observer = Observer()
         
     handler = ChangeHandler(daemon)
     

@@ -19,6 +19,5 @@
     "build"
   ],
   "debounce_seconds": 2,
-  "interval_minutes": 1440,
-  "use_polling": false
+  "interval_minutes": 1440
 }
