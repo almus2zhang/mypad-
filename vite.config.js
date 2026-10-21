@@ -9,11 +9,16 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
-        globPatterns: ['**/*.{js,css,html,woff,woff2,svg,png,jpg,json}'],
+        globPatterns: ['**/*.{js,mjs,css,html,woff,woff2,svg,png,jpg,json}'],
         maximumFileSizeToCacheInBytes: 5000000,
         importScripts: ['sw-share-target.js'],
+        navigateFallback: 'index.html',
+        cleanupOutdatedCaches: true,
       },
       manifest: false, // We already have a manifest.json in public/
+      devOptions: {
+        enabled: true,
+      },
     })
   ],
 

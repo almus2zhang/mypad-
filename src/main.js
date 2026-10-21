@@ -1805,7 +1805,7 @@ function showEmptyState() {
 // ============================================================
 
 let toastContainer = document.getElementById('toast-container');
-function showToast(message, type = 'info') {
+function showToast(message, type = 'info', duration = 3000) {
   if (!toastContainer) {
     toastContainer = document.createElement('div');
     toastContainer.id = 'toast-container';
@@ -1825,7 +1825,7 @@ function showToast(message, type = 'info') {
   setTimeout(() => {
     toast.classList.remove('visible');
     setTimeout(() => toast.remove(), 300);
-  }, 3000);
+  }, duration);
 }
 
 // ── Check for Language Switch Toast ───────────────────────────────────────
@@ -2182,12 +2182,17 @@ import { registerSW } from 'virtual:pwa-register';
 
 if ('serviceWorker' in navigator) {
   const updateSW = registerSW({
+    immediate: true,
     onNeedRefresh() {
-      // Could show a toast here in the future
+      showToast(t('New version available, refreshing...'), 'info');
     },
     onOfflineReady() {
       console.log('App is ready to work offline');
+      showToast(t('Offline cache is ready! You can now use the app in airplane mode.'), 'success', 5000);
     },
+    onRegisterError(error) {
+      console.error('Service worker registration failed:', error);
+    }
   });
 }
 

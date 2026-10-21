@@ -305,6 +305,8 @@ const ZH_DICTIONARY = {
       <br><b>当前版本：v0.2.0</b>
     </p>
   `,
+  'New version available, refreshing...': '发现新版本，正在刷新...',
+  'Offline cache is ready! You can now use the app in airplane mode.': '🎉 离线缓存已就绪，飞行模式下可正常使用',
 };
 
 class I18n {
